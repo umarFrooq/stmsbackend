@@ -1,4 +1,4 @@
-const roles = ['user', 'admin', 'supplier', 'requestedSeller', 'marketplace'];
+const roles = ['user', 'admin', 'supplier', 'requestedSeller', 'marketplace', 'student', 'teacher', 'staff', 'admin_education'];
 
 const roleRights = new Map();
 roleRights.set(roles[0], ["manageProfile", 'manageReview', 'manageCart', "viewPhone", "getGroupBuy",

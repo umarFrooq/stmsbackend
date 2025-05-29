@@ -126,6 +126,10 @@ const userSchema = new Schema({
     // paymentPlatform: [{ type: String, enums: { ...Object.values(gateWay) } }],
     // payment: [userPaymentSchema]
     agreement: { type: Boolean, default: false },
+    cnic: { type: String, unique: true, sparse: true },
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch' },
+    permanentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
+    currentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
 }, {
     timestamps: true,
     toJSON: { virtuals: true }

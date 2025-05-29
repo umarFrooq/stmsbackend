@@ -41,7 +41,11 @@ const addressSchema = new Schema({
   area: {
     type: String,
     required: true
-  }
+  },
+  village: { type: String },
+  town: { type: String },
+  tahsil: { type: String },
+  district: { type: String }
 
 }, {
   timestamps: true,

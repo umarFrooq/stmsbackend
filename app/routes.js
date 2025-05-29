@@ -15,11 +15,15 @@ var orderDetailRoutes = require("./orderDetail/orderDetail.routes");
 var categoryRoutes = require("./category/category.routes");
 var wishListRoutes = require("./wishList/wishList.routes");
 var addressRoutes = require("./address/address.routes");
+var attendanceRoutes = require("./attendance/attendance.routes");
+var branchRoutes = require("./branch/branch.routes");
 var orderRoutes = require("./order/order.routes");
+var paperRoutes = require("./paper/paper.routes");
 var bannerRoutes = require("./banner/banner.routes");
 var shippmentRoutes = require("./shippment/shippment.routes");
 var sellerDetailRoutes = require("./sellerDetail/sellerDetail.routes");
 var sellerConfidentialDetailRoutes = require("./sellerConfidentialDetail/sellerConfidentialDetail.routes");
+var subjectRoutes = require("./subject/subject.routes");
 var marketRoutes = require("./market/market.routes");
 const docsRoute = require("./docs.route");
 const router = express.Router();
@@ -38,6 +42,9 @@ const voucherRouter = require("../app/voucher/voucher.routes");
 const redeemRouter = require("../app/redeemVoucher/redeem.voucher.routes");
 const groupBuyTraceRouter = require("../app/groupBuyPriceTrace/groupBuyTrace.routes");
 const groupBuyCustomerTraceRouter = require("../app/groupBuyCustomerTrack/groupBuyCustomerTrack.routes");
+const gradeRoutes = require("./grade/grade.routes");
+const testRoutes = require("./test/test.routes");
+const testResultRoutes = require("./testresult/testresult.routes");
 const logsRouter = require("./logs/logs.routes");
 const config = require("../config/config");
 const RequestIp = require('request-ip');
@@ -133,5 +140,12 @@ router.use("/users", userRoutes);
 // router.use("/rbac-access", require("./rbac-access/access.router"))
 // router.use("/ae-feed", require("./aeFeed/aeFeed.routes"))
 // router.use("/transactions", require("./transaction/transaction.routes"))
+router.use("/branches", branchRoutes);
+router.use("/subjects", subjectRoutes);
+router.use("/grades", gradeRoutes);
+router.use("/attendances", attendanceRoutes);
+router.use("/tests", testRoutes);
+router.use("/test-results", testResultRoutes);
+router.use("/papers", paperRoutes);
 
 module.exports = router;
