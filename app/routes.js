@@ -23,13 +23,17 @@ var bannerRoutes = require("./banner/banner.routes");
 var shippmentRoutes = require("./shippment/shippment.routes");
 var sellerDetailRoutes = require("./sellerDetail/sellerDetail.routes");
 var sellerConfidentialDetailRoutes = require("./sellerConfidentialDetail/sellerConfidentialDetail.routes");
+var studentRecordRoutes = require("./studentrecord/studentrecord.routes");
 var subjectRoutes = require("./subject/subject.routes");
+var timetableRoutes = require("./timetable/timetable.routes");
 var marketRoutes = require("./market/market.routes");
 const docsRoute = require("./docs.route");
 const router = express.Router();
 const { version } = require('../package.json');
 const blueRoute = require("./shippementMethods/blueEx/blue.routes");
 const followRouter = require("./follow/follow.route");
+const feeRoutes = require("./fee/fee.routes");
+const fineRoutes = require("./fine/fine.routes");
 const firbaseRouter = require("./firebase/phoneAuth/route")
 const bannerSetRouter = require("./banner-set/banner-set.routes");
 const pushNotificationRoute = require("./firebase/push.notification/push.notification.route");
@@ -147,5 +151,9 @@ router.use("/attendances", attendanceRoutes);
 router.use("/tests", testRoutes);
 router.use("/test-results", testResultRoutes);
 router.use("/papers", paperRoutes);
+router.use("/student-records", studentRecordRoutes);
+router.use("/timetables", timetableRoutes);
+router.use("/fees", feeRoutes);
+router.use("/fines", fineRoutes);
 
 module.exports = router;

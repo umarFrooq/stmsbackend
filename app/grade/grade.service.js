@@ -2,7 +2,6 @@ const httpStatus = require('http-status');
 const { Grade } = require('.'); // Assuming Grade model is exported from index.js
 const Branch = require('../branch/branch.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
-const { roleTypes } = require('../../config/enums'); // Assuming roles are defined here
 
 /**
  * Create a grade

@@ -5,7 +5,6 @@ const Subject = require('../subject/subject.model'); // Adjust path as needed
 const Grade = require('../grade/grade.model'); // Adjust path as needed
 const Branch = require('../branch/branch.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
-const mongoose = require('mongoose');
 
 /**
  * Helper to validate related entities for a single attendance record
