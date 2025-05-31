@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Branch } = require('.'); // Assuming Branch model is exported from index.js in the same directory
+const  {Branch}  = require('./branch.model'); // Assuming Branch model is exported from index.js in the same directory
 const Address = require('../address/address.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
 const { slugGenerator } = require('../../config/components/general.methods'); // Assuming this utility exists
@@ -94,10 +94,10 @@ const deleteBranchById = async (branchId) => {
   return branch;
 };
 
-Branch.statics.isBranchCodeTaken = async function (branchCode, excludeBranchId) {
-    const branch = await this.findOne({ branchCode, _id: { $ne: excludeBranchId } });
-    return !!branch;
-};
+// Branch.statics.isBranchCodeTaken = async function (branchCode, excludeBranchId) {
+//     const branch = await this.findOne({ branchCode, _id: { $ne: excludeBranchId } });
+//     return !!branch;
+// };
 
 
 module.exports = {

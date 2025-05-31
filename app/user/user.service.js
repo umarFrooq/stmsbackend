@@ -10,7 +10,7 @@ const SellerConfidentialDetail = db.SellerConfidentialDetail;
 const config = require('../../config/config');
 const algoliasearch = require("algoliasearch");
 // const client = algoliasearch(config.algolia.algoliaApplicationId, config.algolia.algoliaWriteApiKey);
-const { deleteManyFromAlgolia } = require('./../product/algolia.service');
+
 const addressService = require("../address/address.service");
 const { sellerProfile, userProfile } = require("./profile");
 const { sellerHome } = require("./sellerHome");

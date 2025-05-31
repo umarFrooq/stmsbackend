@@ -1,7 +1,8 @@
 const express = require('express');
 const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
 const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const { attendanceController, attendanceValidations } = require('.'); // Assuming these are exported from index.js
+const attendanceController= require('./attendance.controller'); // Assuming these are exported from index.js
+  const attendanceValidations  = require('./attendance.validations');
 
 const router = express.Router();
 

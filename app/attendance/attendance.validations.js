@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { objectId } = require('../../utils/joi.custom.validation'); // Assuming this custom validation exists
+const { objectId, emptyVal } = require("../auth/custom.validation");
 
 const attendanceStatusEnum = ['present', 'absent', 'leave', 'sick_leave', 'half_day_leave'];
 

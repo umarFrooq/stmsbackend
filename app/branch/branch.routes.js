@@ -1,7 +1,8 @@
 const express = require('express');
 const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
 const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const { branchController, branchValidations } = require('.'); // Assuming these are exported from index.js
+const  branchController= require('./branch.controller')
+const branchValidations  = require('./branch.validations'); // Assuming these are exported from index.js
 
 const router = express.Router();
 

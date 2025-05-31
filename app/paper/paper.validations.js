@@ -1,8 +1,7 @@
 const Joi = require('joi');
-const { objectId } = require('../../utils/joi.custom.validation'); // Assuming this custom validation exists
+const { objectId, emptyVal } = require("../auth/custom.validation");
 
 const paperTypeEnum = ['past_paper', 'model_paper', 'template'];
-
 const uploadPaper = {
   body: Joi.object().keys({
     title: Joi.string().required().trim(),

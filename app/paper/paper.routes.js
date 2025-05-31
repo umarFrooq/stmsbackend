@@ -1,7 +1,8 @@
 const express = require('express');
 const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
 const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const { paperController, paperValidations } = require('.'); // Assuming these are exported from index.js
+const  paperController  = require('./paper.controller'); // Assuming these are exported from index.js
+const  paperValidations  = require('./paper.validations');
 const { uploadToS3 } = require('../../config/upload-to-s3'); // Path to S3 upload middleware
 
 const router = express.Router();
@@ -13,7 +14,7 @@ router
   .route('/')
   .post(
     auth(paperManagementRoles),
-    uploadToS3.single('paperFile'), // Middleware for single file upload to 'paperFile' field
+    uploadToS3.single('paperFile'), 
     validate(paperValidations.uploadPaper),
     paperController.uploadPaperHandler
   )

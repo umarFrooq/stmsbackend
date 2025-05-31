@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Attendance } = require('.'); // Assuming Attendance model is exported from index.js
+const { Attendance } = require('./attendance.model'); // Assuming Attendance model is exported from index.js
 const User = require('../user/user.model'); // Adjust path as needed
 const Subject = require('../subject/subject.model'); // Adjust path as needed
 const Grade = require('../grade/grade.model'); // Adjust path as needed
