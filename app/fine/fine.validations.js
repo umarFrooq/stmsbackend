@@ -1,6 +1,5 @@
 const Joi = require('joi');
-const { objectId } = require('../../utils/joi.custom.validation'); // Assuming this custom validation exists
-
+const { objectId, emptyVal } = require("../auth/custom.validation");
 const fineStatusEnum = ['pending', 'paid', 'waived'];
 
 const issueFine = {

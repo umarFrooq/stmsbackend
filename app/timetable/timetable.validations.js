@@ -1,6 +1,5 @@
 const Joi = require('joi');
-const { objectId } = require('../../utils/joi.custom.validation'); // Assuming this custom validation exists
-
+const { objectId, emptyVal } = require("../auth/custom.validation");
 const dayOfWeekEnum = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM format
 

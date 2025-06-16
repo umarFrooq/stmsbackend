@@ -1,6 +1,5 @@
 const Joi = require('joi');
-const { objectId } = require('../../utils/joi.custom.validation'); // Assuming this custom validation exists
-
+const { objectId, emptyVal } = require("../auth/custom.validation");
 const paymentMethodEnum = ['cash', 'card', 'online_banking', 'cheque', 'wallet', 'other'];
 const feeStatusEnum = ['pending', 'partially_paid', 'paid', 'overdue', 'waived'];
 const monthYearRegex = /^\d{4}-(0[1-9]|1[0-2])$/; // YYYY-MM

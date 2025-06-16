@@ -1,6 +1,5 @@
 const Joi = require('joi');
-const { objectId } = require('../../utils/joi.custom.validation'); // Assuming this custom validation exists
-
+const { objectId, emptyVal } = require("../auth/custom.validation");
 const getStudentRecord = {
   params: Joi.object().keys({
     studentId: Joi.string().custom(objectId).required(),

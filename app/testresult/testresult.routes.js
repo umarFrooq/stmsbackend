@@ -13,7 +13,7 @@ router
   .route('/')
   .post(
     auth(testResultManagementRoles),
-    uploadToS3.single('answerSheetImage'), // Middleware for single file upload to 'answerSheetImage' field
+    // uploadToS3.single('answerSheetImage'), // Middleware for single file upload to 'answerSheetImage' field
     validate(testResultValidations.createTestResult),
     testResultController.createTestResultHandler
   )
@@ -32,7 +32,7 @@ router
   )
   .patch(
     auth(testResultManagementRoles),
-    uploadToS3.single('answerSheetImage'), // For updating/replacing the image
+    // uploadToS3.single('answerSheetImage'), // For updating/replacing the image
     validate(testResultValidations.updateTestResult),
     testResultController.updateTestResultHandler
   )

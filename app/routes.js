@@ -126,6 +126,7 @@ router.use("/users", userRoutes);
 // router.use("/rbac-access", require("./rbac-access/access.router"))
 // router.use("/ae-feed", require("./aeFeed/aeFeed.routes"))
 // router.use("/transactions", require("./transaction/transaction.routes"))
+
 router.use("/branches", branchRoutes);
 router.use("/subjects", subjectRoutes);
 router.use("/grades", gradeRoutes);
@@ -133,9 +134,9 @@ router.use("/attendances", attendanceRoutes);
 router.use("/tests", testRoutes);
 router.use("/test-results", testResultRoutes);
 router.use("/papers", paperRoutes);
-router.use("/student-records", studentRecordRoutes);
-router.use("/timetables", timetableRoutes);
-router.use("/fees", feeRoutes);
-router.use("/fines", fineRoutes);
+// router.use("/student-records", studentRecordRoutes);
+// router.use("/timetables", timetableRoutes);
+// router.use("/fees", feeRoutes);
+// router.use("/fines", fineRoutes);
 
 module.exports = router;

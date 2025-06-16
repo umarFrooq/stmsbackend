@@ -1,6 +1,5 @@
 const Joi = require('joi');
-const { objectId } = require('../../utils/joi.custom.validation'); // Assuming this custom validation exists
-
+const { objectId, emptyVal } = require("../auth/custom.validation");
 const createGrade = {
   body: Joi.object().keys({
     title: Joi.string().required().trim(),

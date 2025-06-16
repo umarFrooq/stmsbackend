@@ -14,7 +14,7 @@ router
   .route('/')
   .post(
     auth(paperManagementRoles),
-    uploadToS3.single('paperFile'), 
+    // uploadToS3.single('paperFile'), 
     validate(paperValidations.uploadPaper),
     paperController.uploadPaperHandler
   )
@@ -33,7 +33,7 @@ router
   )
   .patch(
     auth(paperManagementRoles),
-    uploadToS3.single('paperFile'), // For updating/replacing the file
+    // uploadToS3.single('paperFile'), // For updating/replacing the file
     validate(paperValidations.updatePaper),
     paperController.updatePaperHandler
   )

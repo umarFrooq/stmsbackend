@@ -30,7 +30,6 @@ const userService = require('./user.service');
 const en=require('../../config/locales/en')
 const createUser = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
-  // res.status(httpStatus.CREATED).send(user);
   res.sendStatus({ user });
 });
 
