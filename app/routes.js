@@ -133,5 +133,9 @@ router.use("/attendances", attendanceRoutes);
 router.use("/tests", testRoutes);
 router.use("/test-results", testResultRoutes);
 router.use("/papers", paperRoutes);
+router.use("/student-records", studentRecordRoutes);
+router.use("/timetables", timetableRoutes);
+router.use("/fees", feeRoutes);
+router.use("/fines", fineRoutes);
 
 module.exports = router;

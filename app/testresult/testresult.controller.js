@@ -3,7 +3,6 @@ const catchAsync = require('../../utils/catchAsync');
 const { testResultService } = require('.'); // Assuming service is exported from index.js
 const pick = require('../../utils/pick');
 const ApiError = require('../../utils/ApiError');
-const { deleteFromS3 } = require('../../config/s3.file.system'); // Assuming S3 delete utility exists
 
 const createTestResultHandler = catchAsync(async (req, res) => {
   const userId = req.user.id; // Assuming user ID is available in req.user
