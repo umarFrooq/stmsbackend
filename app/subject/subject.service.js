@@ -3,17 +3,17 @@ const { Subject } = require('.'); // Assuming Subject model is exported from ind
 const Branch = require('../branch/branch.model'); // Adjust path as needed
 const User = require('../user/user.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
-
+let {slugGenerator}=require("@/config/components/general.methods");
 /**
  * Create a subject
  * @param {Object} subjectBody
  * @returns {Promise<Subject>}
  */
 const createSubject = async (subjectBody) => {
-  if (await Subject.isSubjectCodeTaken(subjectBody.subjectCode)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Subject code already taken');
-  }
-
+  // if (await Subject.isSubjectCodeTaken(subjectBody.subjectCode)) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, 'Subject code already taken');
+  // }
+subjectBody.subjectCode=slugGenerator(null, 3);
   const branch = await Branch.findById(subjectBody.branchId);
   if (!branch) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found');

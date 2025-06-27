@@ -56,5 +56,6 @@ module.exports = {
   Voucher: require("../app/voucher/voucher.model"),
   RedeemVoucher: require("../app/redeemVoucher/redeem.voucher.model"),
   Transaction: require("../app/transaction/transaction.model"),
+  Token:require('../app/auth/token.model')
 };
 

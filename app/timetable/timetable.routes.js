@@ -1,8 +1,8 @@
 const express = require('express');
 const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
 const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const { timetableController, timetableValidations } = require('.'); // Assuming these are exported from index.js
-
+const  timetableController  = require('./timetable.controller'); // Assuming these are exported from index.js
+const  timetableValidations  = require('./timetable.validations');
 const router = express.Router();
 
 // Define roles that can manage timetables

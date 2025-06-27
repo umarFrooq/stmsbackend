@@ -8,23 +8,23 @@ const router = express.Router();
 
 // Define roles that can manage attendance
 const attendanceManagementRoles = ['teacher', 'staff', 'admin_education'];
+router
+  .route('/') // For querying attendance records
+  .get(auth("attendanceManagement"), validate(attendanceValidations.getAttendances), attendanceController.getAttendancesHandler);
 
 router
   .route('/single') // For marking a single attendance record
-  .post(auth(attendanceManagementRoles), validate(attendanceValidations.markAttendance), attendanceController.markAttendanceHandler);
+  .post(auth("attendanceManagement"), validate(attendanceValidations.markAttendance), attendanceController.markAttendanceHandler);
 
 router
   .route('/bulk') // For marking multiple attendance records
-  .post(auth(attendanceManagementRoles), validate(attendanceValidations.markBulkAttendance), attendanceController.markBulkAttendanceHandler);
+  .post(auth("attendanceManagement"), validate(attendanceValidations.markBulkAttendance), attendanceController.markBulkAttendanceHandler);
 
-router
-  .route('/') // For querying attendance records
-  .get(auth(attendanceManagementRoles), validate(attendanceValidations.getAttendances), attendanceController.getAttendancesHandler);
 
 router
   .route('/:attendanceId')
-  .get(auth(attendanceManagementRoles), validate(attendanceValidations.getAttendance), attendanceController.getAttendanceHandler)
-  .patch(auth(attendanceManagementRoles), validate(attendanceValidations.updateAttendance), attendanceController.updateAttendanceHandler)
-  .delete(auth(attendanceManagementRoles), validate(attendanceValidations.deleteAttendance), attendanceController.deleteAttendanceHandler);
+  .get(auth("attendanceManagement"), validate(attendanceValidations.getAttendance), attendanceController.getAttendanceHandler)
+  .patch(auth("attendanceManagement"), validate(attendanceValidations.updateAttendance), attendanceController.updateAttendanceHandler)
+  .delete(auth("attendanceManagement"), validate(attendanceValidations.deleteAttendance), attendanceController.deleteAttendanceHandler);
 
 module.exports = router;

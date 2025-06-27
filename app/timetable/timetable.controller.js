@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../../utils/catchAsync');
-const { timetableService } = require('.'); // Assuming service is exported from index.js
+const  timetableService  = require('./timetable.service'); // Assuming service is exported from index.js
 const pick = require('../../utils/pick');
 const ApiError = require('../../utils/ApiError');
 

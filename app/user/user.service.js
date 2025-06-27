@@ -30,7 +30,7 @@ const { sendEmailVerifemail } = require("../auth/email.service");
  * @returns {Promise<User>}
  */
 const createUser = async (userBody) => {
-    if (await User.isEmailTakenWithRole(userBody.email, "user")) {
+    if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
     }
     const user = await User.create(userBody);
@@ -632,8 +632,8 @@ const updateBulkRefCode = async () => {
  * @param {string} role
  * @returns {Promise<User>}
  */
-async function getUserByEmailAndRole(email, role) {
-    return User.findOne({ email, $or: role });
+async function getUserByEmailAndRole(email, ) {
+    return User.findOne({ email});
 
 }
 

@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Attendance } = require('./attendance.model'); // Assuming Attendance model is exported from index.js
+const  Attendance  = require('./attendance.model'); // Assuming Attendance model is exported from index.js
 const User = require('../user/user.model'); // Adjust path as needed
 const Subject = require('../subject/subject.model'); // Adjust path as needed
 const Grade = require('../grade/grade.model'); // Adjust path as needed
@@ -36,10 +36,10 @@ const validateAttendanceEntities = async (attendanceBody) => {
   }
 
   // Ensure all entities belong to the same branch (if applicable, e.g. subject.branchId)
-  if (subject.branchId.toString() !== branchId) {
+  if (subject.branchId.toString() != branchId) {
       throw new ApiError(httpStatus.BAD_REQUEST, `Subject ${subject.title} does not belong to branch ${branch.name}.`);
   }
-  if (grade.branchId.toString() !== branchId) {
+  if (grade.branchId._id.toString() != branchId) {
       throw new ApiError(httpStatus.BAD_REQUEST, `Grade ${grade.title} does not belong to branch ${branch.name}.`);
   }
    // TODO: Future: Check if student is enrolled in this grade/section/subject. This requires an enrollment module.

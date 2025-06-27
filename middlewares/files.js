@@ -103,7 +103,8 @@ var uploadImages = multer({
   { name: "wideBannerImage", maxCount: 1 },
   { name: "sellerDetailLogo", maxCount: 1 },
   { name: "langImage", maxCount: 1 },
-  { name: "transactionImages", maxCount: 5 }
+  { name: "transactionImages", maxCount: 5 },
+  { name: "testSheet", maxCount: 5 }
 ]);
 // var discriptionUploads = multer({
 //   storage: storage,

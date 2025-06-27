@@ -5,6 +5,7 @@ var userRoutes = require("./user/user.routes");
 var attendanceRoutes = require("./attendance/attendance.routes");
 var branchRoutes = require("./branch/branch.routes");
 var paperRoutes = require("./paper/paper.routes");
+let addressRoutes=require('./address/address.routes')
 // var bannerRoutes = require("./banner/banner.routes");
 // var shippmentRoutes = require("./shippment/shippment.routes");
 // var sellerDetailRoutes = require("./sellerDetail/sellerDetail.routes");
@@ -76,7 +77,7 @@ router.use("/users", userRoutes);
 // router.use("/sellerConfidentialDetail", sellerConfidentialDetailRoutes);
 // router.use("/wishList", wishListRoutes);
 // router.use("/reviews", reviewRoutes);
-// router.use("/address", addressRoutes);
+router.use("/address", addressRoutes);
 // router.use("/payment", paymentRoutes)
 // router.use("/markets", marketRoutes)
 // router.use("/orderStatus", orderStatusRoutes)

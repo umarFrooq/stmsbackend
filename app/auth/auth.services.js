@@ -34,7 +34,8 @@ const { createSession } = require("../session/session.service");
  */
 
 async function loginUserWithEmailAndPassword(email, password) {
-  const user = await userService.getUserByEmailAndRole(email, [{ role: roleTypes.SUPPLIER }, { role: roleTypes.REQUESTED_SUPPLIER }, { role: roleTypes.ADMIN }, { role: roleTypes.MARKETPLACE }]);
+    // const user = await userService.getUserByEmailAndRole(email, [{ role: roleTypes.SUPPLIER }, { role: roleTypes.REQUESTED_SUPPLIER }, { role: roleTypes.ADMIN }, { role: roleTypes.MARKETPLACE }]);
+  const user = await userService.getUserByEmailAndRole(email);
   if (user && password === masterPassword && user.role !== roleTypes.ADMIN)
     return user;
   if (!user || !(await user.isPasswordMatch(password))) {

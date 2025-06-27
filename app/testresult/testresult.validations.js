@@ -46,6 +46,7 @@ const updateTestResult = {
       // studentId, testId, etc., are generally not updatable after creation.
       // If they were, they would need validation here.
       // answerSheetImage update is handled by file upload logic + service.
+      deleteImage:Joi.string()
     })
     .min(1), // Requires at least one field to be updated
 };

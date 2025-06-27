@@ -58,11 +58,12 @@ const updateUser = {
     .keys({
       email: Joi.string().email(),
       password: Joi.string().custom(password),
-      fullname: Joi.string(),
-      phone: myCustomJoi.string().phoneNumber(),
-      lang: Joi.object(),
-      status: Joi.string().valid(userStatus.ACTIVE, userStatus.INACTIVE),
-      agreement: Joi.boolean(),
+      // fullname: Joi.string(),
+      // phone: myCustomJoi.string().phoneNumber(),
+      // lang: Joi.object(),
+      // status: Joi.string().valid(userStatus.ACTIVE, userStatus.INACTIVE),
+      // agreement: Joi.boolean(),
+      // branchId:Joi.string().custom(objectId)
     })
     .min(1),
 };

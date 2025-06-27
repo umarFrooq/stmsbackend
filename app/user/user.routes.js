@@ -42,8 +42,11 @@ router
   .get(auth('getUsers'), validate(userValidation.getUser), userController.getUser)
   .patch(auth('manageProfile'), validate(userValidation.updateUser), userController.updateUser)
   .delete(auth('manageUsers'), validate(userValidation.deleteUser), userController.deleteUser);
-router
-  .route('/status/:userId')
+
+router.route('/admin/:userId')
+  .patch(auth('manageProfile'), validate(userValidation.updateUser), userController.updateUser)
+
+  router.route('/status/:userId')
   .patch(auth('manageStatus'), validate(userValidation.updateStatus), userController.updateStatus)
 router
   .route('/change-password')

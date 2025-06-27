@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Timetable } = require('.'); // Assuming Timetable model is exported from index.js
+const  Timetable  = require('./timetable.model'); // Assuming Timetable model is exported from index.js
 const Grade = require('../grade/grade.model'); // Adjust path as needed
 const Branch = require('../branch/branch.model'); // Adjust path as needed
 const Subject = require('../subject/subject.model'); // Adjust path as needed

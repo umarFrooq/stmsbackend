@@ -6,18 +6,13 @@ const branchSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      // required: true,
       trim: true,
     },
-    head: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    addressId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Address",
-      required: true,
-      autopopulate: true,
+    address: {
+      type: Object,
+      // required: true,
+   
     },
     branchCode: {
       type: String,

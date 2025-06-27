@@ -3,7 +3,7 @@ const { objectId, emptyVal } = require("../auth/custom.validation");
 const createSubject = {
   body: Joi.object().keys({
     title: Joi.string().required().trim(),
-    subjectCode: Joi.string().required().trim(),
+    // subjectCode: Joi.string().required().trim(),
     description: Joi.string().trim().allow(null, ''), // Allow empty string or null for optional description
     creditHours: Joi.number().required().min(0),
     branchId: Joi.string().custom(objectId).required(),
@@ -35,7 +35,7 @@ const updateSubject = {
   body: Joi.object()
     .keys({
       title: Joi.string().trim(),
-      subjectCode: Joi.string().trim(),
+      subjectCode: Joi.boolean(),
       description: Joi.string().trim().allow(null, ''),
       creditHours: Joi.number().min(0),
       branchId: Joi.string().custom(objectId),

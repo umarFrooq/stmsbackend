@@ -45,6 +45,7 @@ router.post(
 )
 router.post(
     "/register",
+    auth("manageUser"),
     validate(authValidation.register),
     authController.registerUser
 );
@@ -52,7 +53,7 @@ router.post(
     "/registerSeller",
     validate(authValidation.registerSeller),
     authController.registerRequestedSeller
-);
+); 
 router.post(
     "/createSeller",
     validate(authValidation.registerSeller),

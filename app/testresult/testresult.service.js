@@ -1,9 +1,10 @@
 const httpStatus = require('http-status');
-const { TestResult } = require('.'); // Assuming TestResult model is exported from index.js
+const  TestResult  = require('./testresult.model'); // Assuming TestResult model is exported from index.js
 const Test = require('../test/test.model'); // Adjust path as needed
 const User = require('../user/user.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
-const { deleteFromS3 } = require('../../config/s3.file.system'); // Assuming S3 delete utility exists
+// const { deleteFromS3 } = require('../../config/s3.file.system'); // Assuming S3 delete utility exists
+const { uploadToS3, deleteFromS3 } = require("../../config/upload-to-s3");
 
 /**
  * Create a test result
@@ -12,9 +13,10 @@ const { deleteFromS3 } = require('../../config/s3.file.system'); // Assuming S3 
  * @param {string} [imagePath] - Optional path/URL of the uploaded answer sheet image
  * @returns {Promise<TestResult>}
  */
-const createTestResult = async (resultBody, userId, imagePath) => {
+const createTestResult = async (resultBody, userId, file) => {
   const { testId, studentId, obtainedMarks } = resultBody;
-
+  if(file && file.length)
+ resultBody.answerSheetImage = file.testSheet[0].location;
   const test = await Test.findById(testId);
   if (!test) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Test not found');
@@ -35,7 +37,7 @@ const createTestResult = async (resultBody, userId, imagePath) => {
     branchId: test.branchId, // Denormalize from test
     totalMarksAtTimeOfTest: test.totalMarks, // Denormalize from test
     markedBy: userId,
-    answerSheetImage: imagePath, // Can be null
+    // answerSheetImage: imagePath, // Can be null
   };
 
   try {
@@ -117,31 +119,35 @@ const getTestResultById = async (resultId, populateOptions) => {
  * @param {string} [newImagePath] - Optional new path/URL for the answer sheet image
  * @returns {Promise<TestResult>}
  */
-const updateTestResultById = async (resultId, updateBody, userId, newImagePath) => {
+const updateTestResultById = async (resultId, updateBody, userId, files) => {
   const testResult = await getTestResultById(resultId);
+    let file= files && files.testSheet && files.testSheet.length ? files : undefined; // Allow undefined to distinguish from explicit null
+    if(file)
+updateBody.answerSheetImage = file.testSheet[0].location;
   if (!testResult) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Test result not found');
+  }
+    if (updateBody.deleteImage) { // If a new image is provided (even if it's null to remove existing)
+      try {
+        await deleteFromS3(updateBody.deleteImage);
+        if(!file)
+       testResult.set('answerSheetImage', undefined);
+      } catch (s3Error) {
+        console.error(`Failed to delete old image from S3: ${oldImagePath}`, s3Error);
+        // Decide if this should throw an error or just log
+      }
+    
   }
 
   if (updateBody.obtainedMarks !== undefined && updateBody.obtainedMarks > testResult.totalMarksAtTimeOfTest) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Obtained marks (${updateBody.obtainedMarks}) cannot exceed test's total marks (${testResult.totalMarksAtTimeOfTest}).`);
   }
   
-  const oldImagePath = testResult.answerSheetImage;
+ 
   
   Object.assign(testResult, updateBody, { markedBy: userId });
 
-  if (newImagePath !== undefined) { // If a new image is provided (even if it's null to remove existing)
-    testResult.answerSheetImage = newImagePath;
-    if (oldImagePath && newImagePath !== oldImagePath) { // Delete old image if different from new one
-      try {
-        await deleteFromS3(oldImagePath);
-      } catch (s3Error) {
-        console.error(`Failed to delete old image from S3: ${oldImagePath}`, s3Error);
-        // Decide if this should throw an error or just log
-      }
-    }
-  }
+
 
   await testResult.save();
   return testResult;

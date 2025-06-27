@@ -70,7 +70,8 @@ const multilingualErrorConerter = async (error, res) => {
     error.userMessage = res.__("responseMessages."+ msg)
   }
   else{
-    let translatedMessage = await translateString(res.locale, msg)
+    // let translatedMessage = await translateString(res.locale, msg)
+    let translatedMessage=null
     error.userMessage = translatedMessage && translatedMessage.isSuccess &&  translatedMessage.data || error.message
   }
 }

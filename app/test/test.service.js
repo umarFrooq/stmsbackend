@@ -32,10 +32,10 @@ const validateTestEntities = async (testBody) => {
   }
 
   // Ensure all entities belong to the same branch (if applicable)
-  if (subject.branchId.toString() !== branchId) {
+  if (subject.branchId.toString() != branchId) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Subject ${subject.title} does not belong to branch ${branch.name}.`);
   }
-  if (grade.branchId.toString() !== branchId) {
+  if (grade.branchId._id.toString() != branchId) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Grade ${grade.title} does not belong to branch ${branch.name}.`);
   }
 };

@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const  {Branch}  = require('./branch.model'); // Assuming Branch model is exported from index.js in the same directory
+const  Branch  = require('./branch.model'); // Assuming Branch model is exported from index.js in the same directory
 const Address = require('../address/address.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
 const { slugGenerator } = require('../../config/components/general.methods'); // Assuming this utility exists
@@ -11,10 +11,10 @@ const { slugGenerator } = require('../../config/components/general.methods'); //
  */
 const createBranch = async (branchBody) => {
   // Check if addressId exists
-  const address = await Address.findById(branchBody.addressId);
-  if (!address) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Address not found');
-  }
+  // const address = await Address.findById(branchBody.addressId);
+  // if (!address) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, 'Address not found');
+  // }
 
   // Generate branchCode if not provided
   let branchCode = branchBody.branchCode;

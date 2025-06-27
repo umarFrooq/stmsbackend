@@ -2,16 +2,19 @@ const Joi = require('joi');
 const { password } = require('./custom.validation');
 const { objectId,emptyVal} = require("../auth/custom.validation");
 const myCustomJoi = Joi.extend(require('joi-phone-number'));
-
+const {roleTypes}=require('../../config/enums')
 const register = {
   body: Joi.object().keys({
-    email: Joi.string().required().email(),
+    email: Joi.string().email(),
     password: Joi.string().required().custom(password),
     fullname: Joi.string().required(),
     origin: Joi.object().keys({
       source: Joi.string(),
-      version: Joi.string().allow(null)
-    })
+      version: Joi.string().allow(null),
+    }),
+    role:Joi.string().valid(...Object.values(roleTypes)).required(),
+    branchI:Joi.string().custom(objectId),
+    section:Joi.string()
   }),
 };
 const registerSeller = {
