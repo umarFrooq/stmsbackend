@@ -4,7 +4,7 @@ import useAuthStore from '../store/auth.store';
 const login = async (credentials) => {
   try {
     // Replace '/auth/login' with your actual backend login endpoint
-    const response = await apiClient.post('/auth/login', credentials);
+    const response = await apiClient.post('http://localhost:3000/v1/auth/login', credentials);
 
     if (response.data && response.data.token) {
       const { token, user, roles, permissions } = response.data;
