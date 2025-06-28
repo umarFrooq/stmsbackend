@@ -33,7 +33,7 @@ roleRights.set(roles[2], [
 roleRights.set(roles[3], [
   "manageProfile", 'manageAddress', "manageSellerDetail", "viewPhone",
   , "manageVideo", "manageSellerConfidentialDetail", "changePassword",  "notification", "firebaseToken","manageSeller",
-  "manageTranslation", "manageUser","manageBranches","subjectManagement","gradeManagement","attendanceManagement",
+  "manageTranslation", "manageUser", "getUsers", "manageUsers", "manageBranches","subjectManagement","gradeManagement","attendanceManagement",
   "testManagement","testResultManagement"
 ]);
 // roleRights.set(roles[4], [
