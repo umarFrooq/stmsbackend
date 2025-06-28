@@ -11,55 +11,14 @@ import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 // or be passed different role/branch options.
 import UserFormDialog from '../SuperAdmin/UserFormDialog';
 import NotificationToast from '../../components/common/NotificationToast';
+import { TextField, InputAdornment } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import debounce from 'lodash.debounce';
 
-// Mock service - can be adapted from SuperAdmin's or a new one
-// For Admin, it should ideally filter users or restrict creation to specific roles.
-const mockAdminUserService = {
-  getScopedUsers: async () => { // Simulates fetching users Admin can manage
-    await new Promise(resolve => setTimeout(resolve, 500));
-    let allUsers = JSON.parse(localStorage.getItem('mock_users')) || [];
-    // Admin can manage teachers, students, parents. Not other admins or superAdmins.
-    const manageableRoles = ['teacher', 'student', 'parent'];
-    return allUsers.filter(user => manageableRoles.includes(user.role));
-  },
-  // Add, Update, Delete can reuse SuperAdmin's mock for now, but backend would enforce scope.
-  addUser: async (userData) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    let users = JSON.parse(localStorage.getItem('mock_users')) || [];
-    // Ensure role is one that Admin can create
-    const allowedRoles = ['teacher', 'student', 'parent'];
-    if (!allowedRoles.includes(userData.role)) {
-        throw new Error("Admin cannot create users with this role.");
-    }
-    const newUser = { ...userData, id: `user_${Date.now()}` };
-     if (newUser.branchId && !newUser.branch) { // Simulate branch name
-        const branches = JSON.parse(localStorage.getItem('mock_branches')) || [{ id: 'branch1', name: 'Main Campus' }];
-        newUser.branch = branches.find(b => b.id === newUser.branchId)?.name || 'N/A';
-    }
-    users.push(newUser);
-    localStorage.setItem('mock_users', JSON.stringify(users));
-    return { success: true, data: newUser };
-  },
-  updateUser: async (userId, userData) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    let users = JSON.parse(localStorage.getItem('mock_users')) || [];
-     if (userData.branchId && (!userData.branch || users.find(u=>u.id===userId)?.branchId !== userData.branchId)) {
-        const branches = JSON.parse(localStorage.getItem('mock_branches')) || [{ id: 'branch1', name: 'Main Campus' }];
-        userData.branch = branches.find(b => b.id === userData.branchId)?.name || 'N/A';
-    }
-    users = users.map(u => (u.id === userId ? { ...u, ...userData } : u));
-    localStorage.setItem('mock_users', JSON.stringify(users));
-    return { success: true, data: users.find(u => u.id === userId) };
-  },
-  deleteUser: async (userId) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    let users = JSON.parse(localStorage.getItem('mock_users')) || [];
-    users = users.filter(u => u.id !== userId);
-    localStorage.setItem('mock_users', JSON.stringify(users));
-    return { success: true };
-  }
-};
+// Import actual user service
+import userService from '../../services/userService';
 
+const ADMIN_MANAGEABLE_ROLES = ['teacher', 'student', 'parent']; // Define manageable roles for Admin
 
 const AdminUserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -77,29 +36,68 @@ const AdminUserManagementPage = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+  const [totalUsers, setTotalUsers] = useState(0);
+
+
   const showToast = (message, severity = 'success') => {
     setToastMessage(message);
     setToastSeverity(severity);
     setToastOpen(true);
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage = paginationModel.page, currentSearchTerm = searchTerm) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await mockAdminUserService.getScopedUsers();
-      setUsers(data);
+      const params = {
+        page: currentPage + 1, // API is 1-indexed
+        limit: paginationModel.pageSize,
+        role: ADMIN_MANAGEABLE_ROLES.join(','), // Send roles admin can manage
+      };
+      if (currentSearchTerm) {
+        params.name = 'fullname'; // Assuming search by fullname
+        params.value = currentSearchTerm;
+      }
+
+      const response = await userService.getAllUsers(params);
+      // Assuming response.data contains { results: [], totalPages: X, totalResults: Y, page: Z, limit: A }
+      // Adjust based on your actual API response structure from userService.getAllUsers
+      if (response && response.data && Array.isArray(response.data.results)) {
+        setUsers(response.data.results);
+        setTotalUsers(response.data.totalResults || 0);
+      } else {
+        // Handle cases where response is not as expected
+        console.error("Unexpected response structure:", response);
+        setUsers([]);
+        setTotalUsers(0);
+        setError('Failed to fetch users: Unexpected response structure.');
+        showToast('Failed to fetch users: Unexpected response structure.', 'error');
+      }
     } catch (err) {
-      setError(err.message || 'Failed to fetch users.');
-      showToast(err.message || 'Failed to fetch users.', 'error');
+      const errorMessage = err.message || (err.data && err.data.message) || 'Failed to fetch users.';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+      setUsers([]); // Clear users on error
+      setTotalUsers(0);
     } finally {
       setLoading(false);
     }
   };
 
+  const debouncedFetchUsers = debounce(fetchUsers, 500);
+
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers(paginationModel.page, searchTerm);
+  }, [paginationModel.page, paginationModel.pageSize]); // Removed searchTerm from direct dependency here, will be handled by debounced search
+
+  const handleSearchChange = (event) => {
+    const newSearchTerm = event.target.value;
+    setSearchTerm(newSearchTerm);
+    setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset to first page on new search
+    debouncedFetchUsers(0, newSearchTerm); // Call debounced search with page 0
+  };
 
   const handleAddUser = () => {
     setEditingUser(null);
@@ -107,9 +105,7 @@ const AdminUserManagementPage = () => {
   };
 
   const handleEditUser = (user) => {
-    // Admin should not edit users with roles they cannot manage (e.g. other admins)
-    const manageableRoles = ['teacher', 'student', 'parent'];
-    if (!manageableRoles.includes(user.role)) {
+    if (!ADMIN_MANAGEABLE_ROLES.includes(user.role)) {
         showToast("You do not have permission to edit this user's role.", "warning");
         return;
     }
@@ -118,8 +114,7 @@ const AdminUserManagementPage = () => {
   };
 
   const handleDeleteUser = (user) => {
-     const manageableRoles = ['teacher', 'student', 'parent'];
-    if (!manageableRoles.includes(user.role)) {
+    if (!ADMIN_MANAGEABLE_ROLES.includes(user.role)) {
         showToast("You do not have permission to delete this user.", "warning");
         return;
     }
@@ -131,11 +126,11 @@ const AdminUserManagementPage = () => {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      await mockAdminUserService.deleteUser(userToDelete.id);
+      await userService.deleteUser(userToDelete.id); // Use actual service
       showToast(`User "${userToDelete.fullname}" deleted successfully.`, 'success');
-      fetchUsers();
+      fetchUsers(paginationModel.page, searchTerm); // Refetch current page and search
     } catch (err) {
-      showToast(err.message || "Failed to delete user.", 'error');
+      showToast(err.message || (err.data && err.data.message) || "Failed to delete user.", 'error');
     } finally {
       setIsDeleting(false);
       setConfirmDialogOpen(false);
@@ -144,19 +139,24 @@ const AdminUserManagementPage = () => {
   };
 
   const handleUserFormSubmit = async (values, isEditingMode, userId) => {
+    // Ensure role is one that Admin can create/edit if not already handled in UserFormDialog
+    if (!ADMIN_MANAGEABLE_ROLES.includes(values.role)) {
+        showToast(`Admin cannot ${isEditingMode ? 'edit to' : 'create'} users with the role: ${values.role}. Allowed roles: ${ADMIN_MANAGEABLE_ROLES.join(', ')}.`, "error");
+        return false;
+    }
     try {
       if (isEditingMode) {
-        await mockAdminUserService.updateUser(userId, values);
+        await userService.updateUser(userId, values); // Use actual service
         showToast('User updated successfully!', 'success');
       } else {
-        await mockAdminUserService.addUser(values);
+        await userService.addUser(values); // Use actual service
         showToast('User created successfully!', 'success');
       }
       setIsUserFormOpen(false);
-      fetchUsers();
+      fetchUsers(paginationModel.page, searchTerm); // Refetch current page and search
       return true;
     } catch (apiError) {
-      showToast(apiError.message || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
+      showToast(apiError.message || (apiError.data && apiError.data.message) || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
       return false;
     }
   };

@@ -59,9 +59,30 @@ export const updateUser = async (userId, userData) => {
     // The backend route is PATCH /users/:userId
     const response = await apiClient.patch(`/users/${userId}`, userData);
     return response.data;
-  } catch (error)_ {
+  } catch (error) {
     console.error('Error updating user:', error.response ? error.response.data : error.message);
     throw error.response ? error.response.data : new Error('Error updating user');
+  }
+};
+
+/**
+ * Deletes a user.
+ * Calls the backend API directly.
+ * @param {string} userId - The ID of the user to delete.
+ * @returns {Promise<object>} The response data from the API.
+ */
+export const deleteUser = async (userId) => {
+  if (!userId) {
+    throw new Error('User ID is required for deletion.');
+  }
+  try {
+    // This will be prefixed with apiClient's baseURL
+    // The backend route is DELETE /users/:userId
+    const response = await apiClient.delete(`/users/${userId}`);
+    return response.data; // Or handle based on what your backend returns (e.g., status 204 No Content)
+  } catch (error) {
+    console.error('Error deleting user:', error.response ? error.response.data : error.message);
+    throw error.response ? error.response.data : new Error('Error deleting user');
   }
 };
 
@@ -69,4 +90,5 @@ export default {
   getAllUsers,
   addUser,
   updateUser,
+  deleteUser,
 };

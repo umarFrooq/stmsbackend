@@ -7,72 +7,26 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import StyledDataGrid from '../../components/common/StyledDataGrid';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
-import UserFormDialog from './UserFormDialog'; // Import the actual form dialog
-import NotificationToast from '../../components/common/NotificationToast'; // For success/error messages
+import UserFormDialog from './UserFormDialog';
+import NotificationToast from '../../components/common/NotificationToast';
+import { TextField, InputAdornment } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import debounce from 'lodash.debounce';
 
-// Mock service - replace with actual API calls from auth.service.js or a new user.service.js
-const mockUserService = {
-  // NOTE: In a real app, these would be API calls.
-  // SuperAdmin can manage all roles, Admin can manage teacher, student, parent.
-  // This mock service doesn't yet distinguish.
-  getUsers: async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // Retrieve from localStorage or return a default list for mocking
-    let users = JSON.parse(localStorage.getItem('mock_users'));
-    if (!users) {
-      users = [
-        { id: 'sa1', fullname: 'Super Admin User', email: 'super@example.com', role: 'superAdmin', branchId: 'branch1', branch: 'Main Campus', status: 'active' },
-        { id: 'ad1', fullname: 'Alice Admin', email: 'alice@example.com', role: 'admin', branchId: 'branch1', branch: 'Main Campus', status: 'active' },
-        { id: 't1', fullname: 'Bob Teacher', email: 'bob@example.com', role: 'teacher', branchId: 'branch1', branch: 'Main Campus', status: 'active' },
-        { id: 's1', fullname: 'Charlie Student', email: 'charlie@example.com', role: 'student', branchId: 'branch2', branch: 'North Campus', status: 'inactive' },
-        { id: 'p1', fullname: 'Diana Parent', email: 'diana@example.com', role: 'parent', branchId: 'branch1', branch: 'Main Campus', status: 'active' },
-      ];
-      localStorage.setItem('mock_users', JSON.stringify(users));
-    }
-    return users;
-  },
-  addUser: async (userData) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    let users = JSON.parse(localStorage.getItem('mock_users')) || [];
-    const newUser = { ...userData, id: `user_${Date.now()}` };
-    // Simulate branch name if only ID is passed
-    if (newUser.branchId && !newUser.branch) {
-        const branches = JSON.parse(localStorage.getItem('mock_branches')) || [{ id: 'branch1', name: 'Main Campus' }, { id: 'branch2', name: 'North Campus' }];
-        newUser.branch = branches.find(b => b.id === newUser.branchId)?.name || 'N/A';
-    }
-    users.push(newUser);
-    localStorage.setItem('mock_users', JSON.stringify(users));
-    console.log('User added (mocked):', newUser);
-    return { success: true, data: newUser };
-  },
-  updateUser: async (userId, userData) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    let users = JSON.parse(localStorage.getItem('mock_users')) || [];
-    // Simulate branch name update
-    if (userData.branchId && (!userData.branch || users.find(u=>u.id===userId)?.branchId !== userData.branchId)) {
-        const branches = JSON.parse(localStorage.getItem('mock_branches')) || [{ id: 'branch1', name: 'Main Campus' }, { id: 'branch2', name: 'North Campus' }];
-        userData.branch = branches.find(b => b.id === userData.branchId)?.name || 'N/A';
-    }
-    users = users.map(u => (u.id === userId ? { ...u, ...userData } : u));
-    localStorage.setItem('mock_users', JSON.stringify(users));
-    console.log(`User ${userId} updated (mocked):`, userData);
-    return { success: true, data: users.find(u => u.id === userId) };
-  },
-  deleteUser: async (userId) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    let users = JSON.parse(localStorage.getItem('mock_users')) || [];
-    users = users.filter(u => u.id !== userId);
-    localStorage.setItem('mock_users', JSON.stringify(users));
-    console.log(`User ${userId} deleted (mocked)`);
-    return { success: true };
-  }
-};
+// Import actual user service
+import userService from '../../services/userService';
+// TODO: Import services for fetching roles and branches if they exist
+// import roleService from '../../services/roleService';
+// import branchService from '../../services/branchService';
 
+
+// Define roles SuperAdmin can manage - typically all roles including 'superAdmin' itself
+const SUPERADMIN_MANAGEABLE_ROLES = ['superAdmin', 'admin', 'teacher', 'student', 'parent'];
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // For grid errors
+  const [error, setError] = useState(null);
 
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -81,10 +35,17 @@ const UserManagementPage = () => {
   const [userToDelete, setUserToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Notification state
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  // TODO: States for roles and branches to pass to UserFormDialog
+  // const [availableRoles, setAvailableRoles] = useState(SUPERADMIN_MANAGEABLE_ROLES);
+  // const [availableBranches, setAvailableBranches] = useState([]);
 
 
   const showToast = (message, severity = 'success') => {
@@ -93,24 +54,69 @@ const UserManagementPage = () => {
     setToastOpen(true);
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage = paginationModel.page, currentSearchTerm = searchTerm) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await mockUserService.getUsers();
-      setUsers(data);
+      const params = {
+        page: currentPage + 1, // API is 1-indexed
+        limit: paginationModel.pageSize,
+        // No role filter for SuperAdmin, or explicitly ask for all if API requires
+      };
+      if (currentSearchTerm) {
+        params.name = 'fullname'; // Assuming search by fullname
+        params.value = currentSearchTerm;
+      }
+
+      const response = await userService.getAllUsers(params);
+      if (response && response.data && Array.isArray(response.data.results)) {
+        setUsers(response.data.results);
+        setTotalUsers(response.data.totalResults || 0);
+      } else {
+        console.error("Unexpected response structure:", response);
+        setUsers([]);
+        setTotalUsers(0);
+        setError('Failed to fetch users: Unexpected response structure.');
+        showToast('Failed to fetch users: Unexpected response structure.', 'error');
+      }
     } catch (err) {
-      setError(err.message || 'Failed to fetch users.');
-      showToast(err.message || 'Failed to fetch users.', 'error');
+      const errorMessage = err.message || (err.data && err.data.message) || 'Failed to fetch users.';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+      setUsers([]);
+      setTotalUsers(0);
     } finally {
       setLoading(false);
     }
   };
 
+  // TODO: Fetch available roles and branches for the form
+  // useEffect(() => {
+  //   const loadAuxData = async () => {
+  //     try {
+  //       // const rolesData = await roleService.getRoles(); // Replace with actual service
+  //       // setAvailableRoles(rolesData.map(r => r.name)); // Or however roles are structured
+  //       // const branchesData = await branchService.getBranches(); // Replace with actual service
+  //       // setAvailableBranches(branchesData);
+  //     } catch (e) {
+  //       showToast('Failed to load roles/branches for form.', 'error');
+  //     }
+  //   };
+  //   loadAuxData();
+  // }, []);
+
+  const debouncedFetchUsers = debounce(fetchUsers, 500);
+
   useEffect(() => {
-    // localStorage.removeItem('mock_users'); // Uncomment to reset mock data on load for testing
-    fetchUsers();
-  }, []);
+    fetchUsers(paginationModel.page, searchTerm);
+  }, [paginationModel.page, paginationModel.pageSize]);
+
+  const handleSearchChange = (event) => {
+    const newSearchTerm = event.target.value;
+    setSearchTerm(newSearchTerm);
+    setPaginationModel(prev => ({ ...prev, page: 0 }));
+    debouncedFetchUsers(0, newSearchTerm);
+  };
 
   const handleAddUser = () => {
     setEditingUser(null);
@@ -123,6 +129,12 @@ const UserManagementPage = () => {
   };
 
   const handleDeleteUser = (user) => {
+    // Potentially add a check here if a SuperAdmin should not delete their own account
+    // For now, the backend should handle such logic if needed.
+    if (user.role === 'superAdmin' && users.filter(u => u.role === 'superAdmin').length <= 1) {
+        showToast("Cannot delete the only SuperAdmin account.", "warning");
+        return;
+    }
     setUserToDelete(user);
     setConfirmDialogOpen(true);
   };
@@ -131,11 +143,11 @@ const UserManagementPage = () => {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      await mockUserService.deleteUser(userToDelete.id);
+      await userService.deleteUser(userToDelete.id);
       showToast(`User "${userToDelete.fullname}" deleted successfully.`, 'success');
-      fetchUsers(); // Refetch to update the grid
+      fetchUsers(paginationModel.page, searchTerm);
     } catch (err) {
-      showToast(err.message || "Failed to delete user.", 'error');
+      showToast(err.message || (err.data && err.data.message) || "Failed to delete user.", 'error');
     } finally {
       setIsDeleting(false);
       setConfirmDialogOpen(false);
@@ -144,22 +156,20 @@ const UserManagementPage = () => {
   };
 
   const handleUserFormSubmit = async (values, isEditingMode, userId) => {
-    // This function will be passed to UserFormDialog
-    // It should handle the actual API call for add/edit
     try {
       if (isEditingMode) {
-        await mockUserService.updateUser(userId, values);
+        await userService.updateUser(userId, values);
         showToast('User updated successfully!', 'success');
       } else {
-        await mockUserService.addUser(values);
+        await userService.addUser(values);
         showToast('User created successfully!', 'success');
       }
-      setIsUserFormOpen(false); // Close dialog on success
-      fetchUsers(); // Refresh data
-      return true; // Indicate success
+      setIsUserFormOpen(false);
+      fetchUsers(paginationModel.page, searchTerm);
+      return true;
     } catch (apiError) {
-      showToast(apiError.message || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
-      return false; // Indicate failure
+      showToast(apiError.message || (apiError.data && apiError.data.message) || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
+      return false;
     }
   };
 
