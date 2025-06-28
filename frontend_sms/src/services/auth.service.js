@@ -3,20 +3,37 @@ import useAuthStore from '../store/auth.store';
 
 const login = async (credentials) => {
   try {
-    // Replace '/auth/login' with your actual backend login endpoint
-    const response = await apiClient.post('/auth/login', credentials);
+    // The actual backend login endpoint is /v1/auth/login
+    // apiClient should be configured with the base URL http://localhost:3000
+    // So, we'll use '/v1/auth/login' if apiClient doesn't prefix v1,
+    // or ensure apiClient is set up for just '/auth/login' if it includes '/v1'
+    // For now, assuming apiClient is set to hit http://localhost:3000, so path is /v1/auth/login
+    // Based on user's initial description, the full path is 'http://localhost:3000/v1/auth/login'
+    // If apiClient.post already includes 'http://localhost:3000', then '/v1/auth/login' is correct.
+    // If apiClient.post is relative to 'http://localhost:3000/v1', then '/auth/login' is correct.
+    // The original code had '/auth/login'. The user's initial problem description showed 'http://localhost:3000/v1/auth/login'
+    // Let's assume the apiClient is configured for the domain and the path should be '/v1/auth/login'.
+    // However, the provided file already has '/auth/login'. I will stick to what's in the file for now,
+    // as the user's original code snippet might have been from a different version or context.
+    // The critical part is the response handling.
 
-    if (response.data && response.data.token) {
-      const { token, user, roles, permissions } = response.data;
-      // Assuming backend returns token, user object, array of roles, and array of permissions
-      // Adjust according to your actual backend response structure
+    const response = await apiClient.post('/auth/login', credentials); // Using existing path from file
+
+    // Adjusting to the provided API response structure:
+    // { "data": { "user": { ... }, "tokens": { "access": { "token": "..." } } }, ... }
+    if (response.data && response.data.data && response.data.data.tokens && response.data.data.tokens.access && response.data.data.tokens.access.token) {
+      const token = response.data.data.tokens.access.token;
+      const user = response.data.data.user;
+      const roles = user && user.role ? [user.role] : []; // API has user.role as a string
+      const permissions = []; // Permissions are not in the API response
 
       // Use the login action from the store
       useAuthStore.getState().login(token, user, roles, permissions);
       return { success: true, user, roles, permissions };
     } else {
       // Handle cases where token is not in the response
-      throw new Error(response.data.message || 'Login failed: No token received');
+      const message = response.data && response.data.message ? response.data.message : 'Login failed: No token or invalid response structure';
+      throw new Error(message);
     }
   } catch (error) {
     console.error('Login error:', error.response ? error.response.data : error.message);
