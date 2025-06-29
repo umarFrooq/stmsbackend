@@ -17,7 +17,7 @@ export const getAllBranches = async () => {
       page: 1,
     };
     // apiClient is likely configured for /api/v1, so this calls GET /api/v1/branches
-    const response = await apiClient.get('http://localhost:3000/v1/branches', { params });
+    const response = await apiClient.get('/branches', { params });
 
     // Based on the provided response structure: { results: [], ... }
     if (response.data && Array.isArray(response.data.results)) {

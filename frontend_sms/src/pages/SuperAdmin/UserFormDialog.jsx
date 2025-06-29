@@ -102,24 +102,50 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
 
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-    const submissionValues = { ...values };
+    let submissionValues = {};
 
     if (isEditing) {
-      // Remove email and password fields from submission for edits
-      delete submissionValues.email;
-      delete submissionValues.password;
-      delete submissionValues.confirmPassword;
-      // Backend will only update fields that are present in the payload.
-      // If a field (e.g. fullname) is submitted as an empty string,
-      // it's up to the backend to decide if that means "clear this field" or "ignore this".
-    } else {
-      // For creating a new user, confirmPassword was for FE validation only
-      delete submissionValues.confirmPassword;
+      // For editing, explicitly build the payload with only editable fields that have changed.
+      // `user` prop contains the initial state of the user being edited.
+      // `values` contains the current state of the form.
+
+      if (values.fullname !== user?.fullname) {
+        submissionValues.fullname = values.fullname;
+      }
+      if (values.role !== user?.role) {
+        submissionValues.role = values.role;
+      }
+      // For branchId, also consider if user.branchId was null/undefined vs empty string
+      const initialBranchId = user?.branchId || "";
+      if (values.branchId !== initialBranchId) {
+        submissionValues.branchId = values.branchId;
+      }
+      if (values.status !== user?.status) {
+        submissionValues.status = values.status;
+      }
+      // Email and Password are not part of the form in edit mode, so not included.
+    } else { // Create mode
+      submissionValues = { ...values }; // Send all form values for create
+      delete submissionValues.confirmPassword; // Already validated by Yup
     }
 
-    await onSubmit(submissionValues, isEditing, user?.id);
+    // Only proceed with API call if it's a create operation,
+    // or if it's an edit operation and there are actual changes to submit.
+    if (!isEditing || Object.keys(submissionValues).length > 0) {
+      await onSubmit(submissionValues, isEditing, user?.id);
+    } else if (isEditing && Object.keys(submissionValues).length === 0) {
+      // No changes were made in edit mode.
+      // Optionally, show a toast message or simply close the dialog.
+      // For now, we'll call onClose(false) to indicate no refresh needed,
+      // assuming `onSubmit` in parent handles UI feedback like closing dialog.
+      // Or, the parent's `onSubmit` could be called with empty `submissionValues`
+      // and the parent can decide to not make an API call.
+      // Let's call onSubmit as the parent page's logic closes the dialog.
+       await onSubmit(submissionValues, isEditing, user?.id); // This will call the parent's submit handler
+    }
+
     setSubmitting(false);
-    // resetForm(); // Optionally reset form, or handle in parent
+    // resetForm(); // Consider if reset is needed or if parent handles it by closing/remounting.
     // onClose(); // Parent will call onClose with refresh status
   };
 
@@ -151,59 +177,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     disabled={isSubmitting}
                   />
                 </Grid>
-
-
-{!isEditing && (
-  <>
-    <Grid item xs={12}>
-      <TextField
-        fullWidth
-        label="Email Address"
-        name="email"
-        type="email"
-        value={values.email}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={touched.email && Boolean(errors.email)}
-        helperText={touched.email && errors.email}
-        disabled={isSubmitting}
-      />
-    </Grid>
-    <Grid item xs={12} sm={6}>
-      <TextField
-        fullWidth
-        label="Password"
-        name="password"
-        type="password"
-        value={values.password}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={touched.password && Boolean(errors.password)}
-        helperText={touched.password && errors.password}
-        disabled={isSubmitting}
-      />
-    </Grid>
-    <Grid item xs={12} sm={6}>
-      <TextField
-        fullWidth
-        label="Confirm Password"
-        name="confirmPassword"
-        type="password"
-        value={values.confirmPassword}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={touched.confirmPassword && Boolean(errors.confirmPassword)}
-        helperText={touched.confirmPassword && errors.confirmPassword}
-        disabled={isSubmitting}
-      />
-    </Grid>
-  </>
-)}
-
-
-
-
-                {/* <Grid item xs={12}>
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Email Address"
@@ -217,7 +191,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     disabled={isSubmitting || isEditing} // Often email is not editable after creation
                   />
                 </Grid>
-                if(isEditing)<Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label={isEditing ? "New Password (optional)" : "Password"}
@@ -231,7 +205,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     disabled={isSubmitting}
                   />
                 </Grid>
-                if(isEditing)<Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label="Confirm Password"
@@ -244,7 +218,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     helperText={touched.confirmPassword && errors.confirmPassword}
                     disabled={isSubmitting || !values.password} // Disable if password field is empty
                   />
-                </Grid> */}
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth error={touched.role && Boolean(errors.role)} disabled={isSubmitting}>
                     <InputLabel id="role-select-label">Role</InputLabel>
