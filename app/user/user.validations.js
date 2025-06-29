@@ -58,13 +58,8 @@ const updateUser = {
   }),
   body: Joi.object()
     .keys({
-<<<<<<< Updated upstream
       // email: Joi.string().email(),
       // password: Joi.string().custom(password),
-=======
-      email: Joi.string().email(),
-      password: Joi.string().custom(password),
->>>>>>> Stashed changes
       fullname: Joi.string(),
       phone: myCustomJoi.string().phoneNumber(),
       lang: Joi.object(),
