@@ -64,52 +64,60 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     status: user?.status || 'active',
   };
 
+  // Adjusted Validation Schema
   const validationSchema = Yup.object().shape({
-    fullname: Yup.string().required('Full name is required'),
-    email: Yup.string().email('Invalid email address').required('Email is required'),
-    password: Yup.string()
-      .when('$isEditing', (isEditingActual, schema) => { // Access isEditing from context
-        return isEditingActual
-          ? schema.min(8, 'Password must be at least 8 characters if changing')
-          : schema.required('Password is required for new users').min(8, 'Password must be at least 8 characters');
-      }),
-    confirmPassword: Yup.string()
-      .when('password', (password, schema) => {
-        if (password && password.length > 0) { // Only require confirmPassword if password is being set/changed
-          return schema.oneOf([Yup.ref('password'), null], 'Passwords must match')
-                       .required('Confirm password is required');
-        }
-        return schema;
-      }),
-    role: Yup.string().required('Role is required'),
-    branchId: Yup.string().when('role', (role, schema) => {
-        // Branch might not be applicable for all roles, e.g. superAdmin (if they are global)
-        // For this example, making it required for non-student roles for simplicity
-        if (role && role !== 'student' && role !== 'parent' /*&& role !== 'superAdmin'*/) {
-            return schema.required('Branch is required for this role');
-        }
-        return schema;
+    fullname: Yup.string().when('$isEditing', (isEditingActual, schema) =>
+      isEditingActual ? schema : schema.required('Full name is required')
+    ),
+    email: Yup.string().when('$isEditing', (isEditingActual, schema) =>
+      isEditingActual ? schema.email('Invalid email address') : schema.email('Invalid email address').required('Email is required')
+    ),
+    password: Yup.string().when('$isEditing', (isEditingActual, schema) =>
+      isEditingActual
+        ? schema.min(8, 'Password must be at least 8 characters if changing') // Optional password change
+        : schema.required('Password is required').min(8, 'Password must be at least 8 characters')
+    ),
+    confirmPassword: Yup.string().when(['isEditing', 'password'], ([isEditingActual, password], schema) => {
+      if (!isEditingActual || (password && password.length > 0)) { // Required for new user or if password is being changed
+        return schema
+          .oneOf([Yup.ref('password'), null], 'Passwords must match')
+          .required('Confirm password is required');
+      }
+      return schema;
     }),
-    status: Yup.string().required('Status is required'),
+    role: Yup.string().when('$isEditing', (isEditingActual, schema) =>
+      isEditingActual ? schema : schema.required('Role is required')
+    ),
+    branchId: Yup.string().when(['isEditing', 'role'], ([isEditingActual, role], schema) => {
+      if (!isEditingActual && role && role !== 'student' && role !== 'parent') {
+        return schema.required('Branch is required for this role (create mode)');
+      }
+      // In edit mode, or for roles like student/parent, branchId is optional
+      return schema;
+    }),
+    status: Yup.string().when('$isEditing', (isEditingActual, schema) =>
+      isEditingActual ? schema : schema.required('Status is required')
+    ),
   });
 
+
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-    // Remove confirmPassword before submitting if password handling is complex
     const submissionValues = { ...values };
-    if (!submissionValues.password) { // If password is not being changed/set
+
+    if (isEditing) {
+      // Remove email and password fields from submission for edits
+      delete submissionValues.email;
       delete submissionValues.password;
       delete submissionValues.confirmPassword;
+      // Backend will only update fields that are present in the payload.
+      // If a field (e.g. fullname) is submitted as an empty string,
+      // it's up to the backend to decide if that means "clear this field" or "ignore this".
     } else {
-        delete submissionValues.confirmPassword; // Always remove confirmPassword before sending to backend
+      // For creating a new user, confirmPassword was for FE validation only
+      delete submissionValues.confirmPassword;
     }
 
-
-    // Map branchId back to branch name if your backend expects name, or ensure consistency
-    // For this example, we assume backend handles branchId.
-    // If 'branch' was a string in mock data and you used that, map it back if needed.
-    // submissionValues.branch = mockBranches.find(b => b.id === values.branchId)?.name;
-
-    await onSubmit(submissionValues, isEditing, user?.id); // Pass isEditing and userId for context
+    await onSubmit(submissionValues, isEditing, user?.id);
     setSubmitting(false);
     // resetForm(); // Optionally reset form, or handle in parent
     // onClose(); // Parent will call onClose with refresh status
