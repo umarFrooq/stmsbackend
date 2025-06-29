@@ -18,7 +18,7 @@ import debounce from 'lodash.debounce';
 // Import actual user service
 import userService from '../../services/userService';
 
-const ADMIN_MANAGEABLE_ROLES = ['teacher', 'student', 'parent']; // Define manageable roles for Admin
+const ADMIN_MANAGEABLE_ROLES = ['teacher', 'student', 'parent',"admin"]; // Define manageable roles for Admin
 
 const AdminUserManagementPage = () => {
   const [users, setUsers] = useState([]);

@@ -78,7 +78,7 @@ export const deleteUser = async (userId) => {
   try {
     // This will be prefixed with apiClient's baseURL
     // The backend route is DELETE /users/:userId
-    const response = await apiClient.delete(`/users/${userId}`);
+    const response = await apiClient.delete(`http://localhost:3000/v1/users/${userId}`);
     return response.data; // Or handle based on what your backend returns (e.g., status 204 No Content)
   } catch (error) {
     console.error('Error deleting user:', error.response ? error.response.data : error.message);
