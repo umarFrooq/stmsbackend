@@ -54,11 +54,7 @@ const AdminUserManagementPage = () => {
       const params = {
         page: currentPage + 1, // API is 1-indexed
         limit: paginationModel.pageSize,
-<<<<<<< Updated upstream
-        // role: "admin", // Send roles admin can manage
-=======
         role: "admin", // Send roles admin can manage
->>>>>>> Stashed changes
       };
       if (currentSearchTerm) {
         params.name = 'fullname'; // Assuming search by fullname
