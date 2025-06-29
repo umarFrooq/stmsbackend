@@ -19,26 +19,49 @@ import {
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
+import { getAllBranches } from '../../services/branchService'; // Import branch service
 
-// Mock data - replace with actual data from API or props
-const mockRoles = ['admin', 'teacher', 'student', 'parent']; // Should come from a central config or API
-const mockBranches = [ // Should come from API
-  { id: 'branch1', name: 'Main Campus' },
-  { id: 'branch2', name: 'North Campus' },
-  { id: 'branch3', name: 'Online Academy' },
-];
+// availableRoles prop will be used instead of mockRoles
+// availableBranches state will be populated from API instead of mockBranches
 
-const UserFormDialog = ({ open, onClose, user, onSubmit }) => {
-  const isEditing = Boolean(user); // Determine if it's an edit or add form
+const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) => { // Added availableRoles to props
+  const isEditing = Boolean(user);
+
+  const [availableBranches, setAvailableBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+  const [branchError, setBranchError] = useState(null);
+
+  useEffect(() => {
+    if (open) { // Fetch branches when dialog opens
+      setLoadingBranches(true);
+      setBranchError(null);
+      getAllBranches()
+        .then((branches) => {
+          setAvailableBranches(branches || []);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch branches for form:", error);
+          setBranchError("Failed to load branches. Please try again.");
+          setAvailableBranches([]); // Ensure it's an array on error
+        })
+        .finally(() => {
+          setLoadingBranches(false);
+        });
+    } else {
+      // Optionally reset branches when dialog closes to refetch next time,
+      // or keep them cached if they don't change often.
+      // setAvailableBranches([]);
+    }
+  }, [open]); // Dependency array ensures this runs when 'open' changes
 
   const initialValues = {
     fullname: user?.fullname || '',
     email: user?.email || '',
-    password: '', // Password should generally only be set for new users or reset, not displayed for edit
+    password: '',
     confirmPassword: '',
     role: user?.role || '',
-    branchId: user?.branchId || user?.branch || '', // Adapt based on how branch info is stored/passed
-    status: user?.status || 'active', // Default to active for new users
+    branchId: user?.branchId || '', // Ensure this aligns with what user object provides
+    status: user?.status || 'active',
   };
 
   const validationSchema = Yup.object().shape({
@@ -174,9 +197,10 @@ const UserFormDialog = ({ open, onClose, user, onSubmit }) => {
                       onChange={handleChange}
                       onBlur={handleBlur}
                     >
-                      {mockRoles.map((role) => (
+                      {/* Use availableRoles prop from parent */}
+                      {(availableRoles || []).map((role) => (
                         <MenuItem key={role} value={role}>
-                          <Chip label={role} size="small" />
+                          <Chip label={role.charAt(0).toUpperCase() + role.slice(1)} size="small" />
                         </MenuItem>
                       ))}
                     </Select>
@@ -184,7 +208,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit }) => {
                   </FormControl>
                 </Grid>
                  <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting}>
+                  <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting || loadingBranches}>
                     <InputLabel id="branch-select-label">Branch/Campus</InputLabel>
                     <Select
                       labelId="branch-select-label"
@@ -195,14 +219,20 @@ const UserFormDialog = ({ open, onClose, user, onSubmit }) => {
                       onChange={handleChange}
                       onBlur={handleBlur}
                     >
-                      <MenuItem value=""><em>None</em></MenuItem>
-                      {mockBranches.map((branch) => (
+                      <MenuItem value="">
+                        <em>{loadingBranches ? 'Loading...' : branchError ? 'Error loading' : 'None'}</em>
+                      </MenuItem>
+                      {/* Use availableBranches state populated from API */}
+                      {availableBranches.map((branch) => (
+                        // Assuming branch object has 'id' and 'address.city' for name
+                        // Or 'name' directly if that's the case. Using address.city as per API example.
                         <MenuItem key={branch.id} value={branch.id}>
-                          {branch.name}
+                          {branch.address?.city || branch.name || branch.id}
                         </MenuItem>
                       ))}
                     </Select>
                     {touched.branchId && errors.branchId && <FormHelperText>{errors.branchId}</FormHelperText>}
+                    {branchError && !loadingBranches && <FormHelperText error>{branchError}</FormHelperText>}
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
