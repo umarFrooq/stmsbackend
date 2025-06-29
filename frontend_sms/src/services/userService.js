@@ -34,7 +34,7 @@ export const addUser = async (userData) => {
   try {
     // This will be prefixed with apiClient's baseURL (e.g., http://localhost:3000/api/v1)
     // The backend route is POST /users
-    const response = await apiClient.post('/users', userData);
+    const response = await apiClient.post('http://localhost:3000/api/v1/users', userData);
     return response.data;
   } catch (error) {
     console.error('Error adding user:', error.response ? error.response.data : error.message);
@@ -57,7 +57,7 @@ export const updateUser = async (userId, userData) => {
   try {
     // This will be prefixed with apiClient's baseURL
     // The backend route is PATCH /users/:userId
-    const response = await apiClient.patch(`/users/${userId}`, userData);
+    const response = await apiClient.patch(`http://localhost:3000/v1/users/${userId}`, userData);
     return response.data;
   } catch (error) {
     console.error('Error updating user:', error.response ? error.response.data : error.message);

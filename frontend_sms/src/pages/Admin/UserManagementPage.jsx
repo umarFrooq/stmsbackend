@@ -54,7 +54,7 @@ const AdminUserManagementPage = () => {
       const params = {
         page: currentPage + 1, // API is 1-indexed
         limit: paginationModel.pageSize,
-        role: ADMIN_MANAGEABLE_ROLES.join(','), // Send roles admin can manage
+        role: "admin", // Send roles admin can manage
       };
       if (currentSearchTerm) {
         params.name = 'fullname'; // Assuming search by fullname
@@ -64,9 +64,10 @@ const AdminUserManagementPage = () => {
       const response = await userService.getAllUsers(params);
       // Assuming response.data contains { results: [], totalPages: X, totalResults: Y, page: Z, limit: A }
       // Adjust based on your actual API response structure from userService.getAllUsers
+      console.log("dtasssssssss",response.data.results)
       if (response && response.data && Array.isArray(response.data.results)) {
         setUsers(response.data.results);
-        setTotalUsers(response.data.totalResults || 0);
+        setTotalUsers(response.totalResults || 0);
       } else {
         // Handle cases where response is not as expected
         console.error("Unexpected response structure:", response);
@@ -243,7 +244,7 @@ const AdminUserManagementPage = () => {
         user={editingUser}
         onSubmit={handleUserFormSubmit}
         // Pass props to UserFormDialog to restrict role selection if needed:
-        // availableRoles={['teacher', 'student', 'parent']}
+        availableRoles={['teacher', 'student', 'parent']}
       />
 
       <ConfirmationDialog
