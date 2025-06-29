@@ -54,7 +54,11 @@ const AdminUserManagementPage = () => {
       const params = {
         page: currentPage + 1, // API is 1-indexed
         limit: paginationModel.pageSize,
+<<<<<<< Updated upstream
         // role: "admin", // Send roles admin can manage
+=======
+        role: "admin", // Send roles admin can manage
+>>>>>>> Stashed changes
       };
       if (currentSearchTerm) {
         params.name = 'fullname'; // Assuming search by fullname
@@ -62,11 +66,12 @@ const AdminUserManagementPage = () => {
       }
 
       const response = await userService.getAllUsers(params);
+      console.log("response is ",response.data.data.results)
       // Assuming response.data contains { results: [], totalPages: X, totalResults: Y, page: Z, limit: A }
       // Adjust based on your actual API response structure from userService.getAllUsers
-      if (response && response.data && Array.isArray(response.data.results)) {
-        setUsers(response.data.results);
-        setTotalUsers(response.data.totalResults || 0);
+      if (response .data.data.results && Array.isArray(response.data.data.results)) {
+        setUsers(response.data.data.results);
+        setTotalUsers(response.data.data.totalResults || 0);
       } else {
         // Handle cases where response is not as expected
         console.error("Unexpected response structure:", response);

@@ -217,7 +217,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     disabled={isSubmitting || isEditing} // Often email is not editable after creation
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                if(isEditing)<Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label={isEditing ? "New Password (optional)" : "Password"}
@@ -231,7 +231,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     disabled={isSubmitting}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                if(isEditing)<Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label="Confirm Password"

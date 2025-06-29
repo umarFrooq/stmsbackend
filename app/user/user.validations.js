@@ -12,7 +12,9 @@ const createUser = {
     origin: Joi.object().keys({
       source: Joi.string(),
       version: Joi.string().allow(null),
-      lang: Joi.object()
+      lang: Joi.object(),
+      status: Joi.string().valid(userStatus.ACTIVE, userStatus.INACTIVE),
+
     })
   }),
 };
@@ -56,8 +58,13 @@ const updateUser = {
   }),
   body: Joi.object()
     .keys({
+<<<<<<< Updated upstream
       // email: Joi.string().email(),
       // password: Joi.string().custom(password),
+=======
+      email: Joi.string().email(),
+      password: Joi.string().custom(password),
+>>>>>>> Stashed changes
       fullname: Joi.string(),
       phone: myCustomJoi.string().phoneNumber(),
       lang: Joi.object(),

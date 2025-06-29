@@ -26,8 +26,13 @@ roleRights.set(roles[2], [
   "manageOrders", "getOrders", "manageSellerDetail", "subjectManagement", "manageVideo", "manageSellerConfidentialDetail", "print", "notification"
   , "firebaseToken", "changePassword", "csvUpload",
   , "firebaseToken", "changePassword", "csvUpload", "manageRefund", "refund", "userManageAddress",  "pushNotification","manageAnswer", "manageSeller", "manageDashboard", "manageTranslation", "manageStatus",
+<<<<<<< Updated upstream
 "manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting",
 "gradeManagement","attendanceManagement","testManagement","testResultManagement","getUsers"
+=======
+"manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting","getUsers",
+"gradeManagement","attendanceManagement","testManagement","testResultManagement","manageUser"
+>>>>>>> Stashed changes
 ]);
 
 roleRights.set(roles[3], [

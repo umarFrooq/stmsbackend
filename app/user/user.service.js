@@ -29,7 +29,9 @@ const { sendEmailVerifemail } = require("../auth/email.service");
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
-const createUser = async (userBody) => {
+const createUser = async (userBody,userDoc) => {
+    if(userDoc.role=="admin"&& userBody.role=="admin")
+        throw new ApiError(httpStatus.BAD_REQUEST, 'admin cannot create other admin');
     if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
     }
