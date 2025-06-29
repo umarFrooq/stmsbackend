@@ -71,17 +71,17 @@ const DashboardLayout = (props) => {
   // Define navigation items based on roles/permissions
   // This can be further refined and moved to a separate config file if it grows large
   const navItems = [
-    { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'superAdmin', 'parent'] },
+    { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'supperAdmin', 'parent'] },
     // Super Admin specific
-    { text: 'SA Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['superAdmin'] },
+    { text: 'SA Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['supperAdmin'] },
     // Admin specific
-    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'superAdmin'] },
+    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'supperAdmin'] }, // Also update here if admin can be supperAdmin
     // Teacher specific
-    { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'superAdmin'] },
+    { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'supperAdmin'] }, // Also update here
     // Student specific
-    { text: 'Student Dashboard', icon: <FaceIcon />, path: '/student', requiredRoles: ['student', 'superAdmin'] },
+    { text: 'Student Dashboard', icon: <FaceIcon />, path: '/student', requiredRoles: ['student', 'supperAdmin'] }, // Also update here
     // Parent specific - Assuming 'parent' role exists
-    // { text: 'Parent Dashboard', icon: <FaceIcon />, path: '/parent', requiredRoles: ['parent', 'superAdmin'] },
+    // { text: 'Parent Dashboard', icon: <FaceIcon />, path: '/parent', requiredRoles: ['parent', 'supperAdmin'] }, // Also update here
   ];
 
   const drawer = (

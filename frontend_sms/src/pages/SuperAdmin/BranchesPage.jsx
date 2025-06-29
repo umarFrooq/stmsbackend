@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Container, Typography, Alert, Snackbar } from '@mui/material';
-import BranchList from '../components/BranchList';
-import BranchForm from '../components/BranchForm';
-import { getBranches, createBranch, updateBranch, deleteBranch as deleteBranchApi } from '../services/branchApi';
+import BranchList from '../../components/branch/BranchList.jsx';
+import BranchForm from '../../components/branch/BranchForm.jsx';
+import { getBranches, createBranch, updateBranch, deleteBranch as deleteBranchApi } from '../../services/branchApi.js';
 // Assuming your enums are available, e.g.
-// import { branches as branchEnumValues } from '../../config/enums'; // Adjust path as needed
+// import { branches as branchEnumValues } from '../../../config/enums'; // Adjust path as needed from project root
 
 const BranchesPage = () => {
   const [branches, setBranches] = useState([]);

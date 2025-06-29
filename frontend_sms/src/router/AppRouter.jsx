@@ -27,7 +27,8 @@ import GradeOversightPageAdmin from '../pages/Admin/GradeOversightPage';
 // Super Admin Pages
 import SuperAdminDashboardPage from '../pages/SuperAdmin/SuperAdminDashboardPage';
 import UserManagementPageSAC from '../pages/SuperAdmin/UserManagementPage';
-import BranchManagementPageSAC from '../pages/SuperAdmin/BranchManagementPage';
+// import BranchManagementPageSAC from '../pages/SuperAdmin/BranchManagementPage'; // Old or placeholder
+import BranchesPage from '../pages/SuperAdmin/BranchesPage.jsx'; // New page
 import SystemSettingsPageSAC from '../pages/SuperAdmin/SystemSettingsPage';
 import RolePermissionViewerPageSAC from '../pages/SuperAdmin/RolePermissionViewerPage';
 
@@ -92,11 +93,12 @@ const AppRouter = () => {
           {/* Super Admin Routes */}
           <Route
             path="superadmin"
-            element={<ProtectedRoute role="superAdmin"><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute role="supperAdmin"><Outlet /></ProtectedRoute>}
           >
             <Route index element={<SuperAdminDashboardPage />} />
             <Route path="users" element={<UserManagementPageSAC />} />
-            <Route path="branches" element={<BranchManagementPageSAC />} />
+            {/* Use the new BranchesPage for the "branches" route */}
+            <Route path="branches" element={<BranchesPage />} />
             <Route path="settings" element={<SystemSettingsPageSAC />} />
             <Route path="roles" element={<RolePermissionViewerPageSAC />} />
           </Route>
@@ -104,7 +106,7 @@ const AppRouter = () => {
           {/* Admin Routes */}
           <Route
             path="admin"
-            element={<ProtectedRoute roles={['admin', 'superAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['admin', 'supperAdmin']}><Outlet /></ProtectedRoute>}
           >
             <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<AdminUserManagementPage />} />
@@ -118,7 +120,7 @@ const AppRouter = () => {
           {/* Teacher Routes */}
           <Route
             path="teacher"
-            element={<ProtectedRoute roles={['teacher', 'superAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['teacher', 'supperAdmin']}><Outlet /></ProtectedRoute>}
           >
             <Route index element={<TeacherDashboardPage />} />
             <Route path="my-classes" element={<MyClassesPageTeacher />} />
@@ -129,7 +131,7 @@ const AppRouter = () => {
           {/* Student Routes */}
           <Route
             path="student"
-            element={<ProtectedRoute roles={['student', 'superAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['student', 'supperAdmin']}><Outlet /></ProtectedRoute>}
           >
             <Route index element={<StudentDashboardPage />} />
             {/* <Route path="grades" element={<StudentGradesPage />} /> */}
@@ -138,7 +140,7 @@ const AppRouter = () => {
           {/* Parent Routes */}
            <Route
             path="parent"
-            element={<ProtectedRoute roles={['parent', 'superAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['parent', 'supperAdmin']}><Outlet /></ProtectedRoute>}
           >
             {/* <Route index element={<ParentDashboardPage />} /> */}
           </Route>

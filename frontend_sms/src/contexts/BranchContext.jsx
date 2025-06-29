@@ -11,7 +11,7 @@ export const BranchProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   // Placeholder for context logic (fetching, adding, updating, deleting branches)
-  // This would interact with src/services/branchApi.js
+  // This would interact with ../services/branchApi.js // Adjusted path
 
   const value = {
     branches,
