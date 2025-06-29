@@ -12,9 +12,7 @@ const createUser = {
     origin: Joi.object().keys({
       source: Joi.string(),
       version: Joi.string().allow(null),
-      lang: Joi.object(),
-      status: Joi.string().valid(userStatus.ACTIVE, userStatus.INACTIVE),
-
+      lang: Joi.object()
     })
   }),
 };

@@ -16,7 +16,7 @@ export const getAllUsers = async (params) => {
     // as its baseURL might be configured for v1.
     // apiClient will still add headers like Authorization.
     const response = await apiClient.get(GET_ALL_USERS_V2_URL, { params });
-    return response; // Assuming the backend returns data in the format { data: { results: [], ... } }
+    return response.data; // Assuming the backend returns data in the format { data: { results: [], ... } }
   } catch (error) {
     console.error('Error fetching all users:', error.response ? error.response.data : error.message);
     throw error.response ? error.response.data : new Error('Error fetching users');
@@ -34,7 +34,7 @@ export const addUser = async (userData) => {
   try {
     // This will be prefixed with apiClient's baseURL (e.g., http://localhost:3000/api/v1)
     // The backend route is POST /users
-    const response = await apiClient.post('http://localhost:3000/v1/auth/register', userData);
+    const response = await apiClient.post('/users', userData);
     return response.data;
   } catch (error) {
     console.error('Error adding user:', error.response ? error.response.data : error.message);
@@ -57,7 +57,7 @@ export const updateUser = async (userId, userData) => {
   try {
     // This will be prefixed with apiClient's baseURL
     // The backend route is PATCH /users/:userId
-    const response = await apiClient.patch(`http://localhost:3000/v1/users/${userId}`, userData);
+    const response = await apiClient.patch(`/users/${userId}`, userData);
     return response.data;
   } catch (error) {
     console.error('Error updating user:', error.response ? error.response.data : error.message);

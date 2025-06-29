@@ -131,7 +131,7 @@ const userSchema = new Schema({
     permanentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
     currentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
     section:{type:String},
-    gradeId: { type: Schema.Types.ObjectId , ref: 'Grade'},
+    gradeId: { type: Schema.Types.ObjectId,required:true , ref: 'Grade'},
 
 }, {
     timestamps: true,
