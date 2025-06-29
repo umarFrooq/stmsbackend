@@ -17,7 +17,7 @@ const login = async (credentials) => {
     // as the user's original code snippet might have been from a different version or context.
     // The critical part is the response handling.
 
-    const response = await apiClient.post('/auth/login', credentials); // Using existing path from file
+    const response = await apiClient.post('http://localhost:3000/v1/auth/login', credentials); // Using existing path from file
 
     // Adjusting to the provided API response structure:
     // { "data": { "user": { ... }, "tokens": { "access": { "token": "..." } } }, ... }

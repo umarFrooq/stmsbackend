@@ -57,7 +57,7 @@ export const updateUser = async (userId, userData) => {
   try {
     // This will be prefixed with apiClient's baseURL
     // The backend route is PATCH /users/:userId
-    const response = await apiClient.patch(`/users/${userId}`, userData);
+    const response = await apiClient.patch(`http://localhost:3000/v1/users/${userId}`, userData);
     return response.data;
   } catch (error) {
     console.error('Error updating user:', error.response ? error.response.data : error.message);

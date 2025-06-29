@@ -54,7 +54,7 @@ const AdminUserManagementPage = () => {
       const params = {
         page: currentPage + 1, // API is 1-indexed
         limit: paginationModel.pageSize,
-        role: ADMIN_MANAGEABLE_ROLES.join(','), // Send roles admin can manage
+        // role: "admin", // Send roles admin can manage
       };
       if (currentSearchTerm) {
         params.name = 'fullname'; // Assuming search by fullname
@@ -243,7 +243,7 @@ const AdminUserManagementPage = () => {
         user={editingUser}
         onSubmit={handleUserFormSubmit}
         // Pass props to UserFormDialog to restrict role selection if needed:
-        // availableRoles={['teacher', 'student', 'parent']}
+        availableRoles={['teacher', 'student', 'parent']}
       />
 
       <ConfirmationDialog

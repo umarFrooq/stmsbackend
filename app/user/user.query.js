@@ -24,18 +24,18 @@ const usersearchQuery = async (filter, options, search) => {
         serachQuery["$search"]['sort'] = options.sortBy;
       }
     const query = [
-        serachQuery,
+        // serachQuery,
         {
             '$skip': pagination.skip
         }, {
             '$limit': pagination.limit
         },
-        {
-            $addFields: {
-                'meta': '$$SEARCH_META',
+        // {
+        //     $addFields: {
+        //         'meta': '$$SEARCH_META',
            
-            }
-          },
+        //     }
+        //   },
         lookUp.userLookup,
         lookUp.userUnwind,
       { '$project': {

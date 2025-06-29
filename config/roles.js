@@ -27,7 +27,7 @@ roleRights.set(roles[2], [
   , "firebaseToken", "changePassword", "csvUpload",
   , "firebaseToken", "changePassword", "csvUpload", "manageRefund", "refund", "userManageAddress",  "pushNotification","manageAnswer", "manageSeller", "manageDashboard", "manageTranslation", "manageStatus",
 "manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting",
-"gradeManagement","attendanceManagement","testManagement","testResultManagement"
+"gradeManagement","attendanceManagement","testManagement","testResultManagement","getUsers"
 ]);
 
 roleRights.set(roles[3], [

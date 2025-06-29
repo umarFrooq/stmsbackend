@@ -151,7 +151,59 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     disabled={isSubmitting}
                   />
                 </Grid>
-                <Grid item xs={12}>
+
+
+{!isEditing && (
+  <>
+    <Grid item xs={12}>
+      <TextField
+        fullWidth
+        label="Email Address"
+        name="email"
+        type="email"
+        value={values.email}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={touched.email && Boolean(errors.email)}
+        helperText={touched.email && errors.email}
+        disabled={isSubmitting}
+      />
+    </Grid>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        fullWidth
+        label="Password"
+        name="password"
+        type="password"
+        value={values.password}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={touched.password && Boolean(errors.password)}
+        helperText={touched.password && errors.password}
+        disabled={isSubmitting}
+      />
+    </Grid>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        fullWidth
+        label="Confirm Password"
+        name="confirmPassword"
+        type="password"
+        value={values.confirmPassword}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={touched.confirmPassword && Boolean(errors.confirmPassword)}
+        helperText={touched.confirmPassword && errors.confirmPassword}
+        disabled={isSubmitting}
+      />
+    </Grid>
+  </>
+)}
+
+
+
+
+                {/* <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Email Address"
@@ -192,7 +244,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     helperText={touched.confirmPassword && errors.confirmPassword}
                     disabled={isSubmitting || !values.password} // Disable if password field is empty
                   />
-                </Grid>
+                </Grid> */}
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth error={touched.role && Boolean(errors.role)} disabled={isSubmitting}>
                     <InputLabel id="role-select-label">Role</InputLabel>
