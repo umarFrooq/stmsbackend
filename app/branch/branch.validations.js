@@ -3,7 +3,7 @@ const { objectId, emptyVal } = require("../auth/custom.validation");
 const {braches}=require('../../config/enums')
 const createBranch = {
   body: Joi.object().keys({
-    // name: Joi.string().required().trim(),
+    name: Joi.string().required().trim(),
     // head: Joi.string().custom(objectId),
     address: Joi.object().required(),
     branchCode: Joi.string().trim(),
@@ -36,6 +36,7 @@ const updateBranch = {
       name: Joi.string().trim(),
       address: Joi.object(),
       branchCode: Joi.string().trim(),
+      type:Joi.string().valid(...Object.values(braches))
     })
     .min(1),
 };

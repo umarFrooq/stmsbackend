@@ -21,12 +21,13 @@ const createBranch = async (branchBody) => {
   if (!branchCode && branchBody.name) {
     branchCode = slugGenerator(branchBody.name.toUpperCase(), 2); // Example: "MY-BRANCH-01"
     // Ensure uniqueness if generated (simple check, might need more robust solution for high concurrency)
-    if (await Branch.isBranchCodeTaken(branchCode)) {
-        branchCode = slugGenerator(`${branchBody.name.toUpperCase()}-${Math.floor(Math.random() * 1000)}`, 2)
-    }
-  } else if (branchCode && await Branch.isBranchCodeTaken(branchCode)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch code already taken');
-  }
+    // if (await Branch.isBranchCodeTaken(branchCode)) {
+    //     branchCode = slugGenerator(`${branchBody.name.toUpperCase()}-${Math.floor(Math.random() * 1000)}`, 2)
+    // }
+  } 
+  // else if (branchCode && await Branch.isBranchCodeTaken(branchCode)) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, 'Branch code already taken');
+  // }
   
   branchBody.branchCode = branchCode;
   return Branch.create(branchBody);
@@ -66,9 +67,9 @@ const updateBranchById = async (branchId, updateBody) => {
   if (!branch) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found');
   }
-  if (updateBody.branchCode && (await Branch.isBranchCodeTaken(updateBody.branchCode, branchId))) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch code already taken');
-  }
+  // if (updateBody.branchCode && (await Branch.isBranchCodeTaken(updateBody.branchCode, branchId))) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, 'Branch code already taken');
+  // }
   if (updateBody.addressId) {
     const address = await Address.findById(updateBody.addressId);
     if (!address) {

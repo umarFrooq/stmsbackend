@@ -876,7 +876,7 @@ const googleMetrics = [
 ]
 
 const braches={
-MAIN:"mian",
+MAIN:"main",
 SUB:"sub"
 }
 module.exports = {

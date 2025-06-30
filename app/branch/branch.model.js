@@ -20,6 +20,9 @@ const branchSchema = new mongoose.Schema(
       sparse: true,
       trim: true,
     },
+    type:{
+      type:String
+    }
   },
   {
     timestamps: true,
