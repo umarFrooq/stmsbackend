@@ -32,6 +32,9 @@ import BranchesPage from '../pages/SuperAdmin/BranchesPage.jsx'; // New page
 import SystemSettingsPageSAC from '../pages/SuperAdmin/SystemSettingsPage';
 import RolePermissionViewerPageSAC from '../pages/SuperAdmin/RolePermissionViewerPage';
 
+// Root Admin Pages (New)
+import SchoolManagementPage from '../pages/RootAdmin/SchoolManagementPage.jsx';
+
 
 import UnauthorizedPage from '../pages/UnauthorizedPage';
 import NotFoundPage from '../pages/NotFoundPage';
