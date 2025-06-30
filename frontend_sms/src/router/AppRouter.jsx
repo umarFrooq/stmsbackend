@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import useAuthStore from '../store/auth.store';
 
 // Pages
-import LoginPage from '../pages/Auth/LoginPage';
-import DashboardLayout from '../components/layout/DashboardLayout';
-import HomePage from '../pages/HomePage';
-import StudentDashboardPage from '../pages/Student/StudentDashboardPage';
+import LoginPage from '../pages/Auth/LoginPage.jsx'; // Ensured .jsx
+import DashboardLayout from '../components/layout/DashboardLayout.jsx'; // Ensured .jsx
+import HomePage from '../pages/HomePage.jsx'; // Ensured .jsx
+import StudentDashboardPage from '../pages/Student/StudentDashboardPage.jsx'; // Ensured .jsx
 
 // Teacher Pages
 import TeacherDashboardPage from '../pages/Teacher/TeacherDashboardPage';
@@ -29,20 +29,20 @@ import SuperAdminDashboardPage from '../pages/SuperAdmin/SuperAdminDashboardPage
 import UserManagementPageSAC from '../pages/SuperAdmin/UserManagementPage';
 // import BranchManagementPageSAC from '../pages/SuperAdmin/BranchManagementPage'; // Old or placeholder
 import BranchesPage from '../pages/SuperAdmin/BranchesPage.jsx'; // New page
-import SystemSettingsPageSAC from '../pages/SuperAdmin/SystemSettingsPage';
-import RolePermissionViewerPageSAC from '../pages/SuperAdmin/RolePermissionViewerPage';
+import SystemSettingsPageSAC from '../pages/SuperAdmin/SystemSettingsPage.jsx'; // Ensured .jsx
+import RolePermissionViewerPageSAC from '../pages/SuperAdmin/RolePermissionViewerPage.jsx'; // Ensured .jsx
 
 // Root Admin Pages (New)
-import SchoolManagementPage from '../pages/RootAdmin/SchoolManagementPage.jsx';
+import SchoolManagementPage from '../pages/RootAdmin/SchoolManagementPage.jsx'; // Ensured .jsx
 
 // Context Providers
-import { SchoolProvider } from '../contexts/SchoolContext.jsx'; // Corrected path if SchoolContext is in src/contexts
+import { SchoolProvider } from '../contexts/SchoolContext.jsx'; // Ensured .jsx
 
-import UnauthorizedPage from '../pages/UnauthorizedPage';
-import NotFoundPage from '../pages/NotFoundPage';
+import UnauthorizedPage from '../pages/UnauthorizedPage.jsx'; // Ensured .jsx
+import NotFoundPage from '../pages/NotFoundPage.jsx'; // Ensured .jsx
 
 // Protected Route HOC
-import ProtectedRoute from './ProtectedRoute';
+import ProtectedRoute from './ProtectedRoute.jsx'; // Ensured .jsx
 
 // Example Profile Page (generic for now)
 const UserProfilePage = () => <div>User Profile Page (Accessible by all logged-in users)</div>;
