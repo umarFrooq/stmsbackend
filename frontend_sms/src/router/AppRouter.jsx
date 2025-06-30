@@ -103,6 +103,17 @@ const AppRouter = () => {
             <Route path="roles" element={<RolePermissionViewerPageSAC />} />
           </Route>
 
+          {/* Root Admin Routes (New) */}
+          <Route
+            path="rootadmin" // Base path for root user functionalities
+            element={<ProtectedRoute role="rootUser"><Outlet /></ProtectedRoute>}
+          >
+            {/* Redirect /rootadmin to /rootadmin/schools or a rootadmin dashboard if one exists */}
+            <Route index element={<Navigate to="schools" replace />} />
+            <Route path="schools" element={<SchoolManagementPage />} />
+            {/* Add other rootUser specific routes here, e.g., system overview, global settings */}
+          </Route>
+
           {/* Admin Routes */}
           <Route
             path="admin"

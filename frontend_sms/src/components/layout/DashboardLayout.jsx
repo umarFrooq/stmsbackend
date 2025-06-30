@@ -28,6 +28,7 @@ import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'; // Ad
 import SchoolIcon from '@mui/icons-material/School'; // Teacher
 import FaceIcon from '@mui/icons-material/Face'; // Student & Parent (use different for parent if needed)
 import SettingsIcon from '@mui/icons-material/Settings'; // Generic settings
+import DomainIcon from '@mui/icons-material/Domain'; // For School Management (Root Admin)
 
 import useAuthStore from '../../store/auth.store';
 
@@ -71,17 +72,28 @@ const DashboardLayout = (props) => {
   // Define navigation items based on roles/permissions
   // This can be further refined and moved to a separate config file if it grows large
   const navItems = [
-    { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'supperAdmin', 'parent'] },
-    // Super Admin specific
-    { text: 'SA Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['supperAdmin'] },
+    { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'superadmin', 'rootUser', 'parent'] }, // Added rootUser here for general dashboard access
+
+    // Root Admin specific (New)
+    { text: 'School Management', icon: <DomainIcon />, path: '/rootadmin/schools', requiredRoles: ['rootUser'] },
+    // Potentially other rootUser links like a Root Dashboard
+    // { text: 'Root Dashboard', icon: <AdminPanelSettingsIcon />, path: '/rootadmin', requiredRoles: ['rootUser'] },
+
+
+    // Super Admin specific (school admin - renamed 'supperAdmin' to 'superadmin' for consistency with backend)
+    { text: 'SA Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['superadmin'] }, // Assuming 'superadmin' is the school-level admin
+
     // Admin specific
-    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'supperAdmin'] }, // Also update here if admin can be supperAdmin
+    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'superadmin'] },
+
     // Teacher specific
-    { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'supperAdmin'] }, // Also update here
+    { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'superadmin'] },
+
     // Student specific
-    { text: 'Student Dashboard', icon: <FaceIcon />, path: '/student', requiredRoles: ['student', 'supperAdmin'] }, // Also update here
+    { text: 'Student Dashboard', icon: <FaceIcon />, path: '/student', requiredRoles: ['student', 'superadmin'] },
+
     // Parent specific - Assuming 'parent' role exists
-    // { text: 'Parent Dashboard', icon: <FaceIcon />, path: '/parent', requiredRoles: ['parent', 'supperAdmin'] }, // Also update here
+    // { text: 'Parent Dashboard', icon: <FaceIcon />, path: '/parent', requiredRoles: ['parent', 'superadmin'] },
   ];
 
   const drawer = (
