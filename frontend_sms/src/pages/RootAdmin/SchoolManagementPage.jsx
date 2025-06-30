@@ -192,7 +192,7 @@ const SchoolManagementPage = () => {
           rows={schools}
           columns={finalColumns}
           loading={loadingSchools || loadingSchoolAction}
-          getRowId={(row) => row._id} // Assuming school objects have _id
+          getRowId={(row) => row.id} // Corrected to use 'id' as per backend response
           rowCount={pagination.totalResults}
           pageSize={pagination.limit}
           page={pagination.page - 1} // DataGrid is 0-indexed
