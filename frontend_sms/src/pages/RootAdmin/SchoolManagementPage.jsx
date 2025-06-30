@@ -9,7 +9,7 @@ import StyledDataGrid from '../../components/common/StyledDataGrid'; // Adjust p
 import LoadingSpinner from '../../components/common/LoadingSpinner'; // Adjust path
 import ConfirmationDialog from '../../components/common/ConfirmationDialog'; // Adjust path
 import NotificationToast from '../../components/common/NotificationToast'; // Adjust path
-import SchoolFormDialog from '../../components/schools/SchoolFormDialog'; // Will be created next
+import SchoolFormDialog from '../../components/schools/SchoolFormDialog.jsx'; // Corrected import
 
 import { useSchools } from '../../contexts/SchoolContext'; // Adjust path
 
