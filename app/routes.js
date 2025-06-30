@@ -5,6 +5,7 @@ var userRoutes = require("./user/user.routes");
 var attendanceRoutes = require("./attendance/attendance.routes");
 var branchRoutes = require("./branch/branch.routes");
 var paperRoutes = require("./paper/paper.routes");
+var schoolRoutes = require("./school/school.routes"); // Added school routes
 let addressRoutes=require('./address/address.routes')
 // var bannerRoutes = require("./banner/banner.routes");
 // var shippmentRoutes = require("./shippment/shippment.routes");
@@ -135,6 +136,7 @@ router.use("/attendances", attendanceRoutes);
 router.use("/tests", testRoutes);
 router.use("/test-results", testResultRoutes);
 router.use("/papers", paperRoutes);
+router.use("/schools", schoolRoutes); // Added school routes usage
 // router.use("/student-records", studentRecordRoutes);
 // router.use("/timetables", timetableRoutes);
 // router.use("/fees", feeRoutes);
