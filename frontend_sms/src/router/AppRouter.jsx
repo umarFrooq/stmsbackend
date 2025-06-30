@@ -35,6 +35,8 @@ import RolePermissionViewerPageSAC from '../pages/SuperAdmin/RolePermissionViewe
 // Root Admin Pages (New)
 import SchoolManagementPage from '../pages/RootAdmin/SchoolManagementPage.jsx';
 
+// Context Providers
+import { SchoolProvider } from '../contexts/SchoolContext.jsx'; // Corrected path if SchoolContext is in src/contexts
 
 import UnauthorizedPage from '../pages/UnauthorizedPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -109,7 +111,13 @@ const AppRouter = () => {
           {/* Root Admin Routes (New) */}
           <Route
             path="rootadmin" // Base path for root user functionalities
-            element={<ProtectedRoute role="rootUser"><Outlet /></ProtectedRoute>}
+            element={
+              <ProtectedRoute role="rootUser">
+                <SchoolProvider>
+                  <Outlet />
+                </SchoolProvider>
+              </ProtectedRoute>
+            }
           >
             {/* Redirect /rootadmin to /rootadmin/schools or a rootadmin dashboard if one exists */}
             <Route index element={<Navigate to="schools" replace />} />
