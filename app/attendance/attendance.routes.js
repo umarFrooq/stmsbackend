@@ -1,30 +1,35 @@
 const express = require('express');
-const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
-const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const attendanceController= require('./attendance.controller'); // Assuming these are exported from index.js
-  const attendanceValidations  = require('./attendance.validations');
+const auth = require('../../middlewares/auth');
+const validate = require('../../middlewares/validate');
+const schoolScopeMiddleware = require('../middlewares/schoolScope.middleware'); // Import middleware
+const attendanceController = require('./attendance.controller');
+const attendanceValidations = require('./attendance.validations');
 
 const router = express.Router();
 
-// Define roles that can manage attendance
-const attendanceManagementRoles = ['teacher', 'staff', 'admin_education'];
-router
-  .route('/') // For querying attendance records
-  .get(auth("attendanceManagement"), validate(attendanceValidations.getAttendances), attendanceController.getAttendancesHandler);
+// Define permissions (should be added to config/roles.js for relevant roles)
+const manageAttendancePermission = 'manageAttendances';
+const viewAttendancePermission = 'viewAttendances';
+
+// Apply auth and schoolScope middleware to all attendance routes
+router.use(auth(), schoolScopeMiddleware);
 
 router
-  .route('/single') // For marking a single attendance record
-  .post(auth("attendanceManagement"), validate(attendanceValidations.markAttendance), attendanceController.markAttendanceHandler);
+  .route('/')
+  .get(auth(viewAttendancePermission), validate(attendanceValidations.getAttendances), attendanceController.getAttendancesHandler);
 
 router
-  .route('/bulk') // For marking multiple attendance records
-  .post(auth("attendanceManagement"), validate(attendanceValidations.markBulkAttendance), attendanceController.markBulkAttendanceHandler);
+  .route('/single')
+  .post(auth(manageAttendancePermission), validate(attendanceValidations.markAttendance), attendanceController.markAttendanceHandler);
 
+router
+  .route('/bulk')
+  .post(auth(manageAttendancePermission), validate(attendanceValidations.markBulkAttendance), attendanceController.markBulkAttendanceHandler);
 
 router
   .route('/:attendanceId')
-  .get(auth("attendanceManagement"), validate(attendanceValidations.getAttendance), attendanceController.getAttendanceHandler)
-  .patch(auth("attendanceManagement"), validate(attendanceValidations.updateAttendance), attendanceController.updateAttendanceHandler)
-  .delete(auth("attendanceManagement"), validate(attendanceValidations.deleteAttendance), attendanceController.deleteAttendanceHandler);
+  .get(auth(viewAttendancePermission), validate(attendanceValidations.getAttendance), attendanceController.getAttendanceHandler)
+  .patch(auth(manageAttendancePermission), validate(attendanceValidations.updateAttendance), attendanceController.updateAttendanceHandler)
+  .delete(auth(manageAttendancePermission), validate(attendanceValidations.deleteAttendance), attendanceController.deleteAttendanceHandler);
 
 module.exports = router;

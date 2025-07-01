@@ -10,7 +10,7 @@ const subjectSchema = new mongoose.Schema(
     },
     subjectCode: {
       type: String,
-      unique: true,
+      // unique: true, // Uniqueness will be handled by compound index with schoolId
       required: true,
       trim: true,
     },
@@ -22,6 +22,12 @@ const subjectSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+    },
+    schoolId: { // Added schoolId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      required: true,
+      index: true,
     },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -42,14 +48,22 @@ const subjectSchema = new mongoose.Schema(
 subjectSchema.plugin(toJSON);
 subjectSchema.plugin(paginate);
 
+// Compound index for schoolId and subjectCode to ensure subjectCode is unique within a school
+subjectSchema.index({ schoolId: 1, subjectCode: 1 }, { unique: true });
+
 /**
- * Check if subjectCode is taken
+ * Check if subjectCode is taken within a specific school
  * @param {string} subjectCode - The subject's code
- * @param {ObjectId} [excludeSubjectId] - The id of the subject to be excluded
+ * @param {ObjectId} schoolId - The ID of the school
+ * @param {ObjectId} [excludeSubjectId] - The ID of the subject to be excluded (e.g., when updating)
  * @returns {Promise<boolean>}
  */
-subjectSchema.statics.isSubjectCodeTaken = async function (subjectCode, excludeSubjectId) {
-  const subject = await this.findOne({ subjectCode, _id: { $ne: excludeSubjectId } });
+subjectSchema.statics.isSubjectCodeTakenInSchool = async function (subjectCode, schoolId, excludeSubjectId) {
+  const query = { subjectCode, schoolId };
+  if (excludeSubjectId) {
+    query._id = { $ne: excludeSubjectId };
+  }
+  const subject = await this.findOne(query);
   return !!subject;
 };
 

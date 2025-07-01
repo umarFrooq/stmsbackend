@@ -19,13 +19,18 @@ const { setCache, getCache } = require('@/utils/cache/cache');
  * @param {string} [secret]
  * @returns {string}
  */
-const generateToken = (userId, expires,password, secret = config.jwt.secret) => {
+const generateToken = (userId, expires, role, schoolId, secret = config.jwt.secret) => {
     const payload = {
         sub: userId,
-        password:password,
         iat: moment().unix(),
         exp: expires.unix(),
+        role: role, // Add role to payload
     };
+    // Conditionally add schoolId if it exists (relevant for superadmin, teacher, etc.)
+    if (schoolId) {
+        payload.schoolId = schoolId;
+    }
+    // IMPORTANT: Removed password from payload for security
     return jwt.sign(payload, secret);
 };
 
@@ -85,13 +90,19 @@ const verifyToken = async (token, type) => {
  * @returns {Promise<Object>}
  */
 const generateAuthTokens = async (user) => {
-
+    // Ensure user object has role and schoolId (schoolId can be undefined)
+    const userRole = user.role;
+    const userSchoolId = user.schoolId; // This might be undefined for roles like rootUser
 
     const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, 'minutes');
-    const accessToken = generateToken(user.id, accessTokenExpires,user.password);
+    const accessToken = generateToken(user.id, accessTokenExpires, userRole, userSchoolId);
 
+    // For refresh tokens, the payload can be simpler, but including role/schoolId might be useful
+    // if refresh logic ever needs to check them without hitting DB.
+    // However, typically refresh token payloads are minimal (sub, iat, exp).
+    // Let's keep it consistent with accessToken for now, or simplify if preferred.
     const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
-    const refreshToken = generateToken(user.id, refreshTokenExpires,user.password);
+    const refreshToken = generateToken(user.id, refreshTokenExpires, userRole, userSchoolId);
     await saveToken(refreshToken, user.id, refreshTokenExpires, tokenTypes.REFRESH);
 
     return {
@@ -130,7 +141,11 @@ const generateResetPasswordToken = async (email) => {
     await setCache(key, undefined, isUser + 1, redisEnums.TTL.FORGET_PASSWORD);
     await setCache(lastAttempt, undefined, 1, redisEnums.TTL.FORGET_PASSWORD_LAST_ATTEMPT);
     const expires = moment().add(config.jwt.resetPasswordExpirationMinutes, 'minutes');
-    const resetPasswordToken = generateToken(user.id,expires);
+    // For reset password token, payload usually only needs 'sub' (userId) and 'type'.
+    // Role and schoolId are not typically needed for this specific token's purpose.
+    // However, our modified generateToken expects role and schoolId.
+    // We can pass user.role and user.schoolId.
+    const resetPasswordToken = generateToken(user.id, expires, user.role, user.schoolId);
     await saveToken(resetPasswordToken, user.id, expires, tokenTypes.RESET_PASSWORD);
     return resetPasswordToken;
 };
@@ -143,12 +158,12 @@ const generateRegisterOrLoginFromEmailToken = async (email) => {
         const newUser = await userService.createUser(tempUser);
 
         const expires = moment().add(config.jwt.registerOrLoginFromEmailTokenExpirationMinutes, 'minutes');
-        const registerOrLoginToken = generateToken(newUser._id, expires);
-        await saveToken(registerOrLoginToken, newUser._id, expires, tokenTypes.Register_Or_Login);
+        const registerOrLoginToken = generateToken(newUser.id, expires, newUser.role, newUser.schoolId);
+        await saveToken(registerOrLoginToken, newUser.id, expires, tokenTypes.Register_Or_Login);
         return registerOrLoginToken;
     }
     const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
-    const registerOrLoginToken = generateToken(user.id, expires);
+    const registerOrLoginToken = generateToken(user.id, expires, user.role, user.schoolId);
     await saveToken(registerOrLoginToken, user.id, expires, tokenTypes.Register_Or_Login);
     return registerOrLoginToken;
 };
@@ -158,38 +173,42 @@ const generateVerificationEmailToken = async (email) => {
         throw new ApiError(httpStatus.NOT_FOUND, 'TOKEN_MODULE.NO_USERS_FOUND_WITH_EMAIL');
     }
     const expires = moment().add(config.jwt.verificationEmailExpirationMinutes, 'minutes');
-    const verificationEmailToken = generateToken(user.id, expires);
+    const verificationEmailToken = generateToken(user.id, expires, user.role, user.schoolId);
     await saveToken(verificationEmailToken, user.id, expires, tokenTypes.Verification_Email);
     return verificationEmailToken;
 };
 
 const generateVerificationPhoneToken = async (phone, origin, customer) => {
-
     const user = await userService.getUserByPhoneNumber(phone, customer);
     if (!user) {
-        // throw new ApiError(httpStatus.NOT_FOUND, 'No users found with this phone number');
         var fullname = "user_" + crypto.randomBytes(5).toString('hex');
-        var tempUser = new User({ phone, fullname, isPhoneVarified: true, verificationMethod: verificationMethods.SMS })
+        // Assuming new users created this way default to a role like 'student' or 'user'
+        // and won't have a schoolId initially unless logic is added to determine it.
+        // For now, pass undefined for role/schoolId or a default role.
+        // Let's assume new users get a default role (e.g., 'user' or from config) and no schoolId.
+        // This part may need more sophisticated role/school assignment logic based on app requirements.
+        const defaultRoleForNewUser = 'user'; // Example default
+        var tempUser = new User({ phone, fullname, isPhoneVarified: true, verificationMethod: verificationMethods.SMS, role: defaultRoleForNewUser });
         const newUser = await User.create(tempUser);
 
         const expires = moment().add(config.jwt.verificationPhoneExpirationMinutes, 'minutes');
-        const verificationPhoneToken = generateToken(newUser._id, expires);
-        await saveToken(verificationPhoneToken, newUser._id, expires, tokenTypes.Verification_Sms);
+        const verificationPhoneToken = generateToken(newUser.id, expires, newUser.role, newUser.schoolId);
+        await saveToken(verificationPhoneToken, newUser.id, expires, tokenTypes.Verification_Sms);
         return verificationPhoneToken;
     }
     const expires = moment().add(config.jwt.verificationPhoneExpirationMinutes, 'minutes');
-    const verificationPhoneToken = generateToken(user.id, expires);
+    const verificationPhoneToken = generateToken(user.id, expires, user.role, user.schoolId);
     await saveToken(verificationPhoneToken, user.id, expires, tokenTypes.Verification_Sms);
     return verificationPhoneToken;
 };
 
 const generateVerificationGoogleToken = async (userbody) => {
-    const user = await userService.createUserWithGoogle(userbody);
+    const user = await userService.createUserWithGoogle(userbody); // createUserWithGoogle should populate role and schoolId if applicable
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'TOKEN_MODULE.NO_USERS_FOUND_WITH_THIS_ACCOUNT');
     }
     const expires = moment().add(config.jwt.verificationEmailExpirationMinutes, 'minutes');
-    const verificationEmailToken = generateToken(user.id, expires);
+    const verificationEmailToken = generateToken(user.id, expires, user.role, user.schoolId);
     await saveToken(verificationEmailToken, user.id, expires, tokenTypes.Verification_Google);
     return verificationEmailToken;
 };
@@ -201,8 +220,12 @@ const generateVerificationGoogleToken = async (userbody) => {
  * @returns {Promise<Object>}
  */
 const generateAuthForRefresh = async (user) => {
+    // Ensure user object has role and schoolId for consistency, though they might not be strictly needed for refresh logic
+    const userRole = user.role;
+    const userSchoolId = user.schoolId;
+
     const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, 'minutes');
-    const accessToken = generateToken(user.id,accessTokenExpires,user.password);
+    const accessToken = generateToken(user.id, accessTokenExpires, userRole, userSchoolId);
     return {
         access: {
             token: accessToken,
@@ -218,12 +241,16 @@ const generateAuthForRefresh = async (user) => {
  * @returns {Promise<Object>}
  */
 const generateEmailPhonVerifAuthTokens = async (user) => {
+    const userRole = user.role;
+    const userSchoolId = user.schoolId;
 
     const accessTokenExpires = moment().add(config.jwt.EmailPhoneVerifExpireationMinutes, 'minutes');
-    const accessToken = generateToken(user.id, accessTokenExpires);
+    const accessToken = generateToken(user.id, accessTokenExpires, userRole, userSchoolId);
+
     const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
-    const refreshToken = generateToken(user.id, refreshTokenExpires);
+    const refreshToken = generateToken(user.id, refreshTokenExpires, userRole, userSchoolId);
     await saveToken(refreshToken, user.id, refreshTokenExpires, tokenTypes.REFRESH);
+
     return {
         access: {
             token: accessToken,
@@ -232,7 +259,6 @@ const generateEmailPhonVerifAuthTokens = async (user) => {
             token: refreshToken,
             expires: refreshTokenExpires.toDate(),
         },
-
     };
 };
 

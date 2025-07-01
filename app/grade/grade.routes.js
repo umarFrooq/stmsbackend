@@ -1,32 +1,40 @@
 const express = require('express');
-const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
-const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const gradeController = require('./grade.controller'); // Assuming these are exported from index.js
-const gradeValidations=require('./grade.validations')
+const auth = require('../../middlewares/auth');
+const validate = require('../../middlewares/validate');
+const schoolScopeMiddleware = require('../middlewares/schoolScope.middleware'); // Import the new middleware
+const gradeController = require('./grade.controller');
+const gradeValidations = require('./grade.validations');
+
 const router = express.Router();
 
-// Define roles that can manage grades and their sections
-const gradeManagementRoles = ['admin_education', 'staff'];
+// Define permissions
+const manageGradesPermission = 'manageGrades'; // Assumed permission for CUD operations
+const viewGradesPermission = 'viewGrades'; // Assumed permission for read operations (could be same as manageGrades or more general)
+
+// Apply auth and schoolScope middleware to all routes.
+// Specific permissions will be checked per route.
+router.use(auth(), schoolScopeMiddleware);
+
 
 router
   .route('/')
-  .post(auth("gradeManagement"), validate(gradeValidations.createGrade), gradeController.createGradeHandler)
-  .get(validate(gradeValidations.getGrades), gradeController.getGradesHandler); // Publicly accessible or add auth as needed
+  .post(auth(manageGradesPermission), validate(gradeValidations.createGrade), gradeController.createGradeHandler)
+  .get(auth(viewGradesPermission), validate(gradeValidations.getGrades), gradeController.getGradesHandler);
 
 router
   .route('/:gradeId')
-  .get(validate(gradeValidations.getGrade), gradeController.getGradeHandler) // Publicly accessible or add auth as needed
-  .patch(auth("gradeManagement"), validate(gradeValidations.updateGrade), gradeController.updateGradeHandler)
-  .delete(auth("gradeManagement"), validate(gradeValidations.deleteGrade), gradeController.deleteGradeHandler);
+  .get(auth(viewGradesPermission), validate(gradeValidations.getGrade), gradeController.getGradeHandler)
+  .patch(auth(manageGradesPermission), validate(gradeValidations.updateGrade), gradeController.updateGradeHandler)
+  .delete(auth(manageGradesPermission), validate(gradeValidations.deleteGrade), gradeController.deleteGradeHandler);
 
 // Routes for managing sections within a grade
 router
   .route('/:gradeId/sections')
-  .post(auth("gradeManagement"), validate(gradeValidations.manageSection), gradeController.addSectionHandler) // To add a single section
-  .put(auth("gradeManagement"), validate(gradeValidations.manageSectionsArray), gradeController.updateSectionsHandler); // To replace all sections
+  .post(auth(manageGradesPermission), validate(gradeValidations.manageSection), gradeController.addSectionHandler)
+  .put(auth(manageGradesPermission), validate(gradeValidations.manageSectionsArray), gradeController.updateSectionsHandler);
 
 router
   .route('/:gradeId/sections/:sectionName')
-  .delete(auth("gradeManagement"), validate(gradeValidations.removeSectionParams), gradeController.removeSectionHandler); // To remove a single section by its name
+  .delete(auth(manageGradesPermission), validate(gradeValidations.removeSectionParams), gradeController.removeSectionHandler);
 
 module.exports = router;

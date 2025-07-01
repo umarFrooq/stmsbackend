@@ -66,7 +66,7 @@ const SchoolManagementPage = () => {
   const confirmSchoolDelete = async () => {
     if (!schoolToDelete) return;
     try {
-      await removeSchool(schoolToDelete._id); // Assuming school object has _id
+      await removeSchool(schoolToDelete.id); // Corrected to use .id
       showToast(`School "${schoolToDelete.name}" deleted successfully.`, 'success');
     } catch (apiError) {
       showToast(apiError.message || 'Failed to delete school.', 'error');
@@ -129,7 +129,7 @@ const SchoolManagementPage = () => {
       field: 'createdAt',
       headerName: 'Created At',
       width: 180,
-      valueGetter: (params) => new Date(params).toLocaleDateString(),
+      valueGetter: (params) => new Date(params.row.createdAt).toLocaleDateString(),
     },
     {
       field: 'actions',

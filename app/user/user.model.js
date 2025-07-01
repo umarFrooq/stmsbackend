@@ -127,11 +127,11 @@ const userSchema = new Schema({
     // payment: [userPaymentSchema]
     agreement: { type: Boolean, default: false },
     cnic: { type: String, unique: true, sparse: true },
-    branchId: { type: Schema.Types.ObjectId , ref: 'Branch'},
+    branchId: { type: Schema.Types.ObjectId,required:true , ref: 'Branch'},
     permanentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
     currentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
     section:{type:String},
-    gradeId: { type: Schema.Types.ObjectId , ref: 'Grade'},
+    gradeId: { type: Schema.Types.ObjectId,required:true , ref: 'Grade'},
     schoolId: {
       type: Schema.Types.ObjectId,
       ref: 'School',

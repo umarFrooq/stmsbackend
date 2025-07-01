@@ -1,24 +1,27 @@
 const express = require('express');
-const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
-const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const { fineController, fineValidations } = require('.'); // Assuming these are exported from index.js
+const auth = require('../../middlewares/auth');
+const validate = require('../../middlewares/validate');
+const schoolScopeMiddleware = require('../middlewares/schoolScope.middleware'); // Import middleware
+const { fineController, fineValidations } = require('.');
 
 const router = express.Router();
 
-// Define roles for managing fines
-const fineManagementRoles = ['staff', 'admin_education'];
-// Define roles for viewing fines (broader access)
-const fineAccessRoles = ['student', 'teacher', ...fineManagementRoles];
+// Define permissions
+const manageFinesPermission = 'manageFines';
+const viewFinesPermission = 'viewFines';
+
+// Apply auth and schoolScope middleware to all fine routes
+router.use(auth(), schoolScopeMiddleware);
 
 router
   .route('/')
   .post(
-    auth(fineManagementRoles),
+    auth(manageFinesPermission),
     validate(fineValidations.issueFine),
     fineController.issueFineHandler
   )
   .get(
-    auth(fineAccessRoles),
+    auth(viewFinesPermission),
     validate(fineValidations.getFines),
     fineController.getFinesHandler
   );
@@ -26,15 +29,21 @@ router
 router
   .route('/:fineId')
   .get(
-    auth(fineAccessRoles),
+    auth(viewFinesPermission),
     validate(fineValidations.getFine),
     fineController.getFineHandler
   );
+// Note: A general PATCH for fine details (e.g. amount, description) is missing.
+// The current PATCH is only for status. If general update is needed, add:
+// .patch(auth(manageFinesPermission), validate(fineValidations.updateFine), fineController.updateFineHandler)
+// Also, a DELETE route for fines is missing. If needed:
+// .delete(auth(manageFinesPermission), validate(fineValidations.deleteFine), fineController.deleteFineHandler);
+
 
 router
-  .route('/:fineId/status') // Specific route for status updates (pay/waive)
+  .route('/:fineId/status')
   .patch(
-    auth(fineManagementRoles),
+    auth(manageFinesPermission),
     validate(fineValidations.updateFineStatus),
     fineController.updateFineStatusHandler
   );

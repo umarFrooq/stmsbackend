@@ -8,6 +8,12 @@ const paperSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    schoolId: { // Added schoolId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      required: true,
+      index: true,
+    },
     subjectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subject",

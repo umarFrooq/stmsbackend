@@ -8,6 +8,12 @@ const fineSchema = new mongoose.Schema(
       ref: 'User', 
       required: true 
     },
+    schoolId: { // Added schoolId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      required: true,
+      index: true,
+    },
     branchId: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'Branch', 
