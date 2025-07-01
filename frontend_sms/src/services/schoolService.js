@@ -77,7 +77,7 @@ export const updateSchool = async (schoolId, schoolData) => {
 export const deleteSchool = async (schoolId) => {
   try {
     await apiClient.delete(`${API_ENDPOINT}/${schoolId}`);
-    // DELETE requests usually return 204 No Content, so no response.data to return
+    // DELETE requests usually return uuserser No Content, so no response.data to return
   } catch (error) {
     console.error(`Error deleting school ${schoolId}:`, error.response ? error.response.data : error.message);
     throw error.response?.data || { message: error.message || `Failed to delete school ${schoolId}.` };
