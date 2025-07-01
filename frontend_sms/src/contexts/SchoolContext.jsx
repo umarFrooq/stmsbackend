@@ -99,7 +99,7 @@ export const SchoolProvider = ({ children }) => {
       await schoolService.deleteSchool(schoolId);
       // Optimistically update or re-fetch
       setSchools(prevSchools => prevSchools.filter(school => school._id !== schoolId));
-      // Or await fetchSchools();
+      // Or await fetchSchools()
       // Update totalResults if using optimistic update
       setPagination(prev => ({ ...prev, totalResults: Math.max(0, prev.totalResults -1) }));
       return { success: true };
