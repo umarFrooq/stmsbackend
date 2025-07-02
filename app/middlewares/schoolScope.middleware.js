@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const ApiError = require('../utils/ApiError');
+const ApiError = require('../../utils/ApiError');
 const { roles } = require('../../config/roles'); // To access role strings
 
 const schoolScopeMiddleware = (req, res, next) => {

@@ -28,7 +28,7 @@ router
   .route('/')
   .post(
     auth(managePapersPermission),
-    uploadToS3.single('paperFile'), // multer-s3 middleware for file upload
+    // uploadToS3.single('paperFile'), // multer-s3 middleware for file upload
     validate(paperValidations.uploadPaper),
     paperController.uploadPaperHandler
   )
@@ -47,7 +47,7 @@ router
   )
   .patch(
     auth(managePapersPermission),
-    uploadToS3.single('paperFile'), // For updating/replacing the file
+    // uploadToS3.single('paperFile'), // For updating/replacing the file
     validate(paperValidations.updatePaper),
     paperController.updatePaperHandler
   )

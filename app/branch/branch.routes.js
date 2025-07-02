@@ -14,8 +14,8 @@ router.use(auth('manageBranches'), schoolScopeMiddleware); // manageBranches per
 
 router
   .route('/')
-  .post(validate(branchValidations.createBranch), branchController.createBranchHandler)
-  .get(validate(branchValidations.getBranches), branchController.getBranchesHandler);
+  .post(auth('manageBranches'),validate(branchValidations.createBranch), branchController.createBranchHandler)
+  .get(auth('manageBranches'),validate(branchValidations.getBranches), branchController.getBranchesHandler);
 
 router
   .route('/:branchId')

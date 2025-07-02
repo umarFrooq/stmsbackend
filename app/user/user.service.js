@@ -10,7 +10,7 @@ const SellerConfidentialDetail = db.SellerConfidentialDetail;
 const config = require('../../config/config');
 const algoliasearch = require("algoliasearch");
 // const client = algoliasearch(config.algolia.algoliaApplicationId, config.algolia.algoliaWriteApiKey);
-
+let mongoose= require('mongoose')
 const addressService = require("../address/address.service");
 const { sellerProfile, userProfile } = require("./profile");
 const { sellerHome } = require("./sellerHome");
@@ -922,9 +922,11 @@ const validateRefCode = async (refCode) => {
 
 
 
-const getAllUser = async (filter, options, search) => {
+const getAllUser = async (filter, options, search,schoolId) => {
     filter = setAtasDateCondition(filter)
     options = sortByParser(options, { 'createdAt': -1 });
+    // filter.schoolId=mongoose.Types.ObjectId(schoolId)
+        filter.schoolId=schoolId
     let result = await usersearchQuery(filter, options, search);
     if (!result || !Object.keys(result).length) {
       result = {

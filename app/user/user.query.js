@@ -24,18 +24,18 @@ const usersearchQuery = async (filter, options, search) => {
         serachQuery["$search"]['sort'] = options.sortBy;
       }
     const query = [
-        // serachQuery,
+        serachQuery,
         {
             '$skip': pagination.skip
         }, {
             '$limit': pagination.limit
         },
-        // {
-        //     $addFields: {
-        //         'meta': '$$SEARCH_META',
+        {
+            $addFields: {
+                'meta': '$$SEARCH_META',
            
-        //     }
-        //   },
+            }
+          },
         lookUp.userLookup,
         lookUp.userUnwind,
       { '$project': {
@@ -62,7 +62,7 @@ const usersearchQuery = async (filter, options, search) => {
 
 }
 
-
+l
 const queryParser = (filter, search) => {
     const filterQuery = [{
         'exists': {
@@ -84,6 +84,11 @@ const queryParser = (filter, search) => {
             continue;
         }
         if (key === 'role') {
+
+            filterQuery.push(queryTypeParser(filter[key], key));
+            continue;
+        }
+           if (key === 'schoolId') {
 
             filterQuery.push(queryTypeParser(filter[key], key));
             continue;

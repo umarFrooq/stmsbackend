@@ -186,7 +186,7 @@ const getAllUser = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['fullname', 'email', 'to', 'from', 'role', 'city','lang']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const search = pick(req.query, ['name', 'value']);
-  const result = await userService.getAllUser(filter, options, search);
+  const result = await userService.getAllUser(filter, options, search,req.schoolId);
   // res.status(httpStatus.OK).send(result);
   res.sendStatus(result)
 });
