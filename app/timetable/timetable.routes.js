@@ -1,46 +1,56 @@
 const express = require('express');
-const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
-const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const  timetableController  = require('./timetable.controller'); // Assuming these are exported from index.js
-const  timetableValidations  = require('./timetable.validations');
+const auth = require('../../middlewares/auth');
+const validate = require('../../middlewares/validate');
+const schoolScopeMiddleware = require('../middlewares/schoolScope.middleware'); // Import middleware
+const timetableController = require('./timetable.controller');
+const timetableValidations = require('./timetable.validations');
+
 const router = express.Router();
 
-// Define roles that can manage timetables
-const timetableManagementRoles = ['staff', 'admin_education'];
-// Define roles that can view timetables (broader access)
-const timetableAccessRoles = ['student', 'teacher', ...timetableManagementRoles];
+// Define permissions
+const manageTimetablesPermission = 'manageTimetables';
+const viewTimetablesPermission = 'viewTimetables'; // Students, teachers might have this
 
+// Apply auth and schoolScope middleware
+router.use(auth(), schoolScopeMiddleware);
 
-// The getTimetablesHandler in the controller is designed to handle both general queries
-// and a specific query for an effective timetable based on gradeId, section, branchId, and date.
-// So, a separate '/effective' route might be redundant if the controller logic is robust.
 router
   .route('/')
   .post(
-    auth(timetableManagementRoles),
+    auth(manageTimetablesPermission),
     validate(timetableValidations.createTimetable),
     timetableController.createTimetableHandler
   )
   .get(
-    auth(timetableAccessRoles), // Allow broader access for viewing
-    validate(timetableValidations.getTimetables), // Validation handles different query param combinations
+    auth(viewTimetablesPermission),
+    validate(timetableValidations.getTimetables),
     timetableController.getTimetablesHandler
   );
+
+// Specific route for effective timetable, as its query params are distinct
+router
+    .route('/effective')
+    .get(
+        auth(viewTimetablesPermission), // All school users might need to see effective timetable
+        validate(timetableValidations.getEffectiveTimetable), // Specific validation for these params
+        timetableController.getEffectiveTimetableHandler
+    );
+
 
 router
   .route('/:timetableId')
   .get(
-    auth(timetableAccessRoles), // Allow broader access for viewing
+    auth(viewTimetablesPermission),
     validate(timetableValidations.getTimetable),
     timetableController.getTimetableHandler
   )
   .patch(
-    auth(timetableManagementRoles),
+    auth(manageTimetablesPermission),
     validate(timetableValidations.updateTimetable),
     timetableController.updateTimetableHandler
   )
   .delete(
-    auth(timetableManagementRoles),
+    auth(manageTimetablesPermission),
     validate(timetableValidations.deleteTimetable),
     timetableController.deleteTimetableHandler
   );

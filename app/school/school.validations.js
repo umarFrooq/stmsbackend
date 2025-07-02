@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { objectId, emptyVal } = require("../auth/custom.validation");
+const { objectId } = require('../../utils/joi.custom.validations'); // Assuming a custom validator for MongoDB ObjectIds
 
 const createSchool = {
   body: Joi.object().keys({

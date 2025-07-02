@@ -5,56 +5,90 @@ const pick = require('../../utils/pick');
 const ApiError = require('../../utils/ApiError');
 
 const uploadPaperHandler = catchAsync(async (req, res) => {
-  const userId = req.user.id; // Assuming user ID is available in req.user
+  const userId = req.user.id;
+  const schoolId = req.user.role === 'rootUser' ? req.body.schoolIdForPaper : req.schoolId;
+
+  if (!schoolId && req.user.role !== 'rootUser') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required.');
+  }
+  if (!schoolId && req.user.role === 'rootUser' && !req.body.schoolIdForPaper) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID (schoolIdForPaper) must be provided in body for root users.');
+  }
+
   if (!req.file) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Paper file is required.');
   }
-  const fileUrl = req.file.key; // 'key' is typically the S3 object key from multer-s3
+  const fileUrl = req.file.key;
 
-  const paper = await paperService.uploadPaper(req.body, userId, fileUrl);
+  const paper = await paperService.uploadPaper(req.body, schoolId, userId, fileUrl);
   res.status(httpStatus.CREATED).send(paper);
 });
 
 const getPapersHandler = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['title', 'subjectId', 'gradeId', 'branchId', 'year', 'type', 'uploadedBy']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']);
-  const result = await paperService.queryPapers(filter, options);
+  const schoolId = req.user.role === 'rootUser' ? req.query.schoolId : req.schoolId;
+
+  if (!schoolId && req.user.role !== 'rootUser') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required.');
+  }
+  if (!schoolId && req.user.role === 'rootUser' && !req.query.schoolId) {
+     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID must be provided in query for root users to list papers.');
+  }
+
+  const result = await paperService.queryPapers(filter, options, schoolId);
   res.send(result);
 });
 
 const getPaperHandler = catchAsync(async (req, res) => {
   const populateOptions = req.query.populate;
-  const paper = await paperService.getPaperById(req.params.paperId, populateOptions);
-  if (!paper) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Paper not found');
+  const schoolId = req.user.role === 'rootUser' ? req.query.schoolId : req.schoolId;
+
+  if (!schoolId && req.user.role !== 'rootUser') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required.');
   }
+  if (!schoolId && req.user.role === 'rootUser' && !req.query.schoolId) {
+     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID must be provided in query for root users to get a specific paper.');
+  }
+
+  const paper = await paperService.getPaperById(req.params.paperId, schoolId, populateOptions);
+  // Service handles 404
   res.send(paper);
 });
 
 const updatePaperHandler = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  // newFileUrl is undefined if no file is uploaded, or req.file.key if a new file is uploaded.
-  // It's NOT null unless explicitly made so, which isn't typical for file uploads directly.
-  const newFileUrl = req.file ? req.file.key : undefined; 
+  const schoolId = req.user.role === 'rootUser' ? req.body.schoolIdToScopeTo || req.query.schoolIdToScopeTo : req.schoolId;
 
-  // If the client wants to remove the paperFile (which is required by model),
-  // this would be an invalid operation based on current schema.
-  // If paperFileUrl was optional, one might pass null for newFileUrl.
-  // For now, update implies either keeping the old or providing a new one.
-  // If req.body.paperFileUrl is explicitly sent as null, it's ignored here because
-  // a new file upload (req.file) takes precedence or no file change occurs.
+  if (!schoolId && req.user.role !== 'rootUser') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required.');
+  }
+  if (!schoolId && req.user.role === 'rootUser') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID scope must be provided for root users when updating a paper.');
+  }
+
+  const newFileUrl = req.file ? req.file.key : undefined;
 
   const paper = await paperService.updatePaperById(
     req.params.paperId,
     req.body,
+    schoolId, // Pass schoolId to service
     userId,
-    newFileUrl // Pass the path of the new file, or undefined if not changing
+    newFileUrl
   );
   res.send(paper);
 });
 
 const deletePaperHandler = catchAsync(async (req, res) => {
-  await paperService.deletePaperById(req.params.paperId);
+  const schoolId = req.user.role === 'rootUser' ? req.query.schoolIdToScopeTo : req.schoolId;
+  if (!schoolId && req.user.role !== 'rootUser') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required.');
+  }
+  if (!schoolId && req.user.role === 'rootUser') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID scope must be provided for root users when deleting a paper.');
+  }
+
+  await paperService.deletePaperById(req.params.paperId, schoolId);
   res.status(httpStatus.NO_CONTENT).send();
 });
 

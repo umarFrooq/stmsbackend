@@ -91,7 +91,6 @@ const useAuthStore = create(
       // Selector to check if user has all specified permissions
       hasAllPermissions: (requiredPermissions) => {
         const userPerms = get().permissions;
-        console.log("roolessss",userPerms)
         return requiredPermissions.every(rp => userPerms.includes(rp));
       },
 

@@ -8,15 +8,26 @@ const catchAsync = require("../../utils/catchAsync");
 const db = require("../../config/mongoose");
 const User = db.User;
 const { userTypes } = require("../../config/enums");
+const { roleRights } = require('../../config/roles'); // Import roleRights
 const en = require('../../config/locales/en')
 
 const login = catchAsync(async (req, res) => {
-
-  const { email, password, role } = req.body;
-  const user = await authService.loginUserWithEmailAndPassword(email, password, role);
+  const { email, password, role } = req.body; // role from body is unusual for login, typically derived from user found by email/pass
+  const user = await authService.loginUserWithEmailAndPassword(email, password); // Pass only email/password to service
   const tokens = await tokenService.generateAuthTokens(user);
-  // res.status(httpStatus.OK).send({ user, tokens });
-  res.sendStatus({ user, tokens });
+  const userPermissions = roleRights.get(user.role) || [];
+
+  // Exclude password from user object sent to frontend
+  const userToSend = { ...user.toJSON() }; // Use .toJSON() if available from Mongoose model to strip virtuals/hidden paths
+  delete userToSend.password;
+
+
+  res.status(httpStatus.OK).send({
+    user: userToSend,
+    tokens,
+    roles: [user.role], // Send role as an array
+    permissions: userPermissions
+  });
 });
 const facebookLogin = catchAsync(async (req, res) => {
 

@@ -80,11 +80,18 @@ const DashboardLayout = (props) => {
     // { text: 'Root Dashboard', icon: <AdminPanelSettingsIcon />, path: '/rootadmin', requiredRoles: ['rootUser'] },
 
 
-    // Super Admin specific (school admin - renamed 'supperAdmin' to 'superadmin' for consistency with backend)
-    { text: 'SA Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['superadmin'] }, // Assuming 'superadmin' is the school-level admin
+    // Super Admin specific (school admin)
+    { text: 'School Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['superadmin'] }, // Main dashboard for superadmin
+    { text: 'School Users', icon: <SupervisorAccountIcon />, path: '/superadmin/users', requiredRoles: ['superadmin'], permission: 'viewSchoolUsers' }, // Link to user management for their school
+    { text: 'School Branches', icon: <DomainIcon />, path: '/superadmin/branches', requiredRoles: ['superadmin'], permission: 'viewBranches' }, // Link to branch management for their school
+    // Add links for other modules a superadmin should manage, e.g.:
+    // { text: 'School Grades', icon: <SomeIcon />, path: '/superadmin/grades', requiredRoles: ['superadmin'], permission: 'viewGrades' },
+    // { text: 'School Subjects', icon: <SomeIcon />, path: '/superadmin/subjects', requiredRoles: ['superadmin'], permission: 'viewSubjects' },
+    // { text: 'School Settings', icon: <SettingsIcon />, path: '/superadmin/settings', requiredRoles: ['superadmin'], permission: 'manageOwnSchoolDetails' }, // Example
 
-    // Admin specific
-    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'superadmin'] },
+
+    // Admin specific (This might be a different type of admin, or could be merged/clarified based on system design)
+    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'superadmin'] }, // If superadmin also has 'admin' rights
 
     // Teacher specific
     { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'superadmin'] },
@@ -106,9 +113,11 @@ const DashboardLayout = (props) => {
       <Divider />
       <List>
         {navItems.map((item) => {
-          // Check if user has any of the required roles for this item
-          const canShow = item.requiredRoles.some(role => hasRole(role));
-          if (canShow) {
+          // Check if user has any of the required roles for this item AND the specific permission if defined
+          const hasRequiredRole = item.requiredRoles.some(role => hasRole(role));
+          const hasRequiredPermission = !item.permission || hasPermission(item.permission);
+
+          if (hasRequiredRole && hasRequiredPermission) {
             return (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton onClick={() => navigate(item.path)}>

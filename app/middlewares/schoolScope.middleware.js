@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const ApiError = require('../../utils/ApiError');
+const ApiError = require('../utils/ApiError');
 const { roles } = require('../../config/roles'); // To access role strings
 
 const schoolScopeMiddleware = (req, res, next) => {
@@ -14,7 +14,7 @@ const schoolScopeMiddleware = (req, res, next) => {
   // 'superadmin' is the main one from the original request.
   // 'admin' (if it's a school-level admin), 'teacher' are other examples.
   const schoolScopedRoles = [
-    roles.find(r => r === 'superAdmin'),
+    roles.find(r => r === 'superadmin'),
     roles.find(r => r === 'admin'), // Assuming 'admin' can also be school-scoped
     roles.find(r => r === 'teacher')
     // Add other roles like 'student', 'parent' if they are strictly tied to a school context from login

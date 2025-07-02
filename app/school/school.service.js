@@ -7,7 +7,7 @@ const { roles } = require('../../config/roles'); // To get 'superadmin' role str
 
 // Placeholder for a more robust password generator if desired.
 // For now, using a fixed dummy password.
-const DUMMY_PASSWORD = 'test@123'; // Users should be forced to change this.
+const DUMMY_PASSWORD = 'Password@123'; // Users should be forced to change this.
 
 /**
  * Create a school and its superadmin
@@ -38,11 +38,11 @@ const createSchoolAndAdmin = async (schoolPayload, adminEmail) => {
     fullname: `${nameOfSchool} Admin`, // Or a more generic "School Super Admin"
     email: adminEmail,
     password: hashedPassword,
-    role: roles.find(r => r === 'supperAdmin'), // Ensure 'superadmin' is correctly cased as per config/roles.js
+    role: roles.find(r => r === 'superadmin'), // Ensure 'superadmin' is correctly cased as per config/roles.js
     schoolId: school._id,
     isEmailVerified: false, // Or true, depending on desired flow (e.g., send verification email later)
     isPhoneVerified: false,
-    // userType: 'LOCAL', // Assuming local authentication for this admin
+    userType: 'LOCAL', // Assuming local authentication for this admin
     // branchId and gradeId are required in user model, need to decide how to handle this.
     // For now, I will throw an error or log a message if they are strictly required without defaults.
     // Let's assume they are not strictly required for a 'superadmin' or have defaults,

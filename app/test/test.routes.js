@@ -1,22 +1,28 @@
 const express = require('express');
-const auth = require('../../middlewares/auth'); // Assuming auth middleware exists
-const validate = require('../../middlewares/validate'); // Assuming validate middleware exists
-const  testController = require('./test.controller'); // Assuming these are exported from index.js
-const  testValidations  = require('./test.validations');
+const auth = require('../../middlewares/auth');
+const validate = require('../../middlewares/validate');
+const schoolScopeMiddleware = require('../middlewares/schoolScope.middleware'); // Import middleware
+const testController = require('./test.controller');
+const testValidations = require('./test.validations');
+
 const router = express.Router();
 
-// Define roles that can manage tests
-const testManagementRoles = ['teacher', 'staff', 'admin_education'];
+// Define permissions
+const manageTestsPermission = 'manageTests';
+const viewTestsPermission = 'viewTests';
+
+// Apply auth and schoolScope middleware
+router.use(auth(), schoolScopeMiddleware);
 
 router
   .route('/')
-  .post(auth("testManagement"), validate(testValidations.createTest), testController.createTestHandler)
-  .get(auth("testManagement"), validate(testValidations.getTests), testController.getTestsHandler); // Or broader access if needed
+  .post(auth(manageTestsPermission), validate(testValidations.createTest), testController.createTestHandler)
+  .get(auth(viewTestsPermission), validate(testValidations.getTests), testController.getTestsHandler);
 
 router
   .route('/:testId')
-  .get(auth("testManagement"), validate(testValidations.getTest), testController.getTestHandler) // Or broader access
-  .patch(auth("testManagement"), validate(testValidations.updateTest), testController.updateTestHandler)
-  .delete(auth("testManagement"), validate(testValidations.deleteTest), testController.deleteTestHandler);
+  .get(auth(viewTestsPermission), validate(testValidations.getTest), testController.getTestHandler)
+  .patch(auth(manageTestsPermission), validate(testValidations.updateTest), testController.updateTestHandler)
+  .delete(auth(manageTestsPermission), validate(testValidations.deleteTest), testController.deleteTestHandler);
 
 module.exports = router;

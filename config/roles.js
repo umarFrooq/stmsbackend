@@ -30,16 +30,40 @@ roleRights.set(roles[2], [ // admin
   "gradeManagement","attendanceManagement","testManagement","testResultManagement","manageUser","manageUsers"
 ]);
 
-roleRights.set(roles[3], [ // superadmin (formerly supperAdmin)
-  "manageProfile", 'manageAddress', "manageSellerDetail", "viewPhone",
-  "manageVideo", "manageSellerConfidentialDetail", "changePassword",  "notification", "firebaseToken","manageSeller",
-  "manageTranslation", "manageUser", "getUsers", "manageUsers", "manageBranches","subjectManagement","gradeManagement","attendanceManagement",
-  "testManagement","testResultManagement",
-  // Permissions for managing their own school's details, users, configurations etc.
-  "manageOwnSchoolDetails",
-  "manageSchoolUsers", // Example: Can manage teachers, students within their school
-  "manageSchoolBilling", // Example: Can manage billing for their school
-  "manageSchoolAcademicConfig" // Example: Can manage grades, subjects within their school
+roleRights.set(roles[3], [ // superadmin (school-level admin)
+  // Profile & Basic School Details
+  "manageProfile",
+  "manageOwnSchoolDetails", // General config for their own school
+  // User Management within their school
+  "manageSchoolUsers", // Covers creating/updating/deleting teachers, students, staff within their school
+  "viewSchoolUsers",   // Covers listing users within their school
+  // Branch Management (within their school)
+  "manageBranches",
+  "viewBranches",
+  // Academic Configuration
+  "manageGrades", "viewGrades",
+  "manageSubjects", "viewSubjects", // Assuming subjectManagement covers this
+  "manageTimetables", "viewTimetables",
+  // Academic Operations
+  "manageAttendances", "viewAttendances",
+  "manageTests", "viewTests",
+  "manageTestResults", "viewTestResults",
+  "managePapers", "viewPapers", // For exam papers etc.
+  // Financial Management
+  "manageFees", "viewFees",
+  "manageFines", "viewFines",
+  "manageSchoolBilling",
+  // Other specific permissions previously assigned
+  'manageAddress', // If superadmin manages addresses related to school/users
+  "manageSellerDetail", "viewPhone", // These seem less relevant for SMS superadmin, might be from copy-paste
+  "manageVideo", "manageSellerConfidentialDetail", // ^ same
+  "changePassword",  "notification", "firebaseToken","manageSeller", // ^ same
+  "manageTranslation", // ^ same
+  "gradeManagement", // Covered by manageGrades
+  "attendanceManagement", // Covered by manageAttendances
+  "testManagement", // Covered by manageTests
+  "testResultManagement" // Covered by manageTestResults
+  // "manageUser", "getUsers", "manageUsers", // Replaced by manageSchoolUsers, viewSchoolUsers for clarity
 ]);
 
 roleRights.set(roles[4], [ // rootUser

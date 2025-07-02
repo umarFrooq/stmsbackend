@@ -5,7 +5,7 @@ const ApiError = require('../../utils/ApiError');
 
 /**
  * Create a grade
- * @param {Object} gradeData - Data for tsche grade
+ * @param {Object} gradeData - Data for the grade
  * @param {ObjectId} schoolId - The ID of the school this grade belongs to
  * @returns {Promise<Grade>}
  */

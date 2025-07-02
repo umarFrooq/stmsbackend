@@ -16,23 +16,23 @@ const login = async (credentials) => {
     // However, the provided file already has '/auth/login'. I will stick to what's in the file for now,
     // as the user's original code snippet might have been from a different version or context.
     // The critical part is the response handling.
+    // The backend login controller now sends: { user, tokens, roles, permissions } directly in response.data
 
-    const response = await apiClient.post('/auth/login', credentials); // Using existing path from file
+    const response = await apiClient.post('/auth/login', credentials);
 
-    // Adjusting to the provided API response structure:
-    // { "data": { "user": { ... }, "tokens": { "access": { "token": "..." } } }, ... }
-    if (response.data && response.data.data && response.data.data.tokens && response.data.data.tokens.access && response.data.data.tokens.access.token) {
-      const token = response.data.data.tokens.access.token;
-      const user = response.data.data.user;
-      const roles = user && user.role ? [user.role] : []; // API has user.role as a string
-      const permissions = []; // Permissions are not in the API response
+    if (response.data && response.data.tokens && response.data.tokens.access && response.data.tokens.access.token && response.data.user) {
+      const token = response.data.tokens.access.token;
+      const user = response.data.user; // User profile
+      const roles = response.data.roles || []; // Expecting an array of roles, e.g., ['superadmin']
+      const permissions = response.data.permissions || []; // Expecting an array of permission strings
 
       // Use the login action from the store
       useAuthStore.getState().login(token, user, roles, permissions);
+      // Return what might be useful to the calling component, though store is the source of truth now.
       return { success: true, user, roles, permissions };
     } else {
-      // Handle cases where token is not in the response
-      const message = response.data && response.data.message ? response.data.message : 'Login failed: No token or invalid response structure';
+      // Handle cases where token or essential user data is not in the response
+      const message = response.data && response.data.message ? response.data.message : 'Login failed: Invalid response structure from server.';
       throw new Error(message);
     }
   } catch (error) {
