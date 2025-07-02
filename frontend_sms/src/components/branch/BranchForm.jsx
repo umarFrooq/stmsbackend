@@ -5,8 +5,8 @@ import { TextField, Button, Grid, MenuItem, Paper, Typography, Box } from '@mui/
 
 // Updated branch types based on user feedback
 const branchTypes = [
-  { value: 'main', label: 'Main' },
-  { value: 'sub', label: 'Sub-Branch' },
+  { value: 'main', label: 'main' },
+  { value: 'sub', label: 'sub' },
 ];
 
 // Yup validation schema based on Joi

@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api'; // Adjust if your API is hosted elsewhere or has a different prefix
-
+import apiClient from './api';
 // Function to get the auth token (replace with your actual implementation)
 const getAuthToken = () => {
   // Example: retrieve it from localStorage, a cookie, or a state management store
@@ -9,26 +8,26 @@ const getAuthToken = () => {
 };
 
 // Create an axios instance with default headers
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// const apiClient = axios.create({
+//   baseURL: API_BASE_URL,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
 
-// Interceptor to add the auth token to requests
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// // Interceptor to add the auth token to requests
+// apiClient.interceptors.request.use(
+//   (config) => {
+//     const token = getAuthToken();
+//     if (token) {
+//       config.headers['Authorization'] = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
 
 const getBranches = async (params) => {
   // params could be { sortBy, limit, page, name, branchCode }

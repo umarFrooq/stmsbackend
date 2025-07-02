@@ -62,7 +62,7 @@ const usersearchQuery = async (filter, options, search) => {
 
 }
 
-l
+
 const queryParser = (filter, search) => {
     const filterQuery = [{
         'exists': {
