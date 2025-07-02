@@ -51,6 +51,12 @@ const timetableSchema = new mongoose.Schema(
       ref: 'Grade',
       required: true,
     },
+    schoolId: { // Added schoolId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      required: true,
+      index: true,
+    },
     section: {
       type: String,
       trim: true,

@@ -129,7 +129,7 @@ const SchoolManagementPage = () => {
       field: 'createdAt',
       headerName: 'Created At',
       width: 180,
-      valueGetter: (params) => new Date(params).toLocaleDateString(),
+      valueGetter: (params) => new Date(params.row.createdAt).toLocaleDateString(),
     },
     {
       field: 'actions',

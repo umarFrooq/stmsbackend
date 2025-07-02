@@ -7,52 +7,64 @@ const ApiError = require('../../utils/ApiError');
 const { deleteFromS3 } = require('../../config/s3.file.system'); // Assuming S3 delete utility exists
 
 /**
- * Helper to validate related entities for a paper
+ * Helper to validate related entities for a paper against a given schoolId
+ * @param {Object} paperBody - Contains subjectId, gradeId, branchId
+ * @param {ObjectId} schoolId - The schoolId to validate against
  */
-const validatePaperEntities = async (paperBody) => {
+const validatePaperEntities = async (paperBody, schoolId) => {
   const { subjectId, gradeId, branchId } = paperBody;
 
-  const subject = await Subject.findById(subjectId);
+  if (!schoolId) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'School context is missing for validation.');
+  }
+
+  const subject = await Subject.findOne({ _id: subjectId, schoolId });
   if (!subject) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Subject with ID ${subjectId} not found.`);
+    throw new ApiError(httpStatus.BAD_REQUEST, `Subject with ID ${subjectId} not found in this school.`);
   }
 
-  const grade = await Grade.findById(gradeId);
+  const grade = await Grade.findOne({ _id: gradeId, schoolId });
   if (!grade) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Grade with ID ${gradeId} not found.`);
+    throw new ApiError(httpStatus.BAD_REQUEST, `Grade with ID ${gradeId} not found in this school.`);
   }
 
-  const branch = await Branch.findById(branchId);
+  const branch = await Branch.findOne({ _id: branchId, schoolId });
   if (!branch) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Branch with ID ${branchId} not found.`);
+    throw new ApiError(httpStatus.BAD_REQUEST, `Branch with ID ${branchId} not found in this school.`);
   }
 
-  // Ensure all entities belong to the same branch (if applicable)
-  if (subject.branchId.toString() !== branchId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Subject ${subject.title} does not belong to branch ${branch.name}.`);
+  // Ensure all entities belong to the same branch (which itself belongs to the school)
+  if (subject.branchId.toString() !== branchId.toString()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Subject ${subject.title} does not belong to the specified branch ${branch.name}.`);
   }
-  if (grade.branchId.toString() !== branchId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Grade ${grade.title} does not belong to branch ${branch.name}.`);
+  const gradeBranchId = grade.branchId._id ? grade.branchId._id.toString() : grade.branchId.toString();
+  if (gradeBranchId !== branchId.toString()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Grade ${grade.title} does not belong to the specified branch ${branch.name}.`);
   }
 };
 
 /**
  * Create a paper (upload paper)
- * @param {Object} paperBody - Basic paper data (title, subjectId, gradeId, etc.)
+ * @param {Object} paperData - Basic paper data (title, subjectId, gradeId, etc.)
+ * @param {ObjectId} schoolId - The ID of the school
  * @param {ObjectId} userId - ID of the user uploading the paper (uploadedBy)
  * @param {string} fileUrl - URL of the uploaded paper file from S3
  * @returns {Promise<Paper>}
  */
-const uploadPaper = async (paperBody, userId, fileUrl) => {
-  await validatePaperEntities(paperBody);
+const uploadPaper = async (paperData, schoolId, userId, fileUrl) => {
+  if (!schoolId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to upload a paper.');
+  }
+  await validatePaperEntities(paperData, schoolId);
 
-  const paperData = {
-    ...paperBody,
+  const payload = {
+    ...paperData,
+    schoolId, // Add schoolId
     paperFileUrl: fileUrl,
     uploadedBy: userId,
   };
 
-  const paper = await Paper.create(paperData);
+  const paper = await Paper.create(payload);
   return paper;
 };
 
@@ -60,110 +72,97 @@ const uploadPaper = async (paperBody, userId, fileUrl) => {
  * Query for papers
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
+ * @param {ObjectId} schoolId - The ID of the school
  * @returns {Promise<QueryResult>}
  */
-const queryPapers = async (filter, options) => {
-  const { populate, ...restOptions } = options;
-  
-  let defaultPopulate = 'subjectId:title,gradeId:title,branchId:name,uploadedBy:fullname';
-  if (populate) {
-    defaultPopulate = populate;
+const queryPapers = async (filter, options, schoolId) => {
+  if (!schoolId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to query papers.');
   }
-
-  let query = Paper.find(filter);
-
-  if (restOptions.sortBy) {
-    const sortingCriteria = [];
-    restOptions.sortBy.split(',').forEach((sortOption) => {
-      const [key, order] = sortOption.split(':');
-      sortingCriteria.push((order === 'desc' ? '-' : '') + key);
-    });
-    query = query.sort(sortingCriteria.join(' '));
-  } else {
-    query = query.sort('-createdAt'); // Default sort
-  }
+  const schoolScopedFilter = { ...filter, schoolId };
   
-  defaultPopulate.split(',').forEach((populateOption) => {
-    const parts = populateOption.split(':');
-    let path = parts[0];
-    let select = parts.length > 1 ? parts.slice(1).join(' ') : '';
-    query = query.populate({ path, select });
-  });
-
-  const papers = await Paper.paginate(filter, restOptions, query);
+  // Assuming standard mongoose-paginate-v2 options.populate usage
+  const papers = await Paper.paginate(schoolScopedFilter, options);
   return papers;
 };
 
 /**
  * Get paper by id
- * @param {ObjectId} paperId
- * @param {String} populateOptions - Comma separated string of fields to populate
+ * @param {ObjectId} paperId - Paper ID
+ * @param {ObjectId} schoolId - School ID
+ * @param {String} [populateOptionsStr] - Comma separated string of fields to populate
  * @returns {Promise<Paper>}
  */
-const getPaperById = async (paperId, populateOptions) => {
-  let query = Paper.findById(paperId);
-  let defaultPopulate = 'subjectId gradeId branchId uploadedBy';
-   if (populateOptions) {
-    defaultPopulate = populateOptions;
+const getPaperById = async (paperId, schoolId, populateOptionsStr) => {
+  if (!schoolId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required.');
   }
+  let query = Paper.findOne({ _id: paperId, schoolId });
 
-  defaultPopulate.split(',').forEach((populateOption) => {
-    const parts = populateOption.split(':');
-    let path = parts[0];
-    let select = parts.length > 1 ? parts.slice(1).join(' ') : '';
-    query = query.populate({ path, select });
-  });
-  return query.exec();
+  if (populateOptionsStr) {
+    populateOptionsStr.split(',').forEach(popField => {
+      const [path, select] = popField.trim().split(':');
+      if (select) {
+        query = query.populate({ path, select });
+      } else {
+        query = query.populate(path);
+      }
+    });
+  } else { // Default population
+    query = query.populate('subjectId', 'title')
+                 .populate('gradeId', 'title')
+                 .populate('branchId', 'name')
+                 .populate('uploadedBy', 'fullname');
+  }
+  const paper = await query.exec();
+  if (!paper) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Paper not found or not associated with this school.');
+  }
+  return paper;
 };
 
 /**
  * Update paper by id
- * @param {ObjectId} paperId
- * @param {Object} updateBody
+ * @param {ObjectId} paperId - Paper ID
+ * @param {Object} updateBody - Data to update
+ * @param {ObjectId} schoolId - School ID
  * @param {ObjectId} userId - ID of the user performing the update
  * @param {string} [newFileUrl] - Optional new URL for the paper file
  * @returns {Promise<Paper>}
  */
-const updatePaperById = async (paperId, updateBody, userId, newFileUrl) => {
-  const paper = await getPaperById(paperId);
-  if (!paper) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Paper not found');
-  }
+const updatePaperById = async (paperId, updateBody, schoolId, userId, newFileUrl) => {
+  const paper = await getPaperById(paperId, schoolId); // Ensures paper belongs to school
 
-  // If related entities are being updated, validate them
+  if (updateBody.schoolId && updateBody.schoolId.toString() !== schoolId.toString()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot change the school of a paper.');
+  }
+  delete updateBody.schoolId;
+
+  // If related entities are being updated, validate them against the current schoolId
   if (updateBody.subjectId || updateBody.gradeId || updateBody.branchId) {
     const tempPaperBodyForValidation = {
         subjectId: updateBody.subjectId || paper.subjectId,
         gradeId: updateBody.gradeId || paper.gradeId,
         branchId: updateBody.branchId || paper.branchId,
     };
-    await validatePaperEntities(tempPaperBodyForValidation);
+    await validatePaperEntities(tempPaperBodyForValidation, schoolId);
   }
   
   const oldFileUrl = paper.paperFileUrl;
-  Object.assign(paper, updateBody, { uploadedBy: userId }); // Update uploadedBy as well
+  Object.assign(paper, updateBody, { uploadedBy: userId });
 
-  if (newFileUrl !== undefined) { // If a new file is provided (even if it's null to remove existing - though paperFileUrl is required)
-    paper.paperFileUrl = newFileUrl;
-    if (oldFileUrl && newFileUrl !== oldFileUrl) { // Delete old file if different from new one
+  if (newFileUrl !== undefined) {
+    paper.paperFileUrl = newFileUrl; // newFileUrl can be null if file is removed & schema allows
+    if (oldFileUrl && newFileUrl !== oldFileUrl) {
       try {
         await deleteFromS3(oldFileUrl);
       } catch (s3Error) {
         console.error(`Failed to delete old paper file from S3: ${oldFileUrl}`, s3Error);
-        // Decide if this should throw an error or just log
       }
     }
-  } else if (updateBody.paperFileUrl === null && oldFileUrl) {
-      // This case implies wanting to remove the file, but paperFileUrl is required.
-      // This should ideally be prevented by validation or handled if the requirement changes.
-      // For now, if newFileUrl is undefined, we don't change paperFileUrl unless explicitly set in updateBody.
-      // If paperFileUrl is required, setting it to null here would cause a validation error on save.
-      // The controller should ensure newFileUrl is provided if the file is meant to be replaced.
-      // If paperFileUrl is made optional, this is where one might set it to null.
-      // Given paperFileUrl is required, this block might be less relevant unless removing the file is a valid operation
-      // and the schema changes.
   }
-
+  // Note: If paperFileUrl is required in schema and newFileUrl is null, save will fail.
+  // This logic assumes controller handles file upload and provides newFileUrl correctly.
 
   await paper.save();
   return paper;
@@ -171,24 +170,21 @@ const updatePaperById = async (paperId, updateBody, userId, newFileUrl) => {
 
 /**
  * Delete paper by id
- * @param {ObjectId} paperId
+ * @param {ObjectId} paperId - Paper ID
+ * @param {ObjectId} schoolId - School ID
  * @returns {Promise<Paper>}
  */
-const deletePaperById = async (paperId) => {
-  const paper = await getPaperById(paperId);
-  if (!paper) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Paper not found');
-  }
+const deletePaperById = async (paperId, schoolId) => {
+  const paper = await getPaperById(paperId, schoolId); // Ensures paper belongs to school
 
   const fileUrl = paper.paperFileUrl;
-  await paper.remove(); // Remove from DB first
+  await paper.remove();
 
   if (fileUrl) {
     try {
       await deleteFromS3(fileUrl);
     } catch (s3Error) {
       console.error(`Failed to delete paper file from S3 during paper deletion: ${fileUrl}`, s3Error);
-      // Log and continue as the DB entry is already removed.
     }
   }
   return paper;

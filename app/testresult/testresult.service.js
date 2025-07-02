@@ -10,44 +10,53 @@ const { uploadToS3, deleteFromS3 } = require("../../config/upload-to-s3");
  * Create a test result
  * @param {Object} resultBody - Basic result data (testId, studentId, obtainedMarks, comments)
  * @param {ObjectId} userId - ID of the user marking the result (markedBy)
- * @param {string} [imagePath] - Optional path/URL of the uploaded answer sheet image
+ * @param {Object} resultBody - Basic result data (testId, studentId, obtainedMarks, comments)
+ * @param {ObjectId} schoolId - The ID of the school
+ * @param {ObjectId} userId - ID of the user marking the result (markedBy)
+ * @param {any} [files] - Optional files object, e.g., from multer
  * @returns {Promise<TestResult>}
  */
-const createTestResult = async (resultBody, userId, file) => {
+const createTestResult = async (resultBody, schoolId, userId, files) => {
+  if (!schoolId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required.');
+  }
   const { testId, studentId, obtainedMarks } = resultBody;
-  if(file && file.length)
- resultBody.answerSheetImage = file.testSheet[0].location;
-  const test = await Test.findById(testId);
-  if (!test) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Test not found');
+
+  if (files && files.testSheet && files.testSheet.length > 0) { // Assuming 'testSheet' is the field name for the file
+    resultBody.answerSheetImage = files.testSheet[0].location; // S3 location
   }
 
-  const student = await User.findById(studentId);
-  if (!student || !['student', 'user'].includes(student.role)) { // Assuming 'user' can also be a student
-    throw new ApiError(httpStatus.NOT_FOUND, 'Student not found or is not a valid student.');
+  const test = await Test.findOne({ _id: testId, schoolId });
+  if (!test) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Test not found in this school.');
+  }
+
+  const student = await User.findOne({ _id: studentId, schoolId });
+  if (!student || !['student', 'user'].includes(student.role)) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Student not found in this school or is not a valid student.');
   }
 
   if (obtainedMarks > test.totalMarks) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Obtained marks (${obtainedMarks}) cannot exceed test's total marks (${test.totalMarks}).`);
   }
 
-  const testResultData = {
+  const testResultPayload = {
     ...resultBody,
-    gradeId: test.gradeId, // Denormalize from test
-    branchId: test.branchId, // Denormalize from test
-    totalMarksAtTimeOfTest: test.totalMarks, // Denormalize from test
+    schoolId, // Add schoolId
+    gradeId: test.gradeId,
+    branchId: test.branchId,
+    totalMarksAtTimeOfTest: test.totalMarks,
     markedBy: userId,
-    // answerSheetImage: imagePath, // Can be null
   };
 
   try {
-    const testResult = await TestResult.create(testResultData);
+    const testResult = await TestResult.create(testResultPayload);
     return testResult;
   } catch (error) {
      if (error.code === 11000 || (error.message && error.message.includes("duplicate key error")) ) {
-      throw new ApiError(httpStatus.CONFLICT, 'Result for this student and test already exists.');
+      throw new ApiError(httpStatus.CONFLICT, 'Result for this student and test already exists in this school.');
     }
-    throw error; // Re-throw other errors
+    throw error;
   }
 };
 
@@ -55,125 +64,125 @@ const createTestResult = async (resultBody, userId, file) => {
  * Query for test results
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
+ * @param {ObjectId} schoolId - The ID of the school
  * @returns {Promise<QueryResult>}
  */
-const queryTestResults = async (filter, options) => {
-  const { populate, ...restOptions } = options;
-  
-  let defaultPopulate = 'testId:title,studentId:fullname,gradeId:title,branchId:name,markedBy:fullname';
-  if (populate) {
-    defaultPopulate = populate;
+const queryTestResults = async (filter, options, schoolId) => {
+  if (!schoolId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to query test results.');
   }
+  const schoolScopedFilter = { ...filter, schoolId };
   
-  let query = TestResult.find(filter);
-
-  if (restOptions.sortBy) {
-    const sortingCriteria = [];
-    restOptions.sortBy.split(',').forEach((sortOption) => {
-      const [key, order] = sortOption.split(':');
-      sortingCriteria.push((order === 'desc' ? '-' : '') + key);
-    });
-    query = query.sort(sortingCriteria.join(' '));
-  } else {
-    query = query.sort('-createdAt'); // Default sort
-  }
-
-  defaultPopulate.split(',').forEach((populateOption) => {
-    const parts = populateOption.split(':');
-    let path = parts[0];
-    let select = parts.length > 1 ? parts.slice(1).join(' ') : '';
-    query = query.populate({ path, select });
-  });
-
-  const testResults = await TestResult.paginate(filter, restOptions, query);
+  const testResults = await TestResult.paginate(schoolScopedFilter, options);
   return testResults;
 };
 
 /**
  * Get test result by id
- * @param {ObjectId} resultId
- * @param {String} populateOptions - Comma separated string of fields to populate
+ * @param {ObjectId} resultId - Result ID
+ * @param {ObjectId} schoolId - School ID
+ * @param {String} [populateOptionsStr] - Comma separated string of fields to populate
  * @returns {Promise<TestResult>}
  */
-const getTestResultById = async (resultId, populateOptions) => {
-  let query = TestResult.findById(resultId);
-  let defaultPopulate = 'testId studentId gradeId branchId markedBy';
-   if (populateOptions) {
-    defaultPopulate = populateOptions;
+const getTestResultById = async (resultId, schoolId, populateOptionsStr) => {
+  if (!schoolId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required.');
   }
+  let query = TestResult.findOne({ _id: resultId, schoolId });
   
-  defaultPopulate.split(',').forEach((populateOption) => {
-    const parts = populateOption.split(':');
-    let path = parts[0];
-    let select = parts.length > 1 ? parts.slice(1).join(' ') : '';
-    query = query.populate({ path, select });
-  });
-  return query.exec();
+  if (populateOptionsStr) {
+    populateOptionsStr.split(',').forEach(popField => {
+      const [path, select] = popField.trim().split(':');
+      if (select) {
+        query = query.populate({ path, select });
+      } else {
+        query = query.populate(path);
+      }
+    });
+  } else { // Default population
+    query = query.populate('testId', 'title subjectId')
+                 .populate('studentId', 'fullname email')
+                 .populate('gradeId', 'title')
+                 .populate('branchId', 'name')
+                 .populate('markedBy', 'fullname');
+  }
+
+  const testResult = await query.exec();
+  if (!testResult) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Test result not found or not associated with this school.');
+  }
+  return testResult;
 };
 
 /**
  * Update test result by id
- * @param {ObjectId} resultId
- * @param {Object} updateBody
+ * @param {ObjectId} resultId - Result ID
+ * @param {Object} updateBody - Data to update
+ * @param {ObjectId} schoolId - School ID
  * @param {ObjectId} userId - ID of the user performing the update
- * @param {string} [newImagePath] - Optional new path/URL for the answer sheet image
+ * @param {any} [files] - Optional files object for new answer sheet
  * @returns {Promise<TestResult>}
  */
-const updateTestResultById = async (resultId, updateBody, userId, files) => {
-  const testResult = await getTestResultById(resultId);
-    let file= files && files.testSheet && files.testSheet.length ? files : undefined; // Allow undefined to distinguish from explicit null
-    if(file)
-updateBody.answerSheetImage = file.testSheet[0].location;
-  if (!testResult) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Test result not found');
+const updateTestResultById = async (resultId, updateBody, schoolId, userId, files) => {
+  const testResult = await getTestResultById(resultId, schoolId); // Ensures result belongs to school
+
+  if (updateBody.schoolId && updateBody.schoolId.toString() !== schoolId.toString()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot change the school of a test result.');
   }
-    if (updateBody.deleteImage) { // If a new image is provided (even if it's null to remove existing)
+  delete updateBody.schoolId;
+
+  let newImagePath = files && files.testSheet && files.testSheet.length ? files.testSheet[0].location : undefined;
+
+  if (updateBody.deleteImage === 'true' || updateBody.deleteImage === true) { // Handle string 'true' or boolean true
+    if (testResult.answerSheetImage) {
       try {
-        await deleteFromS3(updateBody.deleteImage);
-        if(!file)
-       testResult.set('answerSheetImage', undefined);
+        await deleteFromS3(testResult.answerSheetImage);
+        updateBody.answerSheetImage = null; // Explicitly set to null if deleted
       } catch (s3Error) {
-        console.error(`Failed to delete old image from S3: ${oldImagePath}`, s3Error);
-        // Decide if this should throw an error or just log
+        console.error(`Failed to delete old image from S3: ${testResult.answerSheetImage}`, s3Error);
       }
-    
+    }
+    delete updateBody.deleteImage; // remove from updateBody
   }
+
+  if (newImagePath) { // If a new image is uploaded
+      if (testResult.answerSheetImage && testResult.answerSheetImage !== newImagePath) { // Delete old if exists and different
+          try {
+              await deleteFromS3(testResult.answerSheetImage);
+          } catch (s3Error) {
+              console.error(`Failed to delete old image from S3: ${testResult.answerSheetImage}`, s3Error);
+          }
+      }
+      updateBody.answerSheetImage = newImagePath;
+  }
+
 
   if (updateBody.obtainedMarks !== undefined && updateBody.obtainedMarks > testResult.totalMarksAtTimeOfTest) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Obtained marks (${updateBody.obtainedMarks}) cannot exceed test's total marks (${testResult.totalMarksAtTimeOfTest}).`);
   }
   
- 
-  
   Object.assign(testResult, updateBody, { markedBy: userId });
-
-
-
   await testResult.save();
   return testResult;
 };
 
 /**
  * Delete test result by id
- * @param {ObjectId} resultId
+ * @param {ObjectId} resultId - Result ID
+ * @param {ObjectId} schoolId - School ID
  * @returns {Promise<TestResult>}
  */
-const deleteTestResultById = async (resultId) => {
-  const testResult = await getTestResultById(resultId);
-  if (!testResult) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Test result not found');
-  }
+const deleteTestResultById = async (resultId, schoolId) => {
+  const testResult = await getTestResultById(resultId, schoolId); // Ensures result belongs to school
 
   const imagePath = testResult.answerSheetImage;
-  await testResult.remove(); // Remove from DB first
+  await testResult.remove();
 
   if (imagePath) {
     try {
       await deleteFromS3(imagePath);
     } catch (s3Error) {
       console.error(`Failed to delete image from S3 during result deletion: ${imagePath}`, s3Error);
-      // Decide if this should throw an error or just log
-      // Potentially, the result is deleted, but image remains. Might need a cleanup job.
     }
   }
   return testResult;

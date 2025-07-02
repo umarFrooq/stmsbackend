@@ -32,6 +32,12 @@ const feeSchema = new mongoose.Schema(
       ref: 'User', 
       required: true 
     },
+    schoolId: { // Added schoolId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      required: true,
+      index: true,
+    },
     gradeId: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'Grade', 

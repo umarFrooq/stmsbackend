@@ -42,7 +42,7 @@ const createSchoolAndAdmin = async (schoolPayload, adminEmail) => {
     schoolId: school._id,
     isEmailVerified: false, // Or true, depending on desired flow (e.g., send verification email later)
     isPhoneVerified: false,
-    // userType: 'LOCAL', // Assuming local authentication for this admin
+    userType: 'LOCAL', // Assuming local authentication for this admin
     // branchId and gradeId are required in user model, need to decide how to handle this.
     // For now, I will throw an error or log a message if they are strictly required without defaults.
     // Let's assume they are not strictly required for a 'superadmin' or have defaults,
