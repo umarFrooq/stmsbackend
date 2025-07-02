@@ -55,35 +55,56 @@ const createBranch = async (branchData, schoolId) => {
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
- * @param {ObjectId} schoolId - The ID of the school to filter branches by
+ * @param {ObjectId} [schoolId] - Optional: The ID of the school to filter branches by (for rootUser or specific queries)
+ * @param {String} [userRole] - Optional: The role of the user making the request
  * @returns {Promise<QueryResult>}
  */
-const queryBranches = async (filter, options, schoolId) => {
-  if (!schoolId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to query branches.');
+const queryBranches = async (filter, options, schoolId, userRole) => {
+  let queryFilter = { ...filter };
+
+  if (userRole !== 'rootUser') { // For any non-root user, schoolId is mandatory from their context
+    if (!schoolId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'School ID context is required for your role.');
+    }
+    queryFilter.schoolId = schoolId;
+  } else if (schoolId) { // rootUser provided a specific schoolId to filter by
+    queryFilter.schoolId = schoolId;
   }
-  const schoolScopedFilter = { ...filter, schoolId };
-  const branches = await Branch.paginate(schoolScopedFilter, options);
+  // If userRole is 'rootUser' and schoolId is not provided, queryFilter does not include schoolId,
+  // thus fetching branches from all schools (if that's the desired behavior for root).
+
+  const branches = await Branch.paginate(queryFilter, options);
   return branches;
 };
 
 /**
- * Get branch by id and schoolId
+ * Get branch by id
  * @param {ObjectId} id - Branch ID
- * @param {ObjectId} schoolId - School ID
+ * @param {ObjectId} [schoolId] - Optional: School ID for scoping (mandatory for non-root)
+ * @param {String} [userRole] - Optional: The role of the user
  * @returns {Promise<Branch>}
  */
-const getBranchById = async (id, schoolId) => {
-  if (!schoolId) {
-    // This case should ideally be handled by auth/middleware for school-scoped users.
-    // If a rootUser calls this without schoolId, it implies fetching any branch by its ID.
-    // For now, let's assume schoolId is required for clarity in a multi-school context.
-    // If global access by rootUser is needed, this function might need different handling or a separate function.
-    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to get a branch.');
+const getBranchById = async (id, schoolId, userRole) => {
+  let query = {};
+  if (userRole === 'rootUser') {
+    query._id = id;
+    if (schoolId) { // rootUser can optionally scope to a school
+      query.schoolId = schoolId;
+    }
+  } else { // Non-root users must be scoped
+    if (!schoolId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'School ID context is required for your role.');
+    }
+    query = { _id: id, schoolId };
   }
-  const branch = await Branch.findOne({ _id: id, schoolId });
+
+  const branch = await Branch.findOne(query);
+
   if (!branch) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found or not associated with this school.');
+    const message = (userRole !== 'rootUser' || schoolId)
+      ? 'Branch not found or not associated with the specified school.'
+      : 'Branch not found.';
+    throw new ApiError(httpStatus.NOT_FOUND, message);
   }
   return branch;
 };

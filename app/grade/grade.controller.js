@@ -35,7 +35,7 @@ const getGradesHandler = catchAsync(async (req, res) => {
   // If rootUser provides a branchId in filter, the service should ensure that branch belongs to the queried schoolId.
   // Or, the service could allow rootUser to list all grades if schoolId is omitted (current service requires schoolId).
 
-  const result = await gradeService.queryGrades(filter, options, schoolId);
+  const result = await gradeService.queryGrades(filter, options, schoolId, req.user.role); // Pass userRole
   res.send(result);
 });
 
@@ -43,15 +43,21 @@ const getGradeHandler = catchAsync(async (req, res) => {
   const populateOptions = req.query.populate;
   const schoolId = req.user.role === 'rootUser' ? req.query.schoolId : req.schoolId;
 
-  if (!schoolId && req.user.role !== 'rootUser') {
+  if (!schoolId && req.user.role !== 'rootUser') { // Non-root users must have a schoolId from context
     throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required for your role.');
   }
-   if (!schoolId && req.user.role === 'rootUser' && !req.query.schoolId){
-     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID must be provided in query for root users to get a specific grade.');
+  // For rootUser, schoolId can be undefined if they want to get any grade by ID, or they can specify it.
+  // The service's getGradeById now handles this with userRole.
+  if (!schoolId && req.user.role === 'rootUser' && req.query.schoolId) { // If rootUser explicitly passed schoolId in query
+     schoolId = req.query.schoolId;
+  } else if (!schoolId && req.user.role === 'rootUser' && !req.query.schoolId) {
+    // If root user and no schoolId in query, pass undefined to service for global get by ID
+    schoolId = undefined;
   }
 
-  const grade = await gradeService.getGradeById(req.params.gradeId, schoolId, populateOptions);
-  // Service already throws 404 if not found in scope
+
+  const grade = await gradeService.getGradeById(req.params.gradeId, schoolId, req.user.role, populateOptions); // Pass userRole
+  // Service already throws 404 if not found in scope (when schoolId is provided)
   res.send(grade);
 });
 

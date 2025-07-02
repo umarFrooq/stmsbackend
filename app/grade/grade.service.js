@@ -38,46 +38,65 @@ const createGrade = async (gradeData, schoolId) => {
  * Query for grades
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
- * @param {ObjectId} schoolId - The ID of the school
+ * @param {ObjectId} [schoolId] - Optional: The ID of the school for filtering. Mandatory for non-root users.
+ * @param {String} [userRole] - Optional: Role of the user making the request.
  * @returns {Promise<QueryResult>}
  */
-const queryGrades = async (filter, options, schoolId) => {
-  if (!schoolId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to query grades.');
+const queryGrades = async (filter, options, schoolId, userRole) => {
+  let queryFilter = { ...filter };
+
+  if (userRole !== 'rootUser') {
+    if (!schoolId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'School ID context is required for your role to query grades.');
+    }
+    queryFilter.schoolId = schoolId;
+  } else if (schoolId) { // rootUser provided a specific schoolId
+    queryFilter.schoolId = schoolId;
   }
-  const schoolScopedFilter = { ...filter, schoolId };
-  
-  // The existing populate logic seems complex and might not be directly compatible with Model.paginate(filter, options)
-  // Model.paginate usually handles population via options.populate.
-  // Let's simplify assuming options.populate is used as standard by paginate plugin.
-  // If custom query building is needed before paginate, it's more involved.
-  // For now, assuming standard usage of paginate:
-  const grades = await Grade.paginate(schoolScopedFilter, options);
+  // If rootUser and no schoolId, lists all grades across all schools.
+
+  const grades = await Grade.paginate(queryFilter, options);
   return grades;
 };
 
 
 /**
- * Get grade by id and schoolId
+ * Get grade by id
  * @param {ObjectId} id - Grade ID
- * @param {ObjectId} schoolId - School ID
- * @param {String} populateOptions - Comma separated string of fields to populate (passed to options for paginate or direct query)
+ * @param {ObjectId} [schoolId] - Optional: School ID for scoping. Mandatory for non-root users.
+ * @param {String} [userRole] - Optional: Role of the user.
+ * @param {String} [populateOptionsStr] - Comma separated string of fields to populate.
  * @returns {Promise<Grade>}
  */
-const getGradeById = async (id, schoolId, populateOptionsStr) => {
-  if (!schoolId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to get a grade.');
+const getGradeById = async (id, schoolId, userRole, populateOptionsStr) => {
+  let mongoQuery = {};
+  if (userRole === 'rootUser') {
+    mongoQuery._id = id;
+    if (schoolId) { // rootUser can optionally scope to a school
+      mongoQuery.schoolId = schoolId;
+    }
+  } else { // Non-root users must be scoped
+    if (!schoolId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'School ID context is required for your role to get a grade.');
+    }
+    mongoQuery = { _id: id, schoolId };
   }
-  let query = Grade.findOne({ _id: id, schoolId });
+
+  let findQuery = Grade.findOne(mongoQuery);
   if (populateOptionsStr) {
-    // Simple population, assuming populate plugin handles complex paths if needed
     populateOptionsStr.split(',').forEach(populateOption => {
-      query = query.populate(populateOption.trim());
+        const [path, select] = populateOption.trim().split(':');
+        if (select) { findQuery = findQuery.populate({ path, select }); }
+        else { findQuery = findQuery.populate(path); }
     });
   }
-  const grade = await query.exec();
+  const grade = await findQuery.exec();
+
   if (!grade) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Grade not found or not associated with this school.');
+    const message = (userRole !== 'rootUser' || schoolId) // If scoped or was intended to be scoped
+      ? 'Grade not found or not associated with the specified school.'
+      : 'Grade not found.';
+    throw new ApiError(httpStatus.NOT_FOUND, message);
   }
   return grade;
 };
@@ -86,20 +105,24 @@ const getGradeById = async (id, schoolId, populateOptionsStr) => {
  * Update grade by id
  * @param {ObjectId} gradeId - Grade ID
  * @param {Object} updateBody - Data to update
- * @param {ObjectId} schoolId - School ID
+ * @param {ObjectId} schoolId - School ID (mandatory: operation is always on a specific school's grade)
+ * @param {String} userRole - Role of the user performing update (for getGradeById call)
  * @returns {Promise<Grade>}
  */
-const updateGradeById = async (gradeId, updateBody, schoolId) => {
-  const grade = await getGradeById(gradeId, schoolId); // Ensures grade belongs to school
+const updateGradeById = async (gradeId, updateBody, schoolId, userRole) => {
+  if (!schoolId) { // Should be provided by controller for both root and superadmin
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Target School ID is required to update a grade.');
+  }
+  // Fetch grade ensuring it belongs to the target schoolId, respecting root's ability to specify any schoolId
+  const grade = await getGradeById(gradeId, schoolId, userRole, null);
 
   if (updateBody.schoolId && updateBody.schoolId.toString() !== schoolId.toString()) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot change the school of a grade.');
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot change the school of a grade via this operation.');
   }
   delete updateBody.schoolId;
 
   if (updateBody.branchId && updateBody.branchId.toString() !== grade.branchId.toString()) {
-    // If branch is being changed, verify the new branch belongs to the same school
-    const newBranch = await Branch.findOne({ _id: updateBody.branchId, schoolId });
+    const newBranch = await Branch.findOne({ _id: updateBody.branchId, schoolId }); // branch must be in same school
     if (!newBranch) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'New branch not found or does not belong to this school.');
     }
@@ -110,7 +133,7 @@ const updateGradeById = async (gradeId, updateBody, schoolId) => {
   }
 
   if (updateBody.nextGradeId) {
-    const nextGrade = await Grade.findOne({ _id: updateBody.nextGradeId, schoolId });
+    const nextGrade = await Grade.findOne({ _id: updateBody.nextGradeId, schoolId }); // nextGrade must be in same school
     if (!nextGrade) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'NextGradeId not found or does not belong to this school.');
     }
@@ -124,12 +147,15 @@ const updateGradeById = async (gradeId, updateBody, schoolId) => {
 /**
  * Delete grade by id
  * @param {ObjectId} gradeId - Grade ID
- * @param {ObjectId} schoolId - School ID
+ * @param {ObjectId} schoolId - School ID (mandatory)
+ * @param {String} userRole - Role of the user performing delete
  * @returns {Promise<Grade>}
  */
-const deleteGradeById = async (gradeId, schoolId) => {
-  const grade = await getGradeById(gradeId, schoolId); // Ensures grade belongs to school
-  // Add any pre-delete checks, e.g., if students are enrolled in this grade
+const deleteGradeById = async (gradeId, schoolId, userRole) => {
+  if (!schoolId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Target School ID is required to delete a grade.');
+  }
+  const grade = await getGradeById(gradeId, schoolId, userRole, null);
   await grade.remove();
   return grade;
 };
@@ -138,11 +164,13 @@ const deleteGradeById = async (gradeId, schoolId) => {
  * Add a section to a grade
  * @param {ObjectId} gradeId - Grade ID
  * @param {string} sectionName - Name of the section
- * @param {ObjectId} schoolId - School ID
+ * @param {ObjectId} schoolId - School ID (mandatory)
+ * @param {String} userRole - Role of the user
  * @returns {Promise<Grade>}
  */
-const addSectionToGrade = async (gradeId, sectionName, schoolId) => {
-  const grade = await getGradeById(gradeId, schoolId); // Ensures grade belongs to school
+const addSectionToGrade = async (gradeId, sectionName, schoolId, userRole) => {
+  if (!schoolId) throw new ApiError(httpStatus.BAD_REQUEST, 'Target School ID is required.');
+  const grade = await getGradeById(gradeId, schoolId, userRole, null);
   const upperSectionName = sectionName.toUpperCase().trim();
   if (grade.sections.includes(upperSectionName)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Section already exists in this grade.');
@@ -156,11 +184,13 @@ const addSectionToGrade = async (gradeId, sectionName, schoolId) => {
  * Remove a section from a grade
  * @param {ObjectId} gradeId - Grade ID
  * @param {string} sectionName - Name of the section
- * @param {ObjectId} schoolId - School ID
+ * @param {ObjectId} schoolId - School ID (mandatory)
+ * @param {String} userRole - Role of the user
  * @returns {Promise<Grade>}
  */
-const removeSectionFromGrade = async (gradeId, sectionName, schoolId) => {
-  const grade = await getGradeById(gradeId, schoolId); // Ensures grade belongs to school
+const removeSectionFromGrade = async (gradeId, sectionName, schoolId, userRole) => {
+  if (!schoolId) throw new ApiError(httpStatus.BAD_REQUEST, 'Target School ID is required.');
+  const grade = await getGradeById(gradeId, schoolId, userRole, null);
   const upperSectionName = sectionName.toUpperCase().trim();
   if (!grade.sections.includes(upperSectionName)) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Section not found in this grade.');
@@ -174,11 +204,13 @@ const removeSectionFromGrade = async (gradeId, sectionName, schoolId) => {
  * Update/Replace all sections in a grade
  * @param {ObjectId} gradeId - Grade ID
  * @param {string[]} sectionsArray - Array of new section names
- * @param {ObjectId} schoolId - School ID
+ * @param {ObjectId} schoolId - School ID (mandatory)
+ * @param {String} userRole - Role of the user
  * @returns {Promise<Grade>}
  */
-const updateSectionsInGrade = async (gradeId, sectionsArray, schoolId) => {
-  const grade = await getGradeById(gradeId, schoolId); // Ensures grade belongs to school
+const updateSectionsInGrade = async (gradeId, sectionsArray, schoolId, userRole) => {
+  if (!schoolId) throw new ApiError(httpStatus.BAD_REQUEST, 'Target School ID is required.');
+  const grade = await getGradeById(gradeId, schoolId, userRole, null);
   // Ensure uniqueness and uppercase for the incoming array
   const uniqueSections = [...new Set(sectionsArray.map(s => s.toUpperCase().trim()))];
   grade.sections = uniqueSections;
