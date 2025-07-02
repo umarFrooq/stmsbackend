@@ -98,7 +98,7 @@ const AppRouter = () => {
           {/* Super Admin Routes */}
           <Route
             path="superadmin"
-            element={<ProtectedRoute role="supperAdmin"><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute role="superadmin"><Outlet /></ProtectedRoute>}
           >
             <Route index element={<SuperAdminDashboardPage />} />
             <Route path="users" element={<UserManagementPageSAC />} />
@@ -128,7 +128,7 @@ const AppRouter = () => {
           {/* Admin Routes */}
           <Route
             path="admin"
-            element={<ProtectedRoute roles={['admin', 'supperAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['admin', 'superadmin']}><Outlet /></ProtectedRoute>}
           >
             <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<AdminUserManagementPage />} />
@@ -142,7 +142,7 @@ const AppRouter = () => {
           {/* Teacher Routes */}
           <Route
             path="teacher"
-            element={<ProtectedRoute roles={['teacher', 'supperAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['teacher', 'superadmin']}><Outlet /></ProtectedRoute>}
           >
             <Route index element={<TeacherDashboardPage />} />
             <Route path="my-classes" element={<MyClassesPageTeacher />} />
@@ -153,7 +153,7 @@ const AppRouter = () => {
           {/* Student Routes */}
           <Route
             path="student"
-            element={<ProtectedRoute roles={['student', 'supperAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['student', 'superadmin']}><Outlet /></ProtectedRoute>}
           >
             <Route index element={<StudentDashboardPage />} />
             {/* <Route path="grades" element={<StudentGradesPage />} /> */}
@@ -162,7 +162,7 @@ const AppRouter = () => {
           {/* Parent Routes */}
            <Route
             path="parent"
-            element={<ProtectedRoute roles={['parent', 'supperAdmin']}><Outlet /></ProtectedRoute>}
+            element={<ProtectedRoute roles={['parent', 'superadmin']}><Outlet /></ProtectedRoute>}
           >
             {/* <Route index element={<ParentDashboardPage />} /> */}
           </Route>

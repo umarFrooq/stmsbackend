@@ -24,7 +24,7 @@ const mockRbacService = {
     // This mock data should reflect the backend's role-permission mapping.
     // It's simplified here. A real backend would provide a more structured list.
     return {
-      superAdmin: ['manageSystemSettings', 'manageUserAccounts', 'manageBranches', 'viewAuditLogs', 'manageRolesAndPermissions', 'ALL_ACCESS'],
+      superadmin: ['manageSystemSettings', 'manageUserAccounts', 'manageBranches', 'viewAuditLogs', 'manageRolesAndPermissions', 'ALL_ACCESS'],
       admin: ['manageStudentEnrollment', 'manageTeacherAccounts', 'manageStudentAccounts', 'manageParentAccounts', 'manageCourseCatalog', 'manageClassScheduling', 'viewBranchReports'],
       teacher: ['manageClassAttendanceRecords', 'enterStudentGrades', 'viewAssignedStudents', 'uploadLearningMaterials', 'viewOwnProfile'],
       student: ['viewOwnGrades', 'viewOwnAttendance', 'viewOwnTimetable', 'accessLearningMaterials', 'viewOwnProfile'],
