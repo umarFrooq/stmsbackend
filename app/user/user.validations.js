@@ -64,7 +64,9 @@ const updateUser = {
       status: Joi.string().valid(userStatus.ACTIVE, userStatus.INACTIVE),
       agreement: Joi.boolean(),
       branchId:Joi.string().custom(objectId),
-      role:Joi.string()
+      role:Joi.string(),
+     gradeID:Joi.string().custom(objectId),
+
     })
     .min(1),
 };
