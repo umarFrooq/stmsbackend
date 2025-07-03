@@ -22,6 +22,7 @@ import SubjectManagementPageAdmin from '../pages/Admin/SubjectManagementPage';
 import ClassSchedulingPageAdmin from '../pages/Admin/ClassSchedulingPage';
 import AttendanceOversightPageAdmin from '../pages/Admin/AttendanceOversightPage';
 import GradeOversightPageAdmin from '../pages/Admin/GradeOversightPage';
+import GradeManagementPage from '../pages/Admin/GradeManagementPage.jsx'; // Added for Grade Management
 
 
 // Super Admin Pages
@@ -104,6 +105,7 @@ const AppRouter = () => {
             <Route path="users" element={<UserManagementPageSAC />} />
             {/* Use the new BranchesPage for the "branches" route */}
             <Route path="branches" element={<BranchesPage />} />
+            <Route path="grades" element={<GradeManagementPage />} /> {/* Added Grade Management for SuperAdmin */}
             <Route path="settings" element={<SystemSettingsPageSAC />} />
             <Route path="roles" element={<RolePermissionViewerPageSAC />} />
           </Route>
@@ -137,6 +139,7 @@ const AppRouter = () => {
             <Route path="scheduling" element={<ClassSchedulingPageAdmin />} />
             <Route path="attendance-oversight" element={<AttendanceOversightPageAdmin />} />
             <Route path="grade-oversight" element={<GradeOversightPageAdmin />} />
+            <Route path="grades" element={<GradeManagementPage />} /> {/* Added Grade Management for Admin */}
           </Route>
 
           {/* Teacher Routes */}

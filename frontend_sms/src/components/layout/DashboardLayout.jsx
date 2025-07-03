@@ -29,6 +29,7 @@ import SchoolIcon from '@mui/icons-material/School'; // Teacher
 import FaceIcon from '@mui/icons-material/Face'; // Student & Parent (use different for parent if needed)
 import SettingsIcon from '@mui/icons-material/Settings'; // Generic settings
 import DomainIcon from '@mui/icons-material/Domain'; // For School Management (Root Admin)
+import ClassIcon from '@mui/icons-material/Class'; // For Grade Management
 
 import useAuthStore from '../../store/auth.store';
 
@@ -84,14 +85,23 @@ const DashboardLayout = (props) => {
     { text: 'School Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['superadmin'] }, // Main dashboard for superadmin
     { text: 'School Users', icon: <SupervisorAccountIcon />, path: '/superadmin/users', requiredRoles: ['superadmin'], permission: 'viewSchoolUsers' }, // Link to user management for their school
     { text: 'School Branches', icon: <DomainIcon />, path: '/superadmin/branches', requiredRoles: ['superadmin'], permission: 'viewBranches' }, // Link to branch management for their school
+    { text: 'Grade Management', icon: <ClassIcon />, path: '/superadmin/grades', requiredRoles: ['superadmin'], permission: 'manageGrades' }, // Added for SuperAdmin
     // Add links for other modules a superadmin should manage, e.g.:
-    // { text: 'School Grades', icon: <SomeIcon />, path: '/superadmin/grades', requiredRoles: ['superadmin'], permission: 'viewGrades' },
     // { text: 'School Subjects', icon: <SomeIcon />, path: '/superadmin/subjects', requiredRoles: ['superadmin'], permission: 'viewSubjects' },
     // { text: 'School Settings', icon: <SettingsIcon />, path: '/superadmin/settings', requiredRoles: ['superadmin'], permission: 'manageOwnSchoolDetails' }, // Example
 
 
     // Admin specific (This might be a different type of admin, or could be merged/clarified based on system design)
     { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'superadmin'] }, // If superadmin also has 'admin' rights
+    // Show Admin's Grade Management link only if the user is 'admin' BUT NOT 'superadmin' (to avoid duplicate links if a superadmin also has admin role)
+    {
+      text: 'Grade Management',
+      icon: <ClassIcon />,
+      path: '/admin/grades',
+      requiredRoles: ['admin'],
+      permission: 'manageGrades',
+      condition: (userRoles) => userRoles.includes('admin') && !userRoles.includes('superadmin')
+    },
 
     // Teacher specific
     { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'superadmin'] },
@@ -113,11 +123,12 @@ const DashboardLayout = (props) => {
       <Divider />
       <List>
         {navItems.map((item) => {
-          // Check if user has any of the required roles for this item AND the specific permission if defined
           const hasRequiredRole = item.requiredRoles.some(role => hasRole(role));
           const hasRequiredPermission = !item.permission || hasPermission(item.permission);
+          // Check additional condition if it exists
+          const meetsCondition = !item.condition || item.condition(roles); // `roles` from useAuthStore
 
-          if (hasRequiredRole && hasRequiredPermission) {
+          if (hasRequiredRole && hasRequiredPermission && meetsCondition) {
             return (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton onClick={() => navigate(item.path)}>
