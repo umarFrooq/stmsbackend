@@ -22,37 +22,42 @@ const createBranchHandler = catchAsync(async (req, res) => {
 });
 
 const getBranchesHandler = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name', 'branchCode']);
+  // Updated to pick 'search', 'status', 'type', and 'schoolId' (for rootUser)
+  const filter = pick(req.query, ['search', 'status', 'type', 'schoolId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']);
-  let schoolId = req.query.schoolId; // rootUser can specify schoolId in query to filter
+  let schoolIdForService = req.query.schoolId; // For rootUser to specify a school
 
   if (req.user.role !== 'rootUser') { // For non-root users (e.g., superadmin)
-    schoolId = req.schoolId; // Must use their own schoolId from context
-    if (!schoolId) {
-      // This should ideally be caught by schoolScopeMiddleware if user.schoolId is missing for a scoped role
+    schoolIdForService = req.schoolId; // Must use their own schoolId from context
+    if (!schoolIdForService) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required for your role and is missing.');
     }
+    // Remove schoolId from filter if it was picked from query, as service will use context schoolId
+    delete filter.schoolId;
   }
-  // If user is rootUser, schoolId can be undefined (service will list all) or a specific ID from query.
-  // If user is superadmin, schoolId is now their req.schoolId.
+  // If user is rootUser, schoolIdForService can be undefined (service lists all if filter.schoolId is also undefined)
+  // or a specific ID from query (which is already in filter.schoolId and will be passed as schoolIdForService).
+  // If filter.schoolId exists (from rootUser query), it will be used by service.
+  // If not, and schoolIdForService (from context for superadmin) exists, that's used.
 
-  const result = await branchService.queryBranches(filter, options, schoolId, req.user.role);
+  const result = await branchService.queryBranches(filter, options, schoolIdForService, req.user.role);
   res.send(result);
 });
 
 const getBranchHandler = catchAsync(async (req, res) => {
-  let schoolId = req.query.schoolId; // rootUser can specify schoolId in query
+  let schoolIdForService = req.query.schoolId; // rootUser can specify schoolId in query
 
   if (req.user.role !== 'rootUser') {
-    schoolId = req.schoolId;
-    if (!schoolId) {
+    schoolIdForService = req.schoolId;
+    if (!schoolIdForService) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required for your role and is missing.');
     }
   }
-  // For rootUser, schoolId can be undefined (service will fetch any branch by ID) or specific.
-  // For superadmin, schoolId is their req.schoolId.
+  // For rootUser, schoolIdForService can be undefined (service will fetch any branch by ID) or specific.
+  // For superadmin, schoolIdForService is their req.schoolId.
+  const populateOptions = req.query.populate; // Get populate from query for getBranchById
 
-  const branch = await branchService.getBranchById(req.params.branchId, schoolId, req.user.role);
+  const branch = await branchService.getBranchById(req.params.branchId, schoolIdForService, req.user.role, populateOptions);
   res.send(branch);
 });
 

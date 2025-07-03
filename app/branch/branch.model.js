@@ -27,6 +27,17 @@ const branchSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    status: {
+      type: String,
+      enum: ['active', 'inactive'], // Define possible status values
+      default: 'active',
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['main', 'sub'], // Using corrected "main" and "sub"
+      required: true,
+    }
   },
   {
     timestamps: true,

@@ -60,18 +60,45 @@ const createBranch = async (branchData, schoolId) => {
  * @returns {Promise<QueryResult>}
  */
 const queryBranches = async (filter, options, schoolId, userRole) => {
-  let queryFilter = { ...filter };
+  const queryFilter = {}; // Start with an empty filter object
 
-  if (userRole !== 'rootUser') { // For any non-root user, schoolId is mandatory from their context
+  // Handle schoolId scoping
+  if (userRole !== 'rootUser') {
     if (!schoolId) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'School ID context is required for your role.');
     }
     queryFilter.schoolId = schoolId;
-  } else if (schoolId) { // rootUser provided a specific schoolId to filter by
-    queryFilter.schoolId = schoolId;
+  } else if (filter.schoolId) { // rootUser specifically queried for a schoolId
+    queryFilter.schoolId = filter.schoolId;
   }
-  // If userRole is 'rootUser' and schoolId is not provided, queryFilter does not include schoolId,
-  // thus fetching branches from all schools (if that's the desired behavior for root).
+  // If rootUser and no filter.schoolId, branches from all schools (matching other criteria) will be fetched.
+
+  // Handle search term for name and branchCode (partial, case-insensitive)
+  if (filter.search) {
+    const searchRegex = new RegExp(filter.search, 'i'); // 'i' for case-insensitive
+    queryFilter.$or = [
+      { name: searchRegex },
+      { branchCode: searchRegex },
+      // Add other fields to search if needed, e.g., address components
+      // { 'address.city': searchRegex },
+    ];
+  }
+
+  // Handle status filter
+  if (filter.status) {
+    queryFilter.status = filter.status;
+  }
+
+  // Handle type filter
+  if (filter.type) {
+    queryFilter.type = filter.type;
+  }
+
+  // Remove processed filter keys from the options pass-through if any, though pick should handle this.
+  // delete filter.search;
+  // delete filter.status;
+  // delete filter.type;
+  // delete filter.schoolId; // This was for root user to specify, actual scoping is via queryFilter.schoolId
 
   const branches = await Branch.paginate(queryFilter, options);
   return branches;
@@ -82,23 +109,32 @@ const queryBranches = async (filter, options, schoolId, userRole) => {
  * @param {ObjectId} id - Branch ID
  * @param {ObjectId} [schoolId] - Optional: School ID for scoping (mandatory for non-root)
  * @param {String} [userRole] - Optional: The role of the user
+ * @param {String} [populateOptionsStr] - Optional: Comma separated string of fields to populate
  * @returns {Promise<Branch>}
  */
-const getBranchById = async (id, schoolId, userRole) => {
-  let query = {};
+const getBranchById = async (id, schoolId, userRole, populateOptionsStr) => {
+  let mongoQuery = {};
   if (userRole === 'rootUser') {
-    query._id = id;
+    mongoQuery._id = id;
     if (schoolId) { // rootUser can optionally scope to a school
-      query.schoolId = schoolId;
+      mongoQuery.schoolId = schoolId;
     }
   } else { // Non-root users must be scoped
     if (!schoolId) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'School ID context is required for your role.');
     }
-    query = { _id: id, schoolId };
+    mongoQuery = { _id: id, schoolId };
   }
 
-  const branch = await Branch.findOne(query);
+  let findQuery = Branch.findOne(mongoQuery);
+  if (populateOptionsStr) {
+    populateOptionsStr.split(',').forEach(populateOption => {
+        const [path, select] = populateOption.trim().split(':');
+        if (select) { findQuery = findQuery.populate({ path, select }); }
+        else { findQuery = findQuery.populate(path); }
+    });
+  }
+  const branch = await findQuery.exec();
 
   if (!branch) {
     const message = (userRole !== 'rootUser' || schoolId)

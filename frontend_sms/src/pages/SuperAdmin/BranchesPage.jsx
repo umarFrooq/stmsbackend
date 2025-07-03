@@ -3,8 +3,15 @@ import { Container, Typography, Alert, Snackbar } from '@mui/material';
 import BranchList from '../../components/branch/BranchList.jsx';
 import BranchForm from '../../components/branch/BranchForm.jsx';
 import { getBranches, createBranch, updateBranch, deleteBranch as deleteBranchApi } from '../../services/branchApi.js';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Box, Grid } from '@mui/material'; // Added imports for filter UI
+import debounce from 'lodash.debounce'; // For debouncing search input
+
 // Assuming your enums are available, e.g.
-// import { branches as branchEnumValues } from '../../../config/enums'; // Adjust path as needed from project root
+// import { braches as branchTypeEnum } from '../../../../config/enums'; // Adjust path as needed from project root
+// For now, let's define them here for simplicity if not easily importable
+const branchTypeEnum = { MAIN: 'main', SUB: 'sub' };
+const branchStatusEnum = { ACTIVE: 'active', INACTIVE: 'inactive' };
+
 
 const BranchesPage = () => {
   const [branches, setBranches] = useState([]);
@@ -16,34 +23,83 @@ const BranchesPage = () => {
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
+  // --- Search and Filter State ---
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState(''); // 'active', 'inactive', or '' for all
+  const [filterType, setFilterType] = useState('');   // 'main', 'sub', or '' for all
+
   // Pagination state
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10); // Default to 10
   const [totalBranches, setTotalBranches] = useState(0);
 
-  const fetchBranchesList = useCallback(async () => {
+  const fetchBranchesList = useCallback(async (currentPage = page, currentSearch = searchTerm, currentStatus = filterStatus, currentType = filterType) => {
     setLoading(true);
     setError(null);
     try {
-      // API expects page to be 1-indexed
-      const data = await getBranches({ page: page + 1, limit: rowsPerPage, sortBy: 'name:asc' });
+      const params = {
+        page: currentPage + 1, // API expects page to be 1-indexed
+        limit: rowsPerPage,
+        sortBy: 'name:asc', // Default sort
+      };
+      if (currentSearch) {
+        params.search = currentSearch;
+      }
+      if (currentStatus) {
+        params.status = currentStatus;
+      }
+      if (currentType) {
+        params.type = currentType;
+      }
+
+      const data = await getBranches(params);
       setBranches(data.results || []);
       setTotalBranches(data.totalResults || 0);
     } catch (err) {
       setError(err.message || 'Failed to fetch branches.');
-      setBranches([]); // Clear branches on error
+      setBranches([]);
       setTotalBranches(0);
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, searchTerm, filterStatus, filterType]); // Include all dependencies that trigger re-fetch
+
+  // Debounced version of fetchBranchesList specifically for search term changes
+  const debouncedFetchBranches = useCallback(debounce((newSearchTerm) => {
+    setPage(0); // Reset to first page on new search
+    fetchBranchesList(0, newSearchTerm, filterStatus, filterType);
+  }, 500), [filterStatus, filterType, rowsPerPage, fetchBranchesList]); // fetchBranchesList is now stable due to its own useCallback deps
 
   useEffect(() => {
-    fetchBranchesList();
-  }, [fetchBranchesList]);
+    // Initial fetch, and fetch when page or rowsPerPage changes directly
+    fetchBranchesList(page, searchTerm, filterStatus, filterType);
+  }, [page, rowsPerPage]); // Note: searchTerm, filterStatus, filterType changes are handled by their respective handlers triggering fetch or debounced fetch
+
+  // Handlers for filter changes
+  const handleSearchChange = (event) => {
+    const newSearchTerm = event.target.value;
+    setSearchTerm(newSearchTerm);
+    debouncedFetchBranches(newSearchTerm);
+  };
+
+  const handleStatusChange = (event) => {
+    const newStatus = event.target.value;
+    setFilterStatus(newStatus);
+    setPage(0); // Reset to first page
+    fetchBranchesList(0, searchTerm, newStatus, filterType);
+  };
+
+  const handleTypeChange = (event) => {
+    const newType = event.target.value;
+    setFilterType(newType);
+    setPage(0); // Reset to first page
+    fetchBranchesList(0, searchTerm, filterStatus, newType);
+  };
+
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
+    // fetchBranchesList will be called by useEffect due to page change
   };
 
   const handleRowsPerPageChange = (event) => {
@@ -120,6 +176,52 @@ const BranchesPage = () => {
       <Typography variant="h4" gutterBottom component="h1">
         Branch Management
       </Typography>
+
+      {/* Filter and Search Controls */}
+      <Box sx={{ mb: 3, p: 2, border: '1px solid #eee', borderRadius: '4px' }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Search (Name/Code)"
+              variant="outlined"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth size="small" variant="outlined">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filterStatus}
+                onChange={handleStatusChange}
+                label="Status"
+              >
+                <MenuItem value=""><em>All Statuses</em></MenuItem>
+                {Object.entries(branchStatusEnum).map(([key, value]) => (
+                  <MenuItem key={key} value={value}>{key.charAt(0) + key.slice(1).toLowerCase()}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth size="small" variant="outlined">
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={filterType}
+                onChange={handleTypeChange}
+                label="Type"
+              >
+                <MenuItem value=""><em>All Types</em></MenuItem>
+                 {Object.entries(branchTypeEnum).map(([key, value]) => (
+                  <MenuItem key={key} value={value}>{key.charAt(0) + key.slice(1).toLowerCase()}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Box>
 
       {showForm ? (
         <BranchForm
