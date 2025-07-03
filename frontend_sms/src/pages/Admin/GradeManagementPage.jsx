@@ -171,7 +171,11 @@ const GradeManagementPage = () => {
       headerName: 'Branch/Campus',
       flex: 1,
       minWidth: 180,
-      valueGetter: (params) => params?.row?.branchId?.name || 'N/A',
+      // Using renderCell for more explicit control, though valueGetter should also work.
+      renderCell: (params) => {
+        const branchName = params?.row?.branchId?.name;
+        return branchName || 'N/A';
+      }
     },
     {
       field: 'sections',
@@ -189,7 +193,11 @@ const GradeManagementPage = () => {
       headerName: 'Next Grade',
       flex: 1,
       minWidth: 180,
-      valueGetter: (params) => params?.row?.nextGradeId?.title || 'N/A',
+      // Using renderCell for consistency, can also use valueGetter
+      renderCell: (params) => {
+        const nextGradeTitle = params?.row?.nextGradeId?.title;
+        return nextGradeTitle || 'N/A';
+      }
     },
     {
       field: 'actions',
