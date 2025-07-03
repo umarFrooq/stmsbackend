@@ -200,6 +200,11 @@ const queryParser = (filter) => {
         // Example: { range: { path: 'createdAt', gte: dateFrom, lte: dateTo } }
         filterClauses.push(queryTypeParser(filter.createdAt, 'createdAt', queryTypes.RANGE));
     }
+if (filter.schoolId && mongoose.Types.ObjectId.isValid(filter.schoolId)) {
+  const schoolObjectId = new mongoose.Types.ObjectId(filter[key]);
+  filterQuery.push(queryTypeParser(schoolObjectId, key, queryTypes.EQUALS));
+//   continue;
+}
 
     // The atlasQueryTypeValidation function will take these arrays and structure them
     // into the final 'compound' query, e.g., putting filterClauses into 'filter' part,
