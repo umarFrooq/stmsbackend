@@ -407,23 +407,31 @@ const UserManagementPage = () => {
     debouncedFetchUsers(newSearchTerm, filterStatus, filterRole, filterBranch);
   };
 
-  const handleFilterChange = (setterFunction, newValue) => {
-    setterFunction(newValue);
-    setPaginationModel(prev => ({ ...prev, page: 0 }));
-    // Refetch immediately with new filter value
-    // Need to get the current values of other filters correctly
-    const currentFilters = {s: searchTerm, st: filterStatus, r: filterRole, b: filterBranch};
-    if(setterFunction === setSearchTerm) currentFilters.s = newValue;
-    else if(setterFunction === setFilterStatus) currentFilters.st = newValue;
-    else if(setterFunction === setFilterRole) currentFilters.r = newValue;
-    else if(setterFunction === setFilterBranch) currentFilters.b = newValue;
+  const handleFilterChange = (filterTypeChanged, newValue) => {
+    setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page
 
-    fetchUsers(0, currentFilters.s, currentFilters.st, currentFilters.r, currentFilters.b);
+    let newSearchTerm = searchTerm;
+    let newStatus = filterStatus;
+    let newRole = filterRole;
+    let newBranch = filterBranch;
+
+    if (filterTypeChanged === 'status') {
+      setFilterStatus(newValue);
+      newStatus = newValue;
+    } else if (filterTypeChanged === 'role') {
+      setFilterRole(newValue);
+      newRole = newValue;
+    } else if (filterTypeChanged === 'branch') {
+      setFilterBranch(newValue);
+      newBranch = newValue;
+    }
+    // Search term changes are handled by handleSearchChange with debouncing
+    fetchUsers(0, newSearchTerm, newStatus, newRole, newBranch);
   };
 
-  const handleStatusFilterChange = (event) => handleFilterChange(setFilterStatus, event.target.value);
-  const handleRoleFilterChange = (event) => handleFilterChange(setFilterRole, event.target.value);
-  const handleBranchFilterChange = (event) => handleFilterChange(setFilterBranch, event.target.value);
+  const handleStatusFilterChange = (event) => handleFilterChange('status', event.target.value);
+  const handleRoleFilterChange = (event) => handleFilterChange('role', event.target.value);
+  const handleBranchFilterChange = (event) => handleFilterChange('branch', event.target.value);; // Added semicolon
 
 
   const handleAddUser = () => {
