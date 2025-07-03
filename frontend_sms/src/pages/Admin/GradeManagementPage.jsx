@@ -171,7 +171,7 @@ const GradeManagementPage = () => {
       headerName: 'Branch/Campus',
       flex: 1,
       minWidth: 180,
-      valueGetter: (params) => params?.row?.branchId?.name || 'N/A',
+      valueGetter: (params) => params?.row?.branchId?.name || 'N/N',
     },
     {
       field: 'sections',

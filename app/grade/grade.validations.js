@@ -44,6 +44,8 @@ const updateGrade = {
       branchId: Joi.string().custom(objectId),
       // sections are managed via dedicated endpoints
       nextGradeId: Joi.string().custom(objectId).allow(null),
+       sections: Joi.array().items(Joi.string().trim().uppercase()).optional().unique(),
+
     })
     .min(1), // Requires at least one field to be updated
 };
