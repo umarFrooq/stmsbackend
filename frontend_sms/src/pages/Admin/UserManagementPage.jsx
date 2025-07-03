@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -7,32 +7,18 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import StyledDataGrid from '../../components/common/StyledDataGrid';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
-// Re-use SuperAdmin's UserFormDialog for now, but ideally, it might have slight variations
-// or be passed different role/branch options.
 import UserFormDialog from '../SuperAdmin/UserFormDialog';
 import NotificationToast from '../../components/common/NotificationToast';
-import {  InputAdornment } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { TextField } from '@mui/material';
 import debounce from 'lodash.debounce';
 
-// Import actual user service
 import userService from '../../services/userService';
-
-import { TextField, Select, MenuItem, FormControl, InputLabel,  Grid } from '@mui/material'; // Added imports for filter UI
-import useAuthStore from '../../store/auth.store'; // For current user context if needed
-
-const ADMIN_MANAGEABLE_ROLES = ['teacher', 'student', 'parent', 'admin']; // Define manageable roles for Admin
-// Placeholder for enums, should be imported from a central config if possible
-const userStatusEnum = { ACTIVE: 'active', INACTIVE: 'inactive' };
+import useAuthStore from '../../store/auth.store';
+// import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
 
 
-// Added imports for filter UI elements
-// import { TextField, Select, MenuItem, FormControl, InputLabel, Box, Grid } from '@mui/material'; 
-// useAuthStore is already imported
-// debounce is already imported
-
-// const ADMIN_MANAGEABLE_ROLES = ['teacher', 'student', 'parent', 'admin']; // Defined
-// const userStatusEnum = { ACTIVE: 'active', INACTIVE: 'inactive' }; // Defined
+const ADMIN_MANAGEABLE_ROLES = ['teacher', 'student', 'parent', 'admin'];
+const USER_STATUS_ENUM = { ACTIVE: 'active', INACTIVE: 'inactive' };
 
 const AdminUserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -55,7 +41,7 @@ const AdminUserManagementPage = () => {
   const [filterBranch, setFilterBranch] = useState('');
   const [availableBranches, setAvailableBranches] = useState([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
-  
+
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [totalUsers, setTotalUsers] = useState(0);
 
@@ -67,19 +53,21 @@ const AdminUserManagementPage = () => {
     setToastOpen(true);
   };
 
-  const fetchUsers = useCallback(async (
+  // Initial fetchUsers structure (to be refined by a subsequent diff)
+  const fetchUsersOriginal = async (
     cPage = paginationModel.page,
     cSearch = searchTerm,
     cStatus = filterStatus,
-    cBranch = filterBranch
+    cBranch = filterBranch,
+    cLimit = paginationModel.pageSize
   ) => {
     setLoading(true);
     setError(null);
     try {
       const params = {
         page: cPage + 1,
-        limit: paginationModel.pageSize,
-        role: ADMIN_MANAGEABLE_ROLES.join(','), // Crucial for Admin page
+        limit: cLimit,
+        role: ADMIN_MANAGEABLE_ROLES.join(','),
         sortBy: 'fullname:asc',
       };
       if (cSearch) params.search = cSearch;
@@ -89,13 +77,13 @@ const AdminUserManagementPage = () => {
       const response = await userService.getAllUsers(params);
       if (response && response.data && Array.isArray(response.data.results)) {
         setUsers(response.data.results);
-        setTotalUsers(response.totalResults || 0);
+        setTotalUsers(response.data.totalResults || 0);
       } else {
-        console.error("Unexpected response structure:", response);
+        console.error("Unexpected response structure (Admin):", response);
         setUsers([]);
         setTotalUsers(0);
-        setError('Failed to fetch users: Unexpected response structure.');
-        showToast('Failed to fetch users: Unexpected response structure.', 'error');
+        setError('Failed to fetch users: Unexpected response.');
+        showToast('Failed to fetch users: Unexpected response.', 'error');
       }
     } catch (err) {
       const errorMessage = err.message || (err.data && err.data.message) || 'Failed to fetch users.';
@@ -106,54 +94,102 @@ const AdminUserManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [paginationModel.page, paginationModel.pageSize]); // Removed other deps, they are passed as args
+  };
+  // fetchUsersOriginal was a placeholder. This is the refined fetchUsers.
+  const fetchUsers = useCallback(async (
+    cPage,
+    cSearch,
+    cStatus,
+    cBranch,
+    cLimit = paginationModel.pageSize
+  ) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page: cPage + 1,
+        limit: cLimit,
+        role: ADMIN_MANAGEABLE_ROLES.join(','),
+        sortBy: 'fullname:asc',
+      };
+      if (cSearch) params.search = cSearch;
+      if (cStatus) params.status = cStatus;
+      if (cBranch) params.branchId = cBranch;
 
- useEffect(() => {
+      const response = await userService.getAllUsers(params);
+      if (response && response.data && Array.isArray(response.data.results)) {
+        setUsers(response.data.results);
+        setTotalUsers(response.data.totalResults || 0);
+      } else {
+        console.error("Unexpected response structure (Admin):", response);
+        setUsers([]);
+        setTotalUsers(0);
+        setError('Failed to fetch users: Unexpected response.');
+        showToast('Failed to fetch users: Unexpected response.', 'error');
+      }
+    } catch (err) {
+      const errorMessage = err.message || (err.data && err.data.message) || 'Failed to fetch users.';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+      setUsers([]);
+      setTotalUsers(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [paginationModel.pageSize]); // Stable: depends on pageSize for default cLimit. userService is stable.
+
+  useEffect(() => {
     setLoadingBranches(true);
     const branchParams = { limit: 500, sortBy: 'name:asc' };
     const fetchBranchListForFilter = async () => {
-        try {
-            const branchesResponse = await (await import('../../services/branchApi.js')).getBranches(branchParams);
-            setAvailableBranches(branchesResponse.results || []);
-        } catch (e) {
-            showToast('Failed to load branches for filter.', 'error');
-            setAvailableBranches([]);
-        } finally {
-            setLoadingBranches(false);
-        }
+      try {
+        const { getBranches: fetchBranchesApi } = await import('../../services/branchApi.js');
+        const branchesResponse = await fetchBranchesApi(branchParams);
+        setAvailableBranches(branchesResponse.results || []);
+      } catch (e) {
+        showToast('Failed to load branches for filter.', 'error');
+        setAvailableBranches([]);
+      } finally {
+        setLoadingBranches(false);
+      }
     };
     fetchBranchListForFilter();
   }, []);
 
-
-  const debouncedFetchUsers = useCallback(debounce((s, st, b) => {
-    setPaginationModel(prev => ({ ...prev, page: 0 }));
-    fetchUsers(0, s, st, b);
-  }, 500), [fetchUsers]);
-
-
+  // This useEffect is the single source of truth for triggering data fetches.
   useEffect(() => {
-    fetchUsers(paginationModel.page, searchTerm, filterStatus, filterBranch);
-  }, [paginationModel.page, paginationModel.pageSize, fetchUsers]);
+    // Debounce logic for searchTerm will be handled by how setSearchTerm is called if needed,
+    // or by having a separate debounced effect for searchTerm that then calls fetchUsers.
+    // For now, direct fetch on any change including searchTerm for simplicity of this effect.
+    // If direct fetch on searchTerm is too much, handleSearchChange should use its own debounce.
+    fetchUsers(paginationModel.page, searchTerm, filterStatus, filterBranch, paginationModel.pageSize);
+  }, [paginationModel.page, paginationModel.pageSize, searchTerm, filterStatus, filterBranch, fetchUsers]);
+
+  // Debounced function specifically for search term changes to update state & trigger main useEffect
+  const debouncedSetSearchTerm = useCallback(
+    debounce((newSearchTerm) => {
+      setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page for new search
+      setSearchTerm(newSearchTerm); // This will trigger the main useEffect
+    }, 500),
+    [] // No dependencies, it's a stable debouncer
+  );
 
   const handleSearchChange = (event) => {
-    const newSearchTerm = event.target.value;
-    setSearchTerm(newSearchTerm);
-    debouncedFetchUsers(newSearchTerm, filterStatus, filterBranch);
+    debouncedSetSearchTerm(event.target.value);
   };
 
-  const handleFilterChange = (setterFunction, newValue) => {
-    setterFunction(newValue);
-    setPaginationModel(prev => ({ ...prev, page: 0 }));
-    const currentFilters = {s: searchTerm, st: filterStatus, b: filterBranch};
-    if(setterFunction === setSearchTerm) currentFilters.s = newValue; // Should not happen here
-    else if(setterFunction === setFilterStatus) currentFilters.st = newValue;
-    else if(setterFunction === setFilterBranch) currentFilters.b = newValue;
-    fetchUsers(0, currentFilters.s, currentFilters.st, currentFilters.b);
+  const handleFilterChange = (filterTypeChanged, newValue) => {
+    setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page for any filter change
+    if (filterTypeChanged === 'status') {
+      setFilterStatus(newValue);
+    } else if (filterTypeChanged === 'branch') {
+      setFilterBranch(newValue);
+    }
+    // The main useEffect will pick up changes to filterStatus or filterBranch
   };
-  const handleStatusFilterChange = (event) => handleFilterChange(setFilterStatus, event.target.value);
-  const handleBranchFilterChange = (event) => handleFilterChange(setFilterBranch, event.target.value);
 
+  const handleStatusFilterChange = (event) => handleFilterChange('status', event.target.value);
+  const handleBranchFilterChange = (event) => handleFilterChange('branch', event.target.value);
 
   const handleAddUser = () => {
     setEditingUser(null);
@@ -162,8 +198,8 @@ const AdminUserManagementPage = () => {
 
   const handleEditUser = (user) => {
     if (!ADMIN_MANAGEABLE_ROLES.includes(user.role)) {
-        showToast("You do not have permission to edit this user's role.", "warning");
-        return;
+      showToast("You do not have permission to edit this user's role.", "warning");
+      return;
     }
     setEditingUser(user);
     setIsUserFormOpen(true);
@@ -171,8 +207,8 @@ const AdminUserManagementPage = () => {
 
   const handleDeleteUser = (user) => {
     if (!ADMIN_MANAGEABLE_ROLES.includes(user.role)) {
-        showToast("You do not have permission to delete this user.", "warning");
-        return;
+      showToast("You do not have permission to delete this user.", "warning");
+      return;
     }
     setUserToDelete(user);
     setConfirmDialogOpen(true);
@@ -182,9 +218,10 @@ const AdminUserManagementPage = () => {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      await userService.deleteUser(userToDelete.id); 
+      await userService.deleteUser(userToDelete.id);
       showToast(`User "${userToDelete.fullname}" deleted successfully.`, 'success');
-      fetchUsers(paginationModel.page, searchTerm, filterStatus, filterBranch);
+      fetchUsers(0, searchTerm, filterStatus, filterBranch, paginationModel.pageSize);
+      setPaginationModel(prev => ({ ...prev, page: 0 }));
     } catch (err) {
       showToast(err.message || (err.data && err.data.message) || "Failed to delete user.", 'error');
     } finally {
@@ -196,19 +233,20 @@ const AdminUserManagementPage = () => {
 
   const handleUserFormSubmit = async (values, isEditingMode, userId) => {
     if (!ADMIN_MANAGEABLE_ROLES.includes(values.role)) {
-        showToast(`Admin cannot ${isEditingMode ? 'edit to' : 'create'} users with the role: ${values.role}. Allowed roles: ${ADMIN_MANAGEABLE_ROLES.join(', ')}.`, "error");
-        return false;
+      showToast(`Admin cannot ${isEditingMode ? 'edit to' : 'create'} users with the role: ${values.role}. Allowed roles: ${ADMIN_MANAGEABLE_ROLES.join(', ')}.`, "error");
+      return false;
     }
     try {
       if (isEditingMode) {
-        await userService.updateUser(userId, values); 
+        await userService.updateUser(userId, values);
         showToast('User updated successfully!', 'success');
       } else {
-        await userService.addUser(values); 
+        await userService.addUser(values);
         showToast('User created successfully!', 'success');
       }
       setIsUserFormOpen(false);
-      fetchUsers(paginationModel.page, searchTerm, filterStatus, filterBranch);
+      fetchUsers(0, searchTerm, filterStatus, filterBranch, paginationModel.pageSize);
+      setPaginationModel(prev => ({ ...prev, page: 0 }));
       return true;
     } catch (apiError) {
       showToast(apiError.message || (apiError.data && apiError.data.message) || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
@@ -230,11 +268,11 @@ const AdminUserManagementPage = () => {
       width: 120,
       renderCell: (params) => <Chip label={params.value} size="small" />
     },
-    { 
-      field: 'branch', 
-      headerName: 'Branch/Campus', 
+    {
+      field: 'branch',
+      headerName: 'Branch/Campus',
       width: 180,
-      valueGetter: (params) => params.row.branchId?.name || 'N/A' 
+      valueGetter: (params) => params.row.branchId?.name || 'N/A'
     },
     {
       field: 'status',
@@ -280,10 +318,9 @@ const AdminUserManagementPage = () => {
         </Button>
       </Box>
 
-      {/* Filter and Search UI */}
       <Box sx={{ mb: 3, p: 2, border: '1px solid #eee', borderRadius: '4px' }}>
         <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={12} sm={6} md={4}> {/* Adjusted grid size */}
+          <Grid item xs={12} sm={6} md={4}>
             <TextField
               fullWidth
               label="Search (Name, Email, Phone)"
@@ -293,18 +330,18 @@ const AdminUserManagementPage = () => {
               size="small"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}> {/* Adjusted grid size */}
+          <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth size="small" variant="outlined">
               <InputLabel>Status</InputLabel>
               <Select value={filterStatus} onChange={handleStatusFilterChange} label="Status">
                 <MenuItem value=""><em>All Statuses</em></MenuItem>
-                {Object.entries(userStatusEnum).map(([key, value]) => (
+                {Object.entries(USER_STATUS_ENUM).map(([key, value]) => (
                   <MenuItem key={key} value={value}>{key.charAt(0) + key.slice(1).toLowerCase()}</MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}> {/* Adjusted grid size */}
+          <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth size="small" variant="outlined" disabled={loadingBranches}>
               <InputLabel>Branch</InputLabel>
               <Select value={filterBranch} onChange={handleBranchFilterChange} label="Branch">
@@ -320,8 +357,7 @@ const AdminUserManagementPage = () => {
         </Grid>
       </Box>
 
-
-      {error && !loading && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
+      {error && !loading && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <StyledDataGrid
         rows={users}
@@ -330,17 +366,18 @@ const AdminUserManagementPage = () => {
         error={null}
         getRowId={(row) => row.id}
         minHeight={500}
+        rowCount={totalUsers}
+        paginationModel={paginationModel}
+        onPaginationModelChange={setPaginationModel}
+        paginationMode="server"
       />
 
-      {/* For Admin, UserFormDialog should be restricted to roles like teacher, student, parent */}
-      {/* This can be handled by passing allowed roles to UserFormDialog or creating a specific AdminUserFormDialog */}
       <UserFormDialog
         open={isUserFormOpen}
         onClose={handleUserFormClose}
         user={editingUser}
         onSubmit={handleUserFormSubmit}
-        // Pass props to UserFormDialog to restrict role selection if needed:
-        availableRoles={['teacher', 'student', 'parent']}
+        availableRoles={ADMIN_MANAGEABLE_ROLES.filter(role => role !== 'admin' && role !== 'superAdmin')}
       />
 
       <ConfirmationDialog
