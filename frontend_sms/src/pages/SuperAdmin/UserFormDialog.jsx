@@ -34,6 +34,18 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
   const [loadingGrades, setLoadingGrades] = useState(false);
   const [gradeError, setGradeError] = useState(null);
 
+  // Moved initialValues declaration before useEffect hooks that might depend on it indirectly or directly.
+  const initialValues = {
+    fullname: user?.fullname || '',
+    email: user?.email || '',
+    password: '',
+    confirmPassword: '',
+    role: user?.role || '',
+    branchId: user?.branchId?._id || user?.branchId || '', // Handle populated vs direct ID for branch
+    gradeId: user?.gradeId?._id || user?.gradeId || '', // Handle populated vs direct ID for grade
+    status: user?.status || 'active',
+  };
+
   // Effect for fetching branches
   useEffect(() => {
     if (open) {
@@ -114,19 +126,10 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
       setLoadingGrades(false);
       setGradeError(null);
     }
+  // The problematic useEffect was the one for fetching grades, which depended on initialValues.role and initialValues.branchId.
+  // By moving initialValues above all useEffects, this specific ReferenceError should be resolved.
+  // The Formik component itself will also use these initialValues when it mounts.
   }, [open, user?.role, initialValues.role, initialValues.branchId, isEditing, user?.branchId, currentUser?.schoolScope]);
-
-
-  const initialValues = {
-    fullname: user?.fullname || '',
-    email: user?.email || '',
-    password: '',
-    confirmPassword: '',
-    role: user?.role || '',
-    branchId: user?.branchId?._id || user?.branchId || '', // Handle populated vs direct ID for branch
-    gradeId: user?.gradeId?._id || user?.gradeId || '', // Handle populated vs direct ID for grade
-    status: user?.status || 'active',
-  };
 
   const validationSchema = Yup.object().shape({
     fullname: Yup.string().trim().required('Full name is required'),
