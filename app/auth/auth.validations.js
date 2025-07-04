@@ -17,7 +17,6 @@ const register = {
     section:Joi.string(),
     status:Joi.string(),
     gradeId:Joi.string().custom(objectId).allow(null),
-    cnic:Joi.string()
   }),
 };
 const registerSeller = {

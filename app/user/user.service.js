@@ -60,7 +60,7 @@ const createUser = async (userBody, schoolId) => {
 setRollNumber = await User.findOne({ gradeId: mongoose.Types.ObjectId(userBody.gradeId) })
   .sort({ createdAt: -1 });
     if(setRollNumber && setRollNumber.rollNumber)
-userBody.rollNumber = setRollNumber.rollNumber+1
+userBody.rollNumber = setRollNumber+1
     else{
         userBody.rollNumber = 1
     }
