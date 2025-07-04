@@ -300,6 +300,14 @@ const UserManagementPage = () => {
       renderCell: (params) => <Chip label={params.value} size="small"
         color={params.value === 'superAdmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} />
     },
+         {
+      field: 'cnic',
+      headerName: 'CNIC',
+      width: 120,
+
+      renderCell: (params) => <Chip label={params.value} size="small"
+        color={params.value === 'superadmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} />
+    },
       {
       field: 'branch',
       headerName: 'Branch/Campus',
