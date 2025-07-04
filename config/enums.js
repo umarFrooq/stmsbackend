@@ -163,7 +163,7 @@ const redisEnums = {
 
 
 const roleTypes = {
-  SUPPLIER: "supperAdmin",
+  SUPPLIER: "superadmin",
   USER: "student",
   ADMIN: "admin",
   REQUESTED_SUPPLIER: "teacher",

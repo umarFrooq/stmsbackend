@@ -73,8 +73,8 @@ const AdminUserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        role: ADMIN_MANAGEABLE_ROLES.join(','),
-        sortBy: 'fullname:asc',
+        // role: ADMIN_MANAGEABLE_ROLES.join(','),
+        // sortBy: 'fullname:asc',
       };
       if (cSearch) params.search = cSearch;
       if (cStatus) params.status = cStatus;
@@ -118,8 +118,8 @@ const AdminUserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        role: ADMIN_MANAGEABLE_ROLES.join(','),
-        sortBy: 'fullname:asc',
+        // role: ADMIN_MANAGEABLE_ROLES.join(','),
+        // sortBy: 'fullname:asc',
       };
       if (cSearch) params.search = cSearch; // Backend handles this as name search ideally
       if (cStatus) params.status = cStatus;

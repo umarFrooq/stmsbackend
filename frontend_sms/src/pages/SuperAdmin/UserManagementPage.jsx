@@ -18,7 +18,7 @@ import useAuthStore from '../../store/auth.store';
 // Assuming branchApi.js will be used for fetching branches for filter
 // import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
 
-const ALL_ROLES_FOR_FILTER = ['superAdmin', 'admin', 'teacher', 'student', 'parent', 'rootUser']; // Example
+const ALL_ROLES_FOR_FILTER = ['superadmin', 'admin', 'teacher', 'student', 'parent', 'rootUser']; // Example
 const USER_STATUS_ENUM = { ACTIVE: 'active', INACTIVE: 'inactive' };
 
 const UserManagementPage = () => {
@@ -77,7 +77,7 @@ const UserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        sortBy: 'fullname:asc',
+        // sortBy: 'fullname:asc',
       };
       if (cSearch) params.search = cSearch; // Name search
       if (cStatus) params.status = cStatus;
@@ -224,7 +224,7 @@ const UserManagementPage = () => {
   };
 
   const handleDeleteUser = (user) => {
-    if (user.role === 'superAdmin' && users.filter(u => u.role === 'superAdmin').length <= 1) {
+    if (user.role === 'superadmin' && users.filter(u => u.role === 'superadmin').length <= 1) {
       showToast("Cannot delete the only SuperAdmin account.", "warning");
       return;
     }
