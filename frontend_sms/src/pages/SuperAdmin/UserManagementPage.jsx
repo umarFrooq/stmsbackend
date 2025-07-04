@@ -77,7 +77,7 @@ const UserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        sortBy: 'fullname:asc',
+        // sortBy: 'fullname:asc',
       };
       if (cSearch) {
         params.name = 'fullname';
@@ -297,7 +297,7 @@ const UserManagementPage = () => {
       field: 'branch',
       headerName: 'Branch/Campus',
       width: 180,
-      valueGetter: (params) => params.row.branchId?.name || 'N/A'
+      renderCell: (params) => params?.row?.branchId?.name || 'N/A'
     },
     {
       field: 'status',
