@@ -11,7 +11,7 @@ const subjectManagementRoles = ['admin_education', 'staff'];
 router
   .route('/')
   .post(auth("subjectManagement"), validate(subjectValidations.createSubject), subjectController.createSubjectHandler)
-  .get(validate(subjectValidations.getSubjects), subjectController.getSubjectsHandler); // Publicly accessible or add auth as needed
+  .get(auth("subject"),validate(subjectValidations.getSubjects), subjectController.getSubjectsHandler); // Publicly accessible or add auth as needed
 
 router
   .route('/:subjectId')

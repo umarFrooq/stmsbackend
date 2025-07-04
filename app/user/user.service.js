@@ -922,20 +922,12 @@ const validateRefCode = async (refCode) => {
 
 
 
-const getAllUser = async (filter, options, schoolId) => { // Removed 'search' object, 'search' string is now in 'filter'
-    let effectiveFilter = { ...filter }; // Clone to avoid modifying the input object directly
-    effectiveFilter = setAtasDateCondition(effectiveFilter); // Assuming this handles date filters
+const getAllUser = async (filter, options, search,schoolId) => {
+    filter = setAtasDateCondition(filter)
     options = sortByParser(options, { 'createdAt': -1 });
-
-    if (schoolId) { // Ensure schoolId from context is applied if present
-        effectiveFilter.schoolId = schoolId;
-    }
-    // 'search', 'status', 'branchId', 'role' are now expected to be properties of 'effectiveFilter'
-
-    // The `usersearchQuery` will now take `effectiveFilter` which contains the search term and other filters.
-    // The third argument to `usersearchQuery` (previously the `search` object {name, value}) is no longer needed in the same way.
-    // `usersearchQuery` will need to be adapted to look for `effectiveFilter.search`.
-    let result = await usersearchQuery(effectiveFilter, options); // Pass only filter and options
+    // filter.schoolId=mongoose.Types.ObjectId(schoolId)
+        filter.schoolId=schoolId
+    let result = await usersearchQuery(filter, options, search);
     if (!result || !Object.keys(result).length) {
       result = {
         "page": options.page || 1,

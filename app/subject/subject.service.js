@@ -4,6 +4,7 @@ const Branch = require('../branch/branch.model'); // Adjust path as needed
 const User = require('../user/user.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
 let {slugGenerator}=require("@/config/components/general.methods");
+const mongoose =require('mongoose')
 /**
  * Create a subject
  * @param {Object} subjectData - Data for the subject
@@ -48,9 +49,11 @@ const createSubject = async (subjectData, schoolId) => {
  * @returns {Promise<QueryResult>}
  */
 const querySubjects = async (filter, options, schoolId) => {
+
   if (!schoolId) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to query subjects.');
   }
+  schoolId=mongoose.Types.ObjectId(schoolId)
   const schoolScopedFilter = { ...filter, schoolId };
   const subjects = await Subject.paginate(schoolScopedFilter, options);
   return subjects;

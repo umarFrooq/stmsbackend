@@ -8,7 +8,9 @@ roleRights.set(roles[0], [ // student
   "manageProfile", 'manageReview', 'manageCart', "viewPhone", "getGroupBuy",
   'manageWishList', 'manageAddress', "managePayment", "manageVideo", "follow", "shippmentStatus",
   "changePassword", "firebaseToken",  "manageWallet", "refund", "voucher", "pushNotification","cardPayment",
-"manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial"]);
+"manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial",
+"subject"
+]);
 
 roleRights.set(roles[1], [ // teacher
   'getUsers', 'manageUsers', "manageVisitStats","manageRoles","manageQa",
@@ -19,7 +21,7 @@ roleRights.set(roles[1], [ // teacher
   "manageFirebase", "manageWallet", "refund", "manageRefund", "manageVoucher", "manageGroupBuy", "manageLogs", "print", "manageSiteMap", "adminOrder", "manageAllProducts",
   "pushNotification","manageDeals",  "pushNotification", "getOrderTransaction", "updateSlug", "manageCollections","manageBulkOp","manageSeller","manageDashboard","manageGA","manageTranslation",
   "manageStore","manageReport","productImport","manageSetting","socialToken","managePromotion","manageVector","manageCurrency","manageToken","manageFeedSync","manageVideoUpload", "videoCount","manageRevenue","manageStatus",  "apiKey",
-  "manageTransaction","attendanceManagement","testManagement","testResultManagement"
+  "manageTransaction","attendanceManagement","testManagement","testResultManagement","subject"
 ]);
 
 roleRights.set(roles[2], [ // admin
@@ -27,7 +29,7 @@ roleRights.set(roles[2], [ // admin
   "manageOrders", "getOrders", "manageSellerDetail", "subjectManagement", "manageVideo", "manageSellerConfidentialDetail", "print", "notification",
   "firebaseToken", "changePassword", "csvUpload", "manageRefund", "refund", "userManageAddress",  "pushNotification","manageAnswer", "manageSeller", "manageDashboard", "manageTranslation", "manageStatus",
   "manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting","getUsers",
-  "gradeManagement","attendanceManagement","testManagement","testResultManagement","manageUser","manageUsers"
+  "gradeManagement","attendanceManagement","testManagement","testResultManagement","manageUser","manageUsers","subject"
 ]);
 
 roleRights.set(roles[3], [ // superadmin (school-level admin)
@@ -63,7 +65,7 @@ roleRights.set(roles[3], [ // superadmin (school-level admin)
   "attendanceManagement", // Covered by manageAttendances
   "testManagement", // Covered by manageTests
   "testResultManagement" ,// Covered by manageTestResults
-  "getUsers"
+  "getUsers","subject"
   // "manageUser", "getUsers", "manageUsers", // Replaced by manageSchoolUsers, viewSchoolUsers for clarity
 ]);
 
@@ -71,7 +73,7 @@ roleRights.set(roles[4], [ // rootUser
   "manageSchools", // Full CRUD on school entities
   "manageAllUsers", // Typically a root user can manage any user
   "viewSystemAnalytics", // Example permission
-  "manageSystemSettings" // Example permission
+  "manageSystemSettings","subject" // Example permission
 ]);
 module.exports = {
   roles,

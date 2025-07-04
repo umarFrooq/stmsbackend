@@ -5,14 +5,14 @@ const pick = require('../../utils/pick');
 const ApiError = require('../../utils/ApiError');
 
 const createSubjectHandler = catchAsync(async (req, res) => {
-  const subject = await subjectService.createSubject(req.body);
+  const subject = await subjectService.createSubject(req.body,req.user.schoolId);
   res.status(httpStatus.CREATED).send(subject);
 });
 
 const getSubjectsHandler = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['title', 'subjectCode', 'branchId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await subjectService.querySubjects(filter, options);
+  const result = await subjectService.querySubjects(filter, options,req.user.schoolId);
   res.send(result);
 });
 

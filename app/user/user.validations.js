@@ -131,13 +131,13 @@ const getAllUsers = {
     page: Joi.number().integer(),
     from: Joi.date().allow('', null),
     to: Joi.date().allow('', null),
-    // name: Joi.string(), // Replaced by search
-    // value: Joi.string(), // Replaced by search
-    search: Joi.string().allow('', null).description('Generic search term for fullname, email, phone'),
-    status: Joi.string().valid(...Object.values(userStatus), '').allow(null).description('Filter by user status'),
+    name: Joi.string(), // Replaced by search
+    value: Joi.string(), // Replaced by search
+    // search: Joi.string().allow('', null).description('Generic search term for fullname, email, phone'),
+    // status: Joi.string().valid(...Object.values(userStatus), '').allow(null).description('Filter by user status'),
     branchId: Joi.string().custom(objectId).allow('', null).description('Filter by branch ID'),
-    city: Joi.string().allow('', null),
-    lang:Joi.string().allow('', null)
+    // city: Joi.string().allow('', null),
+    // lang:Joi.string().allow('', null)
   }),
 };
 

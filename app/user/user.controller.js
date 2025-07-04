@@ -189,9 +189,10 @@ const getAllUser = catchAsync(async (req, res) => { // This is linked to /v2/use
   // Updated to pick new filter params: search, status, branchId. Removed name, value.
   const filter = pick(req.query, ['search', 'role', 'status', 'branchId', 'email', 'to', 'from', 'city', 'lang']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']); // Added populate
+  const search = pick(req.query, ['name', 'value']);
   // The 'search' string is now part of the 'filter' object.
   // The 'search' object {name, value} is no longer needed for userService.getAllUser
-  const result = await userService.getAllUser(filter, options, req.schoolId); // Removed old 'search' object param
+  const result = await userService.getAllUser(filter, options,search, req.schoolId); // Removed old 'search' object param
   res.sendStatus(result);
 });
 module.exports = {
