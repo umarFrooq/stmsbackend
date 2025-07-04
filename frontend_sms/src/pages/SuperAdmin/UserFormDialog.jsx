@@ -187,10 +187,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
         return isEditingValue ? schema.nullable().optional() : schema.required('Grade is required for students.');
       }
       return schema.nullable().optional();
-    }),
-    cnic: Yup.string().trim().optional().nullable()
-      otherwise: (schema) => schema.nullable().optional(), // Optional and can be null if not student
-    }),
+    }), // Ensure comma here if it was missing before cnic
     cnic: Yup.string().trim().optional().nullable()
       .matches(/^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$/, 'Invalid CNIC format. Expected: XXXXX-XXXXXXX-X')
       .test('is-valid-cnic-length', 'CNIC must be exactly 15 characters including hyphens', value => {
