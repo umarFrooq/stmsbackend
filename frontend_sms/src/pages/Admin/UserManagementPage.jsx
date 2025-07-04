@@ -73,8 +73,8 @@ const AdminUserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        // role: ADMIN_MANAGEABLE_ROLES.join(','),
-        // sortBy: 'fullname:asc',
+        role: ADMIN_MANAGEABLE_ROLES.join(','),
+        sortBy: 'fullname:asc',
       };
       if (cSearch) params.search = cSearch;
       if (cStatus) params.status = cStatus;
@@ -118,10 +118,13 @@ const AdminUserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        // role: ADMIN_MANAGEABLE_ROLES.join(','),
-        // sortBy: 'fullname:asc',
+        role: ADMIN_MANAGEABLE_ROLES.join(','),
+        sortBy: 'fullname:asc',
       };
-      if (cSearch) params.search = cSearch; // Backend handles this as name search ideally
+      if (cSearch) {
+        params.name = 'fullname';
+        params.value = cSearch;
+      }
       if (cStatus) params.status = cStatus;
       if (cBranch) params.branchId = cBranch;
       if (cEmail) params.email = cEmail;
@@ -192,7 +195,18 @@ const AdminUserManagementPage = () => {
     // or by having a separate debounced effect for searchTerm that then calls fetchUsers.
     // For now, direct fetch on any change including searchTerm for simplicity of this effect.
     // If direct fetch on searchTerm is too much, handleSearchChange should use its own debounce.
-  fetchUsers(paginationModel.page, searchTerm, filterStatus, filterBranch, paginationModel.pageSize, filterEmail, filterPhone, filterGrade);
+  const canSearchName = searchTerm.length === 0 || searchTerm.length >= 3;
+
+  if (canSearchName) {
+    fetchUsers(paginationModel.page, searchTerm, filterStatus, filterBranch, paginationModel.pageSize, filterEmail, filterPhone, filterGrade);
+  } else {
+    // Optional: If searchTerm is 1 or 2 characters, you might want to clear the list or show a message.
+    // For now, it will simply not fetch, leaving the previous results (if any).
+    // If you want to clear, you could do:
+    // setUsers([]);
+    // setTotalUsers(0);
+    // setLoading(false); // If you also set loading true before this check
+  }
 }, [paginationModel.page, paginationModel.pageSize, searchTerm, filterStatus, filterBranch, filterEmail, filterPhone, filterGrade, fetchUsers]);
 
   // Debounced function specifically for search term changes to update state & trigger main useEffect

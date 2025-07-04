@@ -18,7 +18,7 @@ import useAuthStore from '../../store/auth.store';
 // Assuming branchApi.js will be used for fetching branches for filter
 // import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
 
-const ALL_ROLES_FOR_FILTER = ['superadmin', 'admin', 'teacher', 'student', 'parent', 'rootUser']; // Example
+const ALL_ROLES_FOR_FILTER = ['superAdmin', 'admin', 'teacher', 'student', 'parent', 'rootUser']; // Example
 const USER_STATUS_ENUM = { ACTIVE: 'active', INACTIVE: 'inactive' };
 
 const UserManagementPage = () => {
@@ -77,9 +77,12 @@ const UserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        // sortBy: 'fullname:asc',
+        sortBy: 'fullname:asc',
       };
-      if (cSearch) params.search = cSearch; // Name search
+      if (cSearch) {
+        params.name = 'fullname';
+        params.value = cSearch;
+      }
       if (cStatus) params.status = cStatus;
       if (cRole) params.role = cRole;
       if (cBranch) params.branchId = cBranch;
@@ -162,17 +165,24 @@ const UserManagementPage = () => {
 
   useEffect(() => {
     // This effect now triggers fetchUsers whenever any relevant filter or pagination state changes.
-    fetchUsers(
-      paginationModel.page,
-      searchTerm,
-      filterStatus,
-      filterRole,
-      filterBranch,
-      filterEmail,
-      filterPhone,
-      filterGrade,
-      paginationModel.pageSize
-    );
+    const canSearchName = searchTerm.length === 0 || searchTerm.length >= 3;
+
+    if (canSearchName) {
+      fetchUsers(
+        paginationModel.page,
+        searchTerm,
+        filterStatus,
+        filterRole,
+        filterBranch,
+        filterEmail,
+        filterPhone,
+        filterGrade,
+        paginationModel.pageSize
+      );
+    } else {
+      // Optional: Clear list or show message if searchTerm is 1 or 2 chars.
+      // For now, leaves previous results.
+    }
   }, [
     paginationModel.page,
     paginationModel.pageSize,
@@ -224,7 +234,7 @@ const UserManagementPage = () => {
   };
 
   const handleDeleteUser = (user) => {
-    if (user.role === 'superadmin' && users.filter(u => u.role === 'superadmin').length <= 1) {
+    if (user.role === 'superAdmin' && users.filter(u => u.role === 'superAdmin').length <= 1) {
       showToast("Cannot delete the only SuperAdmin account.", "warning");
       return;
     }
