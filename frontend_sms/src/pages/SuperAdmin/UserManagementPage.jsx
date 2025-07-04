@@ -77,7 +77,7 @@ const UserManagementPage = () => {
       const params = {
         page: cPage + 1,
         limit: cLimit,
-        sortBy: 'fullname:asc',
+        // sortBy: 'fullname:asc',
       };
       if (cSearch) {
         params.name = 'fullname';
