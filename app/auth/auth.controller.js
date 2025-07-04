@@ -77,7 +77,7 @@ const logout = catchAsync(async (req, res) => {
   res.sendStatus();
 })
 const registerUser = catchAsync(async (req, res) => {
-  const user = await userService.createUser(req.body,req.user);
+  const user = await userService.createUser(req.body,req.user.schoolId);
   const tokens = await tokenService.generateAuthTokens(user);
   // res.status(httpStatus.CREATED).send({ user, tokens });
   res.sendStatus({ user, tokens });

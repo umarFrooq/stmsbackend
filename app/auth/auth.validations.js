@@ -13,8 +13,10 @@ const register = {
       version: Joi.string().allow(null),
     }),
     role:Joi.string().valid(...Object.values(roleTypes)).required(),
-    branchI:Joi.string().custom(objectId),
-    section:Joi.string()
+    branchId:Joi.string().custom(objectId),
+    section:Joi.string(),
+    gradeId:Joi.string().custom(objectId),
+    status:Joi.string()
   }),
 };
 const registerSeller = {
