@@ -197,13 +197,13 @@ const SubjectManagementPage = () => {
 
   const fetchDropdownData = useCallback(async () => {
     try {
-        const schoolId = user?.schoolId; // Assuming user object has schoolId
-        const params = schoolId ? { schoolId, limit: 1000 } : {limit: 1000}; // High limit to fetch all for dropdowns
+        // const schoolId = user?.schoolId; // Assuming user object has schoolId - REMOVED
+        const params = {limit: 1000 }; // High limit to fetch all for dropdowns. SchoolId handled by backend.
 
         const [gradesRes, teachersRes, branchesRes] = await Promise.all([
-            gradeService.getGrades(params), // Fetch all grades for the current school
-            userService.getAllUsers({ role: 'teacher', ...params }), // Fetch all teachers for the current school
-            branchService.getAllBranches(params) // Fetch all branches for the current school
+            gradeService.getGrades(params), // SchoolId should be handled by backend based on token
+            userService.getAllUsers({ role: 'teacher', ...params }), // SchoolId should be handled by backend
+            branchService.getAllBranches(params) // SchoolId should be handled by backend
         ]);
         setGrades(gradesRes.results || []);
         setTeachers(teachersRes.results || teachersRes.data?.results || []); // userService might have data nested
@@ -212,7 +212,7 @@ const SubjectManagementPage = () => {
         showToast('Failed to load support data (grades, teachers, branches). Please try again.', 'error');
         console.error("Error fetching dropdown data:", err);
     }
-  }, [user?.schoolId]);
+  }, []); // Removed user?.schoolId from dependency array
 
 
   const fetchSubjects = useCallback(async (currentFilters, page = pagination.page, pageSize = pagination.pageSize) => {
@@ -222,7 +222,7 @@ const SubjectManagementPage = () => {
         page: page + 1, // API is 1-indexed
         limit: pageSize,
         sortBy: 'createdAt:desc', // Default sort
-        schoolId: user?.schoolId, // Filter by schoolId of logged-in admin
+        // schoolId: user?.schoolId, // Filter by schoolId of logged-in admin - REMOVED (handled by backend)
         ...currentFilters // title, branchId, gradeId, defaultTeacher, creditHours
       };
       // Remove empty filter values
@@ -295,7 +295,8 @@ const SubjectManagementPage = () => {
 
   const handleSubjectFormSubmit = async (values, isEditingMode, subjectId) => {
     try {
-      const payload = { ...values, schoolId: user?.schoolId }; // Ensure schoolId is part of payload
+      // const payload = { ...values, schoolId: user?.schoolId }; // REMOVED schoolId, backend handles it
+      const payload = { ...values };
       if (isEditingMode) {
         await subjectService.updateSubject(subjectId, payload);
         showToast('Subject updated!', 'success');
