@@ -52,8 +52,8 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
       setLoadingBranches(true);
       setBranchError(null);
       getAllBranches() // This should ideally be scoped by school if not already
-        .then((branches) => {
-          setAvailableBranches(branches || []);
+        .then((response) => { // Renamed to 'response' for clarity
+          setAvailableBranches(response && response.results ? response.results : []);
         })
         .catch((error) => {
           console.error("Failed to fetch branches for user form:", error);
