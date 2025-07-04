@@ -44,6 +44,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     branchId: user?.branchId?._id || user?.branchId || '', // Handle populated vs direct ID for branch
     gradeId: user?.gradeId?._id || user?.gradeId || '', // Handle populated vs direct ID for grade
     status: user?.status || 'active',
+    cnic: user?.cnic || '',
   };
 
   // Effect for fetching branches
@@ -132,7 +133,12 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
   }, [open, user?.role, initialValues.role, initialValues.branchId, isEditing, user?.branchId, currentUser?.schoolScope]);
 
   const validationSchema = Yup.object().shape({
-    fullname: Yup.string().trim().required('Full name is required'),
+    fullname: Yup.string().trim()
+      .when('$isEditing', {
+        is: false,
+        then: (schema) => schema.required('Full name is required'),
+        otherwise: (schema) => schema.optional(),
+      }),
     email: Yup.string()
       .email('Invalid email address')
       .when('$isEditing', {
@@ -154,20 +160,43 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
         return currentSchema.optional();
       });
     }),
-    role: Yup.string().required('Role is required'),
-    branchId: Yup.string().when('role', (role, schema) => {
-      // Branch might be optional for superAdmin, but required for others like admin, teacher, student
-      // For simplicity, let's make it generally required if role is not superAdmin (adjust as needed)
-      // Or, make it always required if your system mandates a branch for all non-superAdmin users.
-      // if (Array.isArray(role) && role.includes('superAdmin')) return schema.optional();
-      return schema.required('Branch/Campus is required');
+    role: Yup.string()
+      .when('$isEditing', {
+        is: false,
+        then: (schema) => schema.required('Role is required'),
+        otherwise: (schema) => schema.optional(),
+      }),
+    branchId: Yup.string()
+      .when('$isEditing', {
+        is: false, // Create mode
+        then: (schema) => schema.required('Branch/Campus is required'),
+        otherwise: (schema) => schema.optional(), // Edit mode
+      }),
+    status: Yup.string()
+      .when('$isEditing', {
+        is: false,
+        then: (schema) => schema.required('Status is required'),
+        otherwise: (schema) => schema.optional(),
+      }),
+    // For gradeId, it's required if role is 'student' during creation.
+    // During an update (isEditing=true), it's optional even if role is 'student', to allow unsetting it.
+    // If role is changed TO 'student' during an update, this logic implies gradeId is not strictly required by Yup,
+    // but the backend or service layer should handle consistency if a student must have a grade.
+    gradeId: Yup.string().when(['$isEditing', 'role'], ([isEditingValue, roleValue], schema) => {
+      if (roleValue === 'student') {
+        return isEditingValue ? schema.nullable().optional() : schema.required('Grade is required for students.');
+      }
+      return schema.nullable().optional();
     }),
-    status: Yup.string().required('Status is required'),
-    gradeId: Yup.string().when('role', {
-      is: 'student',
-      then: (schema) => schema.required('Grade is required for students.'),
+    cnic: Yup.string().trim().optional().nullable()
       otherwise: (schema) => schema.nullable().optional(), // Optional and can be null if not student
     }),
+    cnic: Yup.string().trim().optional().nullable()
+      .matches(/^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$/, 'Invalid CNIC format. Expected: XXXXX-XXXXXXX-X')
+      .test('is-valid-cnic-length', 'CNIC must be exactly 15 characters including hyphens', value => {
+        if (!value) return true; // Optional, so valid if empty
+        return value.length === 15;
+      }),
   });
 
   const handleSubmit = async (values, { setSubmitting }) => {
@@ -192,12 +221,17 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
 
       if (values.status !== user?.status) submissionPayload.status = values.status;
       // Password and email are not changed in edit mode via this form typically
+      if (values.cnic !== (user?.cnic || null)) {
+        submissionPayload.cnic = values.cnic || null;
+      }
     } else { // Create mode
       submissionPayload = { ...values };
       delete submissionPayload.confirmPassword;
       if (submissionPayload.role !== 'student') {
         delete submissionPayload.gradeId; // Remove gradeId if not a student
       }
+      // Ensure CNIC is included, or set to null if empty
+      submissionPayload.cnic = values.cnic || null;
     }
 
     // Ensure gradeId is not sent if role is not student, or set to null if it was cleared
@@ -205,6 +239,11 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
         submissionPayload.gradeId = null; // Explicitly nullify if not student
     } else if (!values.gradeId && isEditing && user?.gradeId) {
         submissionPayload.gradeId = null; // Student's grade was cleared
+    }
+
+    // Ensure cnic is set to null if it's an empty string and being submitted
+    if (submissionPayload.hasOwnProperty('cnic') && submissionPayload.cnic === '') {
+        submissionPayload.cnic = null;
     }
 
 
@@ -370,9 +409,25 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     </FormControl>
                   </Grid>
 
+                  {/* CNIC TextField */}
+                  <Grid item xs={12} sm={values.role === 'student' ? 6 : 6}>
+                    <TextField
+                      fullWidth
+                      label="CNIC (e.g., 12345-1234567-1)"
+                      name="cnic"
+                      value={values.cnic}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={touched.cnic && Boolean(errors.cnic)}
+                      helperText={touched.cnic && errors.cnic}
+                      disabled={isSubmitting}
+                      inputProps={{ maxLength: 15 }} // Optional: guide user input length
+                    />
+                  </Grid>
+
                   {/* Grade Dropdown - only if role is student */}
                   {values.role === 'student' && (
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={6}> {/* Adjusted sm to 6 if CNIC is also 6 */}
                       <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || loadingGrades || !values.branchId}>
                         <InputLabel id="grade-select-label" required>Grade</InputLabel>
                         <Select

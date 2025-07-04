@@ -42,6 +42,7 @@ const createUser = {
     phone: myCustomJoi.string().phoneNumber().optional().allow(null, ''), // Making phone optional for now
     // section: Joi.string().trim().optional().allow(null, ''), // If section is a direct string field
     // Add other fields as necessary from your User model that are settable on creation
+    cnic: Joi.string().optional().allow(null, ''),
   }),
 };
 
@@ -100,7 +101,9 @@ const updateUser = {
       rollNumber: Joi.string().trim().optional().allow(null, '').messages({
          'string.empty': 'Roll number must be a valid string if provided.'
       }), // Service layer handles logic if role is/becomes student
-
+      cnic: Joi.string().trim().optional().allow(null, '')
+        .regex(/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/)
+        .message('Invalid CNIC format. Expected: XXXXX-XXXXXXX-X. Ensure it is 13 digits plus 2 hyphens.'),
       // lang: Joi.object().optional(), // If language settings are updatable
       // agreement: Joi.boolean().optional(), // If agreement status is updatable
       // section: Joi.string().trim().optional().allow(null, ''),

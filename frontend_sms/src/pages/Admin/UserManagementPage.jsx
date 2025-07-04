@@ -334,6 +334,7 @@ const handlePhoneFilterChange = (event) => {
   const columns = [
     { field: 'fullname', headerName: 'Full Name', flex: 1, minWidth: 180 },
     { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
+    { field: 'cnic', headerName: 'CNIC', flex: 1, minWidth: 150 },
     {
       field: 'role',
       headerName: 'Role',
