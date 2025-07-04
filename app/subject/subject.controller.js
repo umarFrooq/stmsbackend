@@ -10,7 +10,7 @@ const createSubjectHandler = catchAsync(async (req, res) => {
 });
 
 const getSubjectsHandler = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['title', 'subjectCode', 'branchId']);
+  const filter = pick(req.query, ['title', 'subjectCode', 'branchId', 'defaultTeacher', 'gradeId', 'creditHours']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await subjectService.querySubjects(filter, options,req.user.schoolId);
   res.send(result);

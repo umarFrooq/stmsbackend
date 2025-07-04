@@ -8,6 +8,7 @@ const createSubject = {
     creditHours: Joi.number().required().min(0),
     branchId: Joi.string().custom(objectId).required(),
     defaultTeacher: Joi.string().custom(objectId).allow(null), // Allow null if no default teacher
+    gradeId: Joi.string().custom(objectId).allow(null), // Allow null if no grade assigned initially
   }),
 };
 
@@ -16,6 +17,9 @@ const getSubjects = {
     title: Joi.string().trim(),
     subjectCode: Joi.string().trim(),
     branchId: Joi.string().custom(objectId),
+    defaultTeacher: Joi.string().custom(objectId),
+    gradeId: Joi.string().custom(objectId),
+    creditHours: Joi.number().integer().min(0),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
@@ -40,6 +44,7 @@ const updateSubject = {
       creditHours: Joi.number().min(0),
       branchId: Joi.string().custom(objectId),
       defaultTeacher: Joi.string().custom(objectId).allow(null),
+      gradeId: Joi.string().custom(objectId).allow(null),
     })
     .min(1), // Requires at least one field to be updated
 };

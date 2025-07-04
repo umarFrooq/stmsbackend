@@ -38,6 +38,11 @@ const subjectSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // We'll need to ensure this user has the 'teacher' role at the service level
     },
+    gradeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Grade",
+      // required: true, // Making it optional for now, can be made required based on product decision
+    },
   },
   {
     timestamps: true,

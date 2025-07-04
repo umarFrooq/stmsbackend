@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const { Subject } = require('.'); // Assuming Subject model is exported from index.js in the same directory
 const Branch = require('../branch/branch.model'); // Adjust path as needed
 const User = require('../user/user.model'); // Adjust path as needed
+const Grade = require('../grade/grade.model'); // Adjust path as needed
 const ApiError = require('../../utils/ApiError');
 let {slugGenerator}=require("@/config/components/general.methods");
 const mongoose =require('mongoose')
@@ -37,6 +38,13 @@ const createSubject = async (subjectData, schoolId) => {
     }
   }
 
+  if (subjectData.gradeId) {
+    const grade = await Grade.findOne({ _id: subjectData.gradeId, schoolId });
+    if (!grade) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Grade not found or does not belong to this school.');
+    }
+  }
+
   const subjectPayload = { ...subjectData, schoolId };
   return Subject.create(subjectPayload);
 };
@@ -53,8 +61,29 @@ const querySubjects = async (filter, options, schoolId) => {
   if (!schoolId) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to query subjects.');
   }
-  schoolId=mongoose.Types.ObjectId(schoolId)
-  const schoolScopedFilter = { ...filter, schoolId };
+  schoolId = mongoose.Types.ObjectId(schoolId);
+
+  // Build the filter object
+  const schoolScopedFilter = { schoolId };
+  if (filter.title) {
+    schoolScopedFilter.title = { $regex: filter.title, $options: 'i' }; // Case-insensitive partial match
+  }
+  if (filter.subjectCode) {
+    schoolScopedFilter.subjectCode = filter.subjectCode;
+  }
+  if (filter.branchId) {
+    schoolScopedFilter.branchId = filter.branchId;
+  }
+  if (filter.defaultTeacher) {
+    schoolScopedFilter.defaultTeacher = filter.defaultTeacher;
+  }
+  if (filter.gradeId) {
+    schoolScopedFilter.gradeId = filter.gradeId;
+  }
+  if (filter.creditHours) {
+    schoolScopedFilter.creditHours = filter.creditHours;
+  }
+
   const subjects = await Subject.paginate(schoolScopedFilter, options);
   return subjects;
 };
@@ -71,7 +100,8 @@ const getSubjectById = async (id, schoolId) => {
   }
   const subject = await Subject.findOne({ _id: id, schoolId })
     .populate('branchId', 'name branchCode') // Populate specific fields
-    .populate('defaultTeacher', 'fullname email'); // Populate specific fields
+    .populate('defaultTeacher', 'fullname email') // Populate specific fields
+    .populate('gradeId', 'title levelCode'); // Populate specific fields for grade
 
   if (!subject) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Subject not found or not associated with this school.');
@@ -115,10 +145,24 @@ const updateSubjectById = async (subjectId, updateBody, schoolId) => {
     updateBody.defaultTeacher = null;
   }
 
+  if (updateBody.gradeId) {
+    const grade = await Grade.findOne({ _id: updateBody.gradeId, schoolId });
+    if (!grade) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'New grade not found or does not belong to this school.');
+    }
+  } else if (updateBody.hasOwnProperty('gradeId') && updateBody.gradeId === null) {
+    // Allow unsetting the grade
+    updateBody.gradeId = null;
+  }
 
   Object.assign(subject, updateBody);
   await subject.save();
-  return subject.populate('branchId', 'name branchCode').populate('defaultTeacher', 'fullname email').execPopulate();
+  // Repopulate after save to get the latest associations
+  const populatedSubject = await Subject.findById(subject._id)
+    .populate('branchId', 'name branchCode')
+    .populate('defaultTeacher', 'fullname email')
+    .populate('gradeId', 'title levelCode');
+  return populatedSubject;
 };
 
 /**
