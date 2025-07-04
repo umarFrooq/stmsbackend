@@ -293,7 +293,14 @@ const UserManagementPage = () => {
       renderCell: (params) => <Chip label={params.value} size="small"
         color={params.value === 'superAdmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} />
     },
-    {
+      {
+      field: 'rollNumber',
+      headerName: 'Roll NO',
+      width: 120,
+      renderCell: (params) => <Chip label={params.value} size="small"
+        color={params.value === 'superAdmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} />
+    },
+      {
       field: 'branch',
       headerName: 'Branch/Campus',
       width: 180,

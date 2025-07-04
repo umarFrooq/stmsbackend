@@ -180,6 +180,8 @@ const getAllUsers = {
     branchId: Joi.string().custom(objectId).allow('', null).description('Filter by branch ID'),
     // city: Joi.string().allow('', null),
     // lang:Joi.string().allow('', null)
+    email:Joi.string(),
+    gradeId:Joi.string().custom(objectId)
   }),
 };
 

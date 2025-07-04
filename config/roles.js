@@ -65,7 +65,7 @@ roleRights.set(roles[3], [ // superadmin (school-level admin)
   "attendanceManagement", // Covered by manageAttendances
   "testManagement", // Covered by manageTests
   "testResultManagement" ,// Covered by manageTestResults
-  "getUsers","subject"
+  "getUsers","subject","manageUser"
   // "manageUser", "getUsers", "manageUsers", // Replaced by manageSchoolUsers, viewSchoolUsers for clarity
 ]);
 

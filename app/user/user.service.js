@@ -55,7 +55,16 @@ const createUser = async (userBody, schoolId) => {
             throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
         }
     }
-
+    let setRollNumber=null
+    if(userBody.gradeId){
+setRollNumber = await User.findOne({ gradeId: mongoose.Types.ObjectId(userBody.gradeId) })
+  .sort({ createdAt: -1 });
+    if(setRollNumber && setRollNumber.rollNumber)
+userBody.rollNumber = setRollNumber+1
+    else{
+        userBody.rollNumber = 1
+    }
+    }
     // Handle gradeId and rollNumber based on role
     if (userBody.role === roleTypes.STUDENT) {
         if (!userBody.gradeId) {

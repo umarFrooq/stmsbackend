@@ -133,8 +133,8 @@ const userSchema = new Schema({
     section:{type:String},
     gradeId: { type: Schema.Types.ObjectId,required:false , ref: 'Grade'}, // Made not required here, will be handled by validation
     rollNumber: {
-      type: String,
-      trim: true,
+      type: Number,
+    //   trim: true,
       sparse: true, // Allow nulls for non-students or if not assigned
     },
     schoolId: {

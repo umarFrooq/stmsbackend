@@ -51,7 +51,9 @@ const usersearchQuery = async (filter, options, search) => {
             //     address: 1,
             //     city: 1
             // },
-            meta:1
+            meta:1,
+            rollNumber:1
+
         }
     }
 
