@@ -31,43 +31,53 @@ const { sendEmailVerifemail } = require("../auth/email.service");
  * @returns {Promise<User>}
  */
 const createUser = async (userBody, schoolId) => {
-    // TODO: Determine if email uniqueness should be global or per school for certain roles.
-    // For now, isEmailTakenWithRole is global for that role.
-    // If a superadmin creates a user, that user should belong to their school.
     const schoolScopedRoles = ['student', 'teacher', 'admin', 'superadmin']; // Roles that should have a schoolId
 
     if (schoolId && schoolScopedRoles.includes(userBody.role)) {
         userBody.schoolId = schoolId;
-        // Potentially, email uniqueness for these roles could be per school.
-        // e.g., if (await User.isEmailTakenInSchool(userBody.email, userBody.role, schoolId))
-        if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) { // Current global check for role
+        if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) { // Consider school-scoped uniqueness if needed
              throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
         }
-    } else {
-        // For users not scoped to a school (e.g. rootUser, or if schoolId not provided)
+    } else if (!schoolId && schoolScopedRoles.includes(userBody.role)) {
+        // If a school-scoped role is being created but no schoolId is provided by the context (e.g. root creating an admin for a school)
+        // userBody.schoolId should have been set by the controller. If not, it's an issue.
+        // For now, assume schoolId is either from context (for superadmin/admin) or explicitly in userBody (for root).
+        if (!userBody.schoolId) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required for this user role.');
+        }
+        // Check email uniqueness globally or per target school if applicable
+        if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) { // Example: global check
+            throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
+        }
+    }
+     else { // For non-school-scoped roles (e.g. 'user', 'supplier')
         if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) {
             throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
         }
     }
 
-    // Ensure branchId and gradeId are handled if they are required and not part of userBody
-    // This was an issue noted when creating superadmin for a new school.
-    // These fields might need to be optional in the User model or explicitly provided.
-    if (schoolScopedRoles.includes(userBody.role) && schoolId) {
-        if (!userBody.branchId && User.schema.paths.branchId.isRequired) {
-            // This logic is complex: a new student/teacher needs a branch.
-            // The calling controller/service needs to ensure branchId is provided and valid for the school.
-            // For now, this service won't try to auto-assign it.
-            // throw new ApiError(httpStatus.BAD_REQUEST, 'Branch ID is required for this user role.');
-            console.warn(`User being created with role ${userBody.role} in school ${schoolId} might require a branchId.`);
+    // Handle gradeId and rollNumber based on role
+    if (userBody.role === roleTypes.STUDENT) {
+        if (!userBody.gradeId) {
+            // This should be caught by Joi validation, but defensive check here.
+            // console.warn('Grade ID is typically required for students.');
+            // Frontend validation should ensure gradeId is provided for students.
         }
-        if (!userBody.gradeId && User.schema.paths.gradeId.isRequired && (userBody.role === 'student' || userBody.role === 'teacher')) {
-            // Similar for gradeId
-            // throw new ApiError(httpStatus.BAD_REQUEST, 'Grade ID is required for this user role.');
-            console.warn(`User being created with role ${userBody.role} in school ${schoolId} might require a gradeId.`);
+        if (!userBody.rollNumber) {
+            // This should be caught by Joi validation if made required.
+            // console.warn('Roll Number is typically required for students.');
         }
+    } else {
+        // If role is not student, explicitly remove/nullify gradeId and rollNumber
+        // to prevent them from being saved, even if passed in userBody.
+        delete userBody.gradeId; // Or userBody.gradeId = null; if schema allows null and you want to clear it.
+        delete userBody.rollNumber; // Or userBody.rollNumber = null;
     }
 
+    // BranchId requirement check (example, actual requirement depends on Joi validation)
+    if (schoolScopedRoles.includes(userBody.role) && !userBody.branchId && User.schema.paths.branchId.isRequired) {
+        console.warn(`User being created with role ${userBody.role} might require a branchId based on schema, ensure Joi validation covers this.`);
+    }
 
     const user = await User.create(userBody);
     return user;
@@ -255,34 +265,76 @@ const updateUserById = async (userId, updateBody, schoolIdScope) => { // Added s
     const roleForDuplicationCheck = user.role === roleTypes.USER ? roleTypes.USER : user.role;
 
     if(updateBody.email && updateBody.email.toLowerCase() === user.email) delete updateBody.email;
-    if(updateBody.phone && updateBody.phone === user.phone) delete updateBody.phone;
+    if(updateBody.phone && updateBody.phone === user.phone) delete updateBody.phone; // Don't process if not changed
+
+    const finalRole = updateBody.role || user.role;
+    const setOperation = { ...updateBody }; // Start with all changes intended for $set
+    const unsetOperation = {};
+
+    // Handle conditional fields based on role
+    if (finalRole === roleTypes.STUDENT) {
+        if (setOperation.hasOwnProperty('gradeId') && setOperation.gradeId === null) {
+            // Explicitly setting gradeId to null for a student (e.g. unassigning grade)
+            // Let it be set to null via $set. Validation should ensure it's a valid ID if not null.
+        }
+        if (setOperation.hasOwnProperty('rollNumber') && setOperation.rollNumber === null) {
+             // Explicitly setting rollNumber to null for a student
+        }
+    } else { // Role is not student (or changing to not student)
+        // We must clear gradeId and rollNumber if they exist on the user
+        if (user.gradeId) {
+            unsetOperation.gradeId = ""; // Mongoose $unset syntax
+        }
+        if (user.rollNumber) {
+            unsetOperation.rollNumber = ""; // Mongoose $unset syntax
+        }
+        // Remove from setOperation if they were accidentally included by client for a non-student
+        delete setOperation.gradeId;
+        delete setOperation.rollNumber;
+    }
+
+    // If role itself is not changing, remove it from setOperation
+    if (setOperation.role && setOperation.role === user.role) {
+        delete setOperation.role;
+    }
     
-    if (updateBody.email) {
-        updateBody.email = updateBody.email.toLowerCase();
-        // TODO: checkDuplication might need schoolId if email/phone uniqueness is per school
-        await checkDuplication({email:updateBody.email}, roleForDuplicationCheck, user.userType);
-        // Email verification logic...
+    // Email and Phone change checks (already partially handled by deleting if same)
+    // This section assumes `setOperation.email` or `setOperation.phone` will only exist if they are new values.
+    if (setOperation.email) { // If email is being changed
+        setOperation.email = setOperation.email.toLowerCase();
+        await checkDuplication({email:setOperation.email}, roleForDuplicationCheck, user.userType);
         let sixDigitCode = slugGenerator(undefined, 6, 'numeric', false, false, false);
         if (!sixDigitCode || !sixDigitCode.length)
           throw new ApiError(400, 'AUTH_MODULE.UNABLE_TO_CREATE_OTP');
-        sendEmailVerifemail(updateBody.email, sixDigitCode, user.fullname);
-        updateBody.isEmailVerified = false; // Note: user model uses isEmailVarified, but standard is isEmailVerified
+        sendEmailVerifemail(setOperation.email, sixDigitCode, user.fullname);
+        setOperation.isEmailVerified = false;
     }
 
-    if (updateBody.phone) {
-        // TODO: checkDuplication might need schoolId
-        await checkDuplication({phone:updateBody.phone}, roleForDuplicationCheck, user.userType);
-        updateBody.isPhoneVerified = false; // Note: user model uses isPhoneVarified
+    if (setOperation.phone) { // If phone is being changed
+        await checkDuplication({phone:setOperation.phone}, roleForDuplicationCheck, user.userType);
+        setOperation.isPhoneVerified = false;
     }
 
-    if (updateBody.lang) {
-        updateBody.lang = updateLangData(updateBody.lang, user.lang);
+    if (setOperation.lang) {
+        setOperation.lang = updateLangData(setOperation.lang, user.lang);
     }
 
-    if (Object.keys(updateBody).length > 0) {
-        return await User.findByIdAndUpdate(userId, { $set: updateBody }, { new: true });
+    // Construct the final update command
+    const updateCommand = {};
+    if (Object.keys(setOperation).length > 0) {
+        // Remove fields from setOperation that are only for unsetting if they are null
+        // Example: if gradeId became null in setOperation for a student, it means $set: { gradeId: null }
+        // If it was removed from setOperation because role is not student, it's handled by $unset.
+        updateCommand.$set = setOperation;
     }
-    else return user;
+    if (Object.keys(unsetOperation).length > 0) {
+        updateCommand.$unset = unsetOperation;
+    }
+
+    if (Object.keys(updateCommand).length > 0) {
+        return await User.findByIdAndUpdate(userId, updateCommand, { new: true });
+    }
+    else return user; // No actual changes detected
 } catch(err) {
     // Ensure ApiError is thrown, not just generic error if checkDuplication throws non-ApiError
     if (err instanceof ApiError) throw err;

@@ -131,7 +131,12 @@ const userSchema = new Schema({
     permanentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
     currentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
     section:{type:String},
-    gradeId: { type: Schema.Types.ObjectId,required:true , ref: 'Grade'},
+    gradeId: { type: Schema.Types.ObjectId,required:false , ref: 'Grade'}, // Made not required here, will be handled by validation
+    rollNumber: {
+      type: String,
+      trim: true,
+      sparse: true, // Allow nulls for non-students or if not assigned
+    },
     schoolId: {
       type: Schema.Types.ObjectId,
       ref: 'School',

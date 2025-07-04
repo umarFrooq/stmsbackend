@@ -29,7 +29,7 @@ roleRights.set(roles[2], [ // admin
   "manageOrders", "getOrders", "manageSellerDetail", "subjectManagement", "manageVideo", "manageSellerConfidentialDetail", "print", "notification",
   "firebaseToken", "changePassword", "csvUpload", "manageRefund", "refund", "userManageAddress",  "pushNotification","manageAnswer", "manageSeller", "manageDashboard", "manageTranslation", "manageStatus",
   "manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting","getUsers",
-  "gradeManagement","attendanceManagement","testManagement","testResultManagement","manageUser","manageUsers","subject",
+  "gradeManagement","attendanceManagement","testManagement","testResultManagement","manageUser","manageUsers","subject"
 ]);
 
 roleRights.set(roles[3], [ // superadmin (school-level admin)
@@ -65,8 +65,7 @@ roleRights.set(roles[3], [ // superadmin (school-level admin)
   "attendanceManagement", // Covered by manageAttendances
   "testManagement", // Covered by manageTests
   "testResultManagement" ,// Covered by manageTestResults
-  "getUsers","subject",
-  "manageUser"
+  "getUsers","subject"
   // "manageUser", "getUsers", "manageUsers", // Replaced by manageSchoolUsers, viewSchoolUsers for clarity
 ]);
 
