@@ -11,9 +11,7 @@ const { findOne, updateById } = require("@/utils/generalDB.methods.js/DB.methods
 const { setCache, getCache } = require("../../utils/cache/cache");
 const { categoryEnums } = require("../../config/enums");
 // const productService =require("../product/product.service");
-const { Product, categoriesfinder } = require('../product/product.model');
 const { BAD_REQUEST, NOT_FOUND } = require("@/node_modules/http-status/lib/index");
-const { translateText } = require("../translation/translation.service");
 
 
 const en = require('../../config/locales/en');

@@ -97,7 +97,7 @@ const userSchema = new Schema({
     role: {
         type: String,
         enum: roles,
-        default: "user",
+        default: "student",
     },
     facebookId: { type: String, unique: true, sparse: true, },
     googleId: { type: String, unique: true, sparse: true, },
@@ -126,6 +126,18 @@ const userSchema = new Schema({
     // paymentPlatform: [{ type: String, enums: { ...Object.values(gateWay) } }],
     // payment: [userPaymentSchema]
     agreement: { type: Boolean, default: false },
+    cnic: { type: String, unique: true, sparse: true },
+    branchId: { type: Schema.Types.ObjectId,required:true , ref: 'Branch'},
+    permanentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
+    currentAddress: { type: Schema.Types.ObjectId, ref: 'Address', autopopulate: true },
+    section:{type:String},
+    gradeId: { type: Schema.Types.ObjectId,required:true , ref: 'Grade'},
+    schoolId: {
+      type: Schema.Types.ObjectId,
+      ref: 'School',
+      autopopulate: true
+    }, // Not required for all users
+
 }, {
     timestamps: true,
     toJSON: { virtuals: true }

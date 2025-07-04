@@ -30,7 +30,6 @@ const userService = require('./user.service');
 const en=require('../../config/locales/en')
 const createUser = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
-  // res.status(httpStatus.CREATED).send(user);
   res.sendStatus({ user });
 });
 
@@ -176,20 +175,25 @@ const createWalletPin = catchAsync(async (req, res) => {
 })
 
 const getAllUsers = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['fullname', 'email', 'to', 'from', 'role', 'city']);
+  // This function seems to be for a different use case or an older version.
+  // We are focusing on getAllUser for the /v2/users/admin endpoint.
+  // For consistency, if this were also to be updated, it would follow similar logic to getAllUser.
+  const filter = pick(req.query, ['search', 'email', 'to', 'from', 'role', 'city', 'status', 'branchId', 'lang']); // Added search, status, branchId
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const search = pick(req.query, ['name', 'value']);
-  const result = await userService.getAllUsers(filter, options, search);
-  // res.status(httpStatus.OK).send(result);
-  res.sendStatus(result)
+  // const searchOb = pick(req.query, ['name', 'value']); // Old search object
+  const result = await userService.getAllUsers(filter, options); // Pass filter directly
+  res.sendStatus(result);
 });
-const getAllUser = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['fullname', 'email', 'to', 'from', 'role', 'city','lang']);
-  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+const getAllUser = catchAsync(async (req, res) => { // This is linked to /v2/users/admin
+  // Updated to pick new filter params: search, status, branchId. Removed name, value.
+  const filter = pick(req.query, ['search', 'role', 'status', 'branchId', 'email', 'to', 'from', 'city', 'lang']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']); // Added populate
   const search = pick(req.query, ['name', 'value']);
-  const result = await userService.getAllUser(filter, options, search);
-  // res.status(httpStatus.OK).send(result);
-  res.sendStatus(result)
+  // The 'search' string is now part of the 'filter' object.
+  // The 'search' object {name, value} is no longer needed for userService.getAllUser
+  const result = await userService.getAllUser(filter, options,search, req.schoolId); // Removed old 'search' object param
+  res.sendStatus(result);
 });
 module.exports = {
   createUser,

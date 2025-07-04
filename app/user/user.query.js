@@ -36,8 +36,8 @@ const usersearchQuery = async (filter, options, search) => {
            
             }
           },
-        lookUp.userLookup,
-        lookUp.userUnwind,
+        // lookUp.userLookup,
+        // lookUp.userUnwind,
       { '$project': {
             id: "$_id",
             _id: 0,
@@ -47,10 +47,10 @@ const usersearchQuery = async (filter, options, search) => {
             phone: 1,
             verificationMethod: 1,
             origin: 1,
-            address: {
-                address: 1,
-                city: 1
-            },
+            // address: {
+            //     address: 1,
+            //     city: 1
+            // },
             meta:1
         }
     }
@@ -88,6 +88,11 @@ const queryParser = (filter, search) => {
             filterQuery.push(queryTypeParser(filter[key], key));
             continue;
         }
+      if (key === 'schoolId') {
+  const schoolObjectId = new mongoose.Types.ObjectId(filter[key]);
+  filterQuery.push(queryTypeParser(schoolObjectId, key, queryTypes.EQUALS));
+  continue;
+}
 
 
 

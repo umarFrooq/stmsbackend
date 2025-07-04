@@ -163,11 +163,10 @@ const redisEnums = {
 
 
 const roleTypes = {
-  SUPPLIER: "supplier",
-  USER: "user",
+  SUPPLIER: "supperAdmin",
+  USER: "student",
   ADMIN: "admin",
-  REQUESTED_SUPPLIER: "requestedSeller",
-  MARKETPLACE: "marketplace"
+  REQUESTED_SUPPLIER: "teacher",
 }
 
 const bannerDevices = {
@@ -875,6 +874,11 @@ const googleMetrics = [
   "userEngagementDuration",
   "userKeyEventRate",
 ]
+
+const braches={
+MAIN:"main",
+SUB:"sub"
+}
 module.exports = {
   productTypes,
   addressLocalTypes,
@@ -989,7 +993,8 @@ module.exports = {
   orderStatusMap,
   orderStatusDescription,
   transactionGeneratedFor,
-  googleEvents
+  googleEvents,
+  braches
 };
 
 

@@ -2,7 +2,7 @@ const { addressLocalTypes, roleTypes, paymentMethods } = require("@/config/enums
 const nodemailer = require("nodemailer");
 const config = require("../../config/config");
 const logger = require("../../config/logger");
-const { shippmentCharges } = require("../shippment/shippment.enums");
+
 const { payment, adminDomain } = require("../../config/config");
 const {settValueParser,handleSetting}=require('../setting/setting.service')
 const transport = nodemailer.createTransport(config.email.smtp);

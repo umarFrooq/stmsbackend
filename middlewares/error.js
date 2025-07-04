@@ -3,7 +3,6 @@ const config = require('../config/config');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const {responseMessages} = require('../config/locales/en');
-const { translateString } = require('@/app/translation/translation.utils');
 const  i18n  = require('i18n')
 // const loger = require('../middlewares/logger');
 
@@ -71,7 +70,8 @@ const multilingualErrorConerter = async (error, res) => {
     error.userMessage = res.__("responseMessages."+ msg)
   }
   else{
-    let translatedMessage = await translateString(res.locale, msg)
+    // let translatedMessage = await translateString(res.locale, msg)
+    let translatedMessage=null
     error.userMessage = translatedMessage && translatedMessage.isSuccess &&  translatedMessage.data || error.message
   }
 }

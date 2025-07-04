@@ -1,52 +1,47 @@
 var express = require("express");
-var qa = require("./q&a/q&a.routes");
+
 var authRoutes = require("./auth/auth.routes");
 var userRoutes = require("./user/user.routes");
-var productRoutes = require("./product/product.routes");
-var orderStatusRoutes = require("./orderStatus/orderStatus.routes");
-var paymentRoutes = require("./payment/payment.routes");
-var reviewRoutes = require("./review/review.routes");
-var cartRoutes = require("./cart/cart.routes");
-var walletRoutes = require("./wallet/wallet.routes");
-var tcsRoute = require("./shippementMethods/tcs/tcs.routes");
-var refundRouter = require("./refund/refund.routes");
-
-var orderDetailRoutes = require("./orderDetail/orderDetail.routes");
-var categoryRoutes = require("./category/category.routes");
-var wishListRoutes = require("./wishList/wishList.routes");
-var addressRoutes = require("./address/address.routes");
-var orderRoutes = require("./order/order.routes");
-var bannerRoutes = require("./banner/banner.routes");
-var shippmentRoutes = require("./shippment/shippment.routes");
-var sellerDetailRoutes = require("./sellerDetail/sellerDetail.routes");
-var sellerConfidentialDetailRoutes = require("./sellerConfidentialDetail/sellerConfidentialDetail.routes");
-var marketRoutes = require("./market/market.routes");
-const docsRoute = require("./docs.route");
+var attendanceRoutes = require("./attendance/attendance.routes");
+var branchRoutes = require("./branch/branch.routes");
+var paperRoutes = require("./paper/paper.routes");
+var schoolRoutes = require("./school/school.routes"); // Added school routes
+let addressRoutes=require('./address/address.routes')
+// var bannerRoutes = require("./banner/banner.routes");
+// var shippmentRoutes = require("./shippment/shippment.routes");
+// var sellerDetailRoutes = require("./sellerDetail/sellerDetail.routes");
+// var sellerConfidentialDetailRoutes = require("./sellerConfidentialDetail/sellerConfidentialDetail.routes");
+var subjectRoutes = require("./subject/subject.routes");
+// var marketRoutes = require("./market/market.routes");
+// const docsRoute = require("./docs.route");
 const router = express.Router();
 const { version } = require('../package.json');
-const blueRoute = require("./shippementMethods/blueEx/blue.routes");
-const followRouter = require("./follow/follow.route");
-const firbaseRouter = require("./firebase/phoneAuth/route")
-const bannerSetRouter = require("./banner-set/banner-set.routes");
-const pushNotificationRoute = require("./firebase/push.notification/push.notification.route");
-const notificationRoute = require("./notifications/notification.route")
-// const friebaseRouter = require("./firebase/firebase.routes")
-const statsRouter = require("../app/stats/stats.routes");
-const reviewStatsRouter = require("../app/review.stats/review.stats.route");
-const groupBuyRoutes = require("../app/groupBy/group_buy.routes");
-const voucherRouter = require("../app/voucher/voucher.routes");
-const redeemRouter = require("../app/redeemVoucher/redeem.voucher.routes");
-const groupBuyTraceRouter = require("../app/groupBuyPriceTrace/groupBuyTrace.routes");
-const groupBuyCustomerTraceRouter = require("../app/groupBuyCustomerTrack/groupBuyCustomerTrack.routes");
-const logsRouter = require("./logs/logs.routes");
+// const blueRoute = require("./shippementMethods/blueEx/blue.routes");
+// const followRouter = require("./follow/follow.route");
+// const firbaseRouter = require("./firebase/phoneAuth/route")
+// const bannerSetRouter = require("./banner-set/banner-set.routes");
+// const pushNotificationRoute = require("./firebase/push.notification/push.notification.route");
+// const notificationRoute = require("./notifications/notification.route")
+// // const friebaseRouter = require("./firebase/firebase.routes")
+// const statsRouter = require("../app/stats/stats.routes");
+// const reviewStatsRouter = require("../app/review.stats/review.stats.route");
+// const groupBuyRoutes = require("../app/groupBy/group_buy.routes");
+// const voucherRouter = require("../app/voucher/voucher.routes");
+// const redeemRouter = require("../app/redeemVoucher/redeem.voucher.routes");
+// const groupBuyTraceRouter = require("../app/groupBuyPriceTrace/groupBuyTrace.routes");
+// const groupBuyCustomerTraceRouter = require("../app/groupBuyCustomerTrack/groupBuyCustomerTrack.routes");
+const gradeRoutes = require("./grade/grade.routes");
+const testRoutes = require("./test/test.routes");
+const testResultRoutes = require("./testresult/testresult.routes");
+// const logsRouter = require("./logs/logs.routes");
 const config = require("../config/config");
 const RequestIp = require('request-ip');
-const ipnRoutes = require('../app/alfaIPN/alfaIPN.routes');
-const report = require('../app/report/report.route')
-const analyticsRoutes = require('../app/analytics/analytics.routes');
-const googleAnalytics = require('../app/googleAnalytics/analytics.routes')
-const leopardRouter = require("./shippementMethods/leopards/leopards.routes");
-const dealsRouter = require("./deals/deals.routes");
+// const ipnRoutes = require('../app/alfaIPN/alfaIPN.routes');
+// const report = require('../app/report/report.route')
+// const analyticsRoutes = require('../app/analytics/analytics.routes');
+// const googleAnalytics = require('../app/googleAnalytics/analytics.routes')
+// const leopardRouter = require("./shippementMethods/leopards/leopards.routes");
+// const dealsRouter = require("./deals/deals.routes");
 
 
 const promotionalEmailRouter = require("./campaign/campaign.routes");
@@ -83,7 +78,7 @@ router.use("/users", userRoutes);
 // router.use("/sellerConfidentialDetail", sellerConfidentialDetailRoutes);
 // router.use("/wishList", wishListRoutes);
 // router.use("/reviews", reviewRoutes);
-// router.use("/address", addressRoutes);
+router.use("/address", addressRoutes);
 // router.use("/payment", paymentRoutes)
 // router.use("/markets", marketRoutes)
 // router.use("/orderStatus", orderStatusRoutes)
@@ -133,5 +128,18 @@ router.use("/users", userRoutes);
 // router.use("/rbac-access", require("./rbac-access/access.router"))
 // router.use("/ae-feed", require("./aeFeed/aeFeed.routes"))
 // router.use("/transactions", require("./transaction/transaction.routes"))
+
+router.use("/branches", branchRoutes);
+router.use("/subjects", subjectRoutes);
+router.use("/grades", gradeRoutes);
+router.use("/attendances", attendanceRoutes);
+router.use("/tests", testRoutes);
+router.use("/test-results", testResultRoutes);
+router.use("/papers", paperRoutes);
+router.use("/schools", schoolRoutes); // Added school routes usage
+// router.use("/student-records", studentRecordRoutes);
+// router.use("/timetables", timetableRoutes);
+// router.use("/fees", feeRoutes);
+// router.use("/fines", fineRoutes);
 
 module.exports = router;

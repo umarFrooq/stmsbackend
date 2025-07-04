@@ -17,7 +17,7 @@ const createAddress = {
     addressLine_2: Joi.string().custom(emptyVal),
     landMark: Joi.string().custom(emptyVal),
     lang: Joi.object(),
-    area:Joi.string().required()
+    // area:Joi.string().required()
   }),
 };
 // const updateAddress = {

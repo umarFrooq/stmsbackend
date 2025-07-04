@@ -216,10 +216,13 @@ const jwtVerify = async (payload, done, other = false) => {
     }
     const userObj = user[0];
     const allowUser = [roleTypes.USER, roleTypes.REQUESTED_SUPPLIER];
-    if (userObj && !allowUser.includes(userObj.role))
-      if (userObj && userObj.role != roleTypes.USER)
-        if (userObj.password !== payload.password)
-          throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized. Please try to login again');
+    // IMPORTANT: Removed the direct password check against payload.password
+    // payload.password no longer exists, and this check was not standard for JWTs.
+    // Token validity is based on signature and expiration. Session validity is handled by getSession.
+    // if (userObj && !allowUser.includes(userObj.role)) // This condition seems specific
+    //   if (userObj && userObj.role != roleTypes.USER) // and might need review based on app logic
+    //     if (userObj.password !== payload.password) // This line is removed.
+    //       throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized. Please try to login again');
 
     done(null, userObj);
   } catch (error) {

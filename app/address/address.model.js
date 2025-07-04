@@ -40,8 +40,12 @@ const addressSchema = new Schema({
   lang: Object,
   area: {
     type: String,
-    required: true
-  }
+    // required: true
+  },
+  village: { type: String },
+  town: { type: String },
+  tahsil: { type: String },
+  district: { type: String }
 
 }, {
   timestamps: true,

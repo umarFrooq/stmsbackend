@@ -56,13 +56,15 @@ const updateUser = {
   }),
   body: Joi.object()
     .keys({
-      email: Joi.string().email(),
-      password: Joi.string().custom(password),
+      // email: Joi.string().email(),
+      // password: Joi.string().custom(password),
       fullname: Joi.string(),
       phone: myCustomJoi.string().phoneNumber(),
       lang: Joi.object(),
       status: Joi.string().valid(userStatus.ACTIVE, userStatus.INACTIVE),
       agreement: Joi.boolean(),
+      branchId:Joi.string().custom(objectId),
+      role:Joi.string()
     })
     .min(1),
 };
@@ -123,16 +125,19 @@ const updateWalletPin = {
 const getAllUsers = {
   query: Joi.object().keys({
     fullname: Joi.string(),
-    role: Joi.string().valid(...Object.values(roleTypes)),
+    role: Joi.string().valid(...Object.values(roleTypes)).allow('', null),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
-    from: Joi.date(),
-    to: Joi.date(),
-    name: Joi.string(),
-    value: Joi.string(),
-    city: Joi.string(),
-    lang:Joi.string()
+    from: Joi.date().allow('', null),
+    to: Joi.date().allow('', null),
+    name: Joi.string(), // Replaced by search
+    value: Joi.string(), // Replaced by search
+    // search: Joi.string().allow('', null).description('Generic search term for fullname, email, phone'),
+    // status: Joi.string().valid(...Object.values(userStatus), '').allow(null).description('Filter by user status'),
+    branchId: Joi.string().custom(objectId).allow('', null).description('Filter by branch ID'),
+    // city: Joi.string().allow('', null),
+    // lang:Joi.string().allow('', null)
   }),
 };
 

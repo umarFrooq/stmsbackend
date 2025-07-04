@@ -21,7 +21,6 @@ const en = require('../../config/locales/en')
 const SellerDetail = db.SellerDetail;
 const Order = db.Order;
 const axios = require('axios');
-const { translateText } = require("../translation/translation.service");
 const { getBucketUrl } = require("@/utils/helperFunctions");
 const config = require("@/config/config");
 

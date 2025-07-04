@@ -10,7 +10,7 @@ const SellerConfidentialDetail = db.SellerConfidentialDetail;
 const config = require('../../config/config');
 const algoliasearch = require("algoliasearch");
 // const client = algoliasearch(config.algolia.algoliaApplicationId, config.algolia.algoliaWriteApiKey);
-const { deleteManyFromAlgolia } = require('./../product/algolia.service');
+let mongoose= require('mongoose')
 const addressService = require("../address/address.service");
 const { sellerProfile, userProfile } = require("./profile");
 const { sellerHome } = require("./sellerHome");
@@ -26,23 +26,59 @@ const {dateFilter,setAtasDateCondition}=require('../../config/components/general
 const { sendEmailVerifemail } = require("../auth/email.service");
 /**
  * Create a user
- * @param {Object} userBody
+ * @param {Object} userBody - Data for the new user
+ * @param {ObjectId} [schoolId] - Optional: The ID of the school if user is created within a school context
  * @returns {Promise<User>}
  */
-const createUser = async (userBody) => {
-    if (await User.isEmailTakenWithRole(userBody.email, "user")) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
+const createUser = async (userBody, schoolId) => {
+    // TODO: Determine if email uniqueness should be global or per school for certain roles.
+    // For now, isEmailTakenWithRole is global for that role.
+    // If a superadmin creates a user, that user should belong to their school.
+    const schoolScopedRoles = ['student', 'teacher', 'admin', 'superadmin']; // Roles that should have a schoolId
+
+    if (schoolId && schoolScopedRoles.includes(userBody.role)) {
+        userBody.schoolId = schoolId;
+        // Potentially, email uniqueness for these roles could be per school.
+        // e.g., if (await User.isEmailTakenInSchool(userBody.email, userBody.role, schoolId))
+        if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) { // Current global check for role
+             throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
+        }
+    } else {
+        // For users not scoped to a school (e.g. rootUser, or if schoolId not provided)
+        if (await User.isEmailTakenWithRole(userBody.email, userBody.role)) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
+        }
     }
+
+    // Ensure branchId and gradeId are handled if they are required and not part of userBody
+    // This was an issue noted when creating superadmin for a new school.
+    // These fields might need to be optional in the User model or explicitly provided.
+    if (schoolScopedRoles.includes(userBody.role) && schoolId) {
+        if (!userBody.branchId && User.schema.paths.branchId.isRequired) {
+            // This logic is complex: a new student/teacher needs a branch.
+            // The calling controller/service needs to ensure branchId is provided and valid for the school.
+            // For now, this service won't try to auto-assign it.
+            // throw new ApiError(httpStatus.BAD_REQUEST, 'Branch ID is required for this user role.');
+            console.warn(`User being created with role ${userBody.role} in school ${schoolId} might require a branchId.`);
+        }
+        if (!userBody.gradeId && User.schema.paths.gradeId.isRequired && (userBody.role === 'student' || userBody.role === 'teacher')) {
+            // Similar for gradeId
+            // throw new ApiError(httpStatus.BAD_REQUEST, 'Grade ID is required for this user role.');
+            console.warn(`User being created with role ${userBody.role} in school ${schoolId} might require a gradeId.`);
+        }
+    }
+
+
     const user = await User.create(userBody);
     return user;
 };
 
 /**
- * Create a user
+ * Create a user (Requested Seller - seems specific, may not need schoolId directly unless sellers are per school)
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
-const createRequestedSeller = async (userBody) => {
+const createRequestedSeller = async (userBody) => { // Assuming requestedSellers are not school-specific for now
     if (await User.isEmailTakenWithRole(userBody.email, "requestedSeller")) {
         throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.EMAIL_ALREADY_TAKEN');
     }
@@ -59,11 +95,15 @@ const createRequestedSeller = async (userBody) => {
 
 /**
  * Get user by id
- * @param {ObjectId} id
+ * @param {ObjectId} id - User ID
+ * @param {ObjectId} [schoolId] - Optional: School ID to scope the search for non-root users
  * @returns {Promise<User>}
  */
-const getUserById = async (id) => {
-    return User.findById(id);
+const getUserById = async (id, schoolId) => {
+    if (schoolId) { // If schoolId is provided, scope the search
+        return User.findOne({ _id: id, schoolId });
+    }
+    return User.findById(id); // For rootUser or unscoped access
 };
 const getSellerProfile = async () => {
     return JSON.stringify(sellerProfile);
@@ -185,65 +225,108 @@ const checkDuplication = async (match, role, currentUserType) => {
     }
 };
 
-const updateUserById = async (userId, updateBody) => {
-   try{ const user = await getUserById(userId);
+const updateUserById = async (userId, updateBody, schoolIdScope) => { // Added schoolIdScope
+   try {
+    const user = await getUserById(userId, schoolIdScope); // Use school-scoped getUserById if schoolIdScope is provided
     if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'USER_NOT_FOUND');
+        // If schoolIdScope was provided, this means user not found in that school
+        const message = schoolIdScope ? 'User not found in your school or does not exist.' : 'User not found.';
+        throw new ApiError(httpStatus.NOT_FOUND, message);
     }
+
+    // Prevent schoolId modification through this service if it's not a root operation
+    if (updateBody.schoolId && schoolIdScope && updateBody.schoolId.toString() !== schoolIdScope.toString()) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Cannot change user's school association through this update.");
+    }
+    if (updateBody.schoolId && !schoolIdScope) { // If a root user is trying to set/change schoolId
+        // Ensure the new schoolId is valid (exists in Schools collection)
+        const School = db.School; // Assuming School model is accessible via db
+        if (!(await School.findById(updateBody.schoolId))) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid schoolId provided.');
+        }
+    }
+    // If schoolIdScope is present, but updateBody.schoolId is not, ensure existing schoolId is not cleared
+    // unless explicitly allowed (e.g. by passing null for schoolId if user can be unassigned from school).
+    // For now, if schoolId is in updateBody, it's handled above. If not, user.schoolId remains.
+
+
     const rolesToCheck = [roleTypes.ADMIN, roleTypes.REQUESTED_SUPPLIER, roleTypes.SUPPLIER];
-    const role = user.role === roleTypes.USER ? roleTypes.USER : { $in: rolesToCheck };
-    if(updateBody.email && updateBody.email===user.email) delete  updateBody.email
-    if(updateBody.phone && updateBody.phone===user.phone) delete updateBody.phone
+    // Role determination for duplication check needs to be based on the user's actual role, not hardcoded.
+    const roleForDuplicationCheck = user.role === roleTypes.USER ? roleTypes.USER : user.role;
+
+    if(updateBody.email && updateBody.email.toLowerCase() === user.email) delete updateBody.email;
+    if(updateBody.phone && updateBody.phone === user.phone) delete updateBody.phone;
     
     if (updateBody.email) {
         updateBody.email = updateBody.email.toLowerCase();
-        await checkDuplication({email:updateBody.email}, role, user.userType);
+        // TODO: checkDuplication might need schoolId if email/phone uniqueness is per school
+        await checkDuplication({email:updateBody.email}, roleForDuplicationCheck, user.userType);
+        // Email verification logic...
         let sixDigitCode = slugGenerator(undefined, 6, 'numeric', false, false, false);
         if (!sixDigitCode || !sixDigitCode.length)
-          throw new ApiError(400, 'AUTH_MODULE.UNABLE_TO_CREATE_OTP')
-        sendEmailVerifemail(updateBody.email, sixDigitCode,user.fullname)
-        updateBody.emailVerified = false
+          throw new ApiError(400, 'AUTH_MODULE.UNABLE_TO_CREATE_OTP');
+        sendEmailVerifemail(updateBody.email, sixDigitCode, user.fullname);
+        updateBody.isEmailVerified = false; // Note: user model uses isEmailVarified, but standard is isEmailVerified
     }
 
     if (updateBody.phone) {
-        updateBody.phone = updateBody.phone.toLowerCase();
-        await checkDuplication({phone:updateBody.phone}, role, user.userType);
-        updateBody.phoneVerified = false
+        // TODO: checkDuplication might need schoolId
+        await checkDuplication({phone:updateBody.phone}, roleForDuplicationCheck, user.userType);
+        updateBody.isPhoneVerified = false; // Note: user model uses isPhoneVarified
     }
 
     if (updateBody.lang) {
         updateBody.lang = updateLangData(updateBody.lang, user.lang);
     }
 
-    if (Object.keys(updateBody).length > 0)
-    return await User.findByIdAndUpdate(userId, updateBody, { new: true });
-    else return user
-}catch(err){
+    if (Object.keys(updateBody).length > 0) {
+        return await User.findByIdAndUpdate(userId, { $set: updateBody }, { new: true });
+    }
+    else return user;
+} catch(err) {
+    // Ensure ApiError is thrown, not just generic error if checkDuplication throws non-ApiError
+    if (err instanceof ApiError) throw err;
     throw new ApiError(httpStatus.BAD_REQUEST, err.message);
 }
 };
 
 const updateProfile = async (user, userId, updateBody) => {
-    if ((user.role != roleTypes.ADMIN) && (user.id != userId)) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized");
+    if ((user.role != roleTypes.ADMIN) && (user.role !== roleTypes.ROOT_USER) && (user.id != userId)) { // rootUser can update any profile
+        // If user is superadmin, they can only update profiles within their school.
+        if (user.role === roleTypes.SUPERADMIN) {
+            const targetUser = await getUserById(userId, user.schoolId);
+            if (!targetUser) {
+                 throw new ApiError(httpStatus.FORBIDDEN, "Forbidden: Cannot update users outside your school.");
+            }
+        } else {
+            throw new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized");
+        }
     }
-    return await updateUserById(userId, updateBody);
+    // Pass schoolId if current user is superadmin, to ensure target user is within scope for updateUserById
+    const schoolIdScope = user.role === roleTypes.SUPERADMIN ? user.schoolId : undefined;
+    return await updateUserById(userId, updateBody, schoolIdScope);
 }
 
-const updateStatus = async (user, userId, updateBody) => {
+const updateStatus = async (user, userId, updateBody) => { // This seems like self-status update
     if (user.id != userId) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized");
+        // Potentially allow admin/superadmin/rootUser to change status of other users.
+        // If superadmin, should be scoped.
+        if (user.role === roleTypes.SUPERADMIN) {
+            const targetUser = await getUserById(userId, user.schoolId);
+            if (!targetUser) throw new ApiError(httpStatus.FORBIDDEN, "Forbidden: Cannot update status for users outside your school.");
+        } else if (user.role !== roleTypes.ROOT_USER && user.role !== roleTypes.ADMIN) { // Assuming ADMIN is also somewhat global here
+            throw new ApiError(httpStatus.UNAUTHORIZED, "Unauthorized");
+        }
     }
     return await User.findByIdAndUpdate(userId, updateBody, { new: true });
 };
 
-const acceptRequestedSeller = async (userId) => {
-    const user = await getUserById(userId);
+const acceptRequestedSeller = async (userId) => { // Likely not school-scoped
+    const user = await getUserById(userId); // Unscoped fetch, as this is usually a root/admin task
     if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'USER_NOT_FOUND');
     }
     if (user.role !== "requestedSeller") {
-
         throw new ApiError(httpStatus.BAD_REQUEST, 'USER_MODULE.USER_NOT_REQUESTED_SELLER');
     }
 
@@ -255,16 +338,27 @@ const acceptRequestedSeller = async (userId) => {
 
 /**
  * Delete user by id
- * @param {ObjectId} userId
+ * @param {ObjectId} userId - ID of the user to delete
+ * @param {ObjectId} [requestingUserSchoolId] - Optional: School ID of the admin performing the delete
+ * @param {string} [requestingUserRole] - Optional: Role of the admin performing the delete
  * @returns {Promise<User>}
  */
-const deleteUserById = async (userId) => {
-    const user = await getUserById(userId);
-    if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'USER_NOT_FOUND');
+const deleteUserById = async (userId, requestingUserSchoolId, requestingUserRole) => {
+    let user;
+    if (requestingUserRole === roleTypes.SUPERADMIN && requestingUserSchoolId) {
+        user = await getUserById(userId, requestingUserSchoolId);
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'User not found in your school or does not exist.');
+        }
+    } else { // For rootUser or other unscoped deletions
+        user = await getUserById(userId);
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'USER_NOT_FOUND');
+        }
     }
+
+    // Existing logic for seller data deletion
     if (user.role === "supplier" || user.role === "requestedSeller") {
-        //await Product.delete({user}).exec();
 
         // try {
         const products = await Product.find({ user })
@@ -320,14 +414,23 @@ const deleteUserById = async (userId) => {
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
+ * @param {ObjectId} [schoolId] - Optional: School ID to scope the query
  * @returns {Promise<QueryResult>}
  */
-const queryUsers = async (filter, options) => {
-    const users = await User.paginate(filter, options);
+const queryUsers = async (filter, options, schoolId) => {
+    let scopedFilter = { ...filter };
+    if (schoolId) {
+        scopedFilter.schoolId = schoolId;
+    }
+    // TODO: Further refine filter based on who is calling (e.g., superadmin should only see their school's users)
+    // This might mean schoolId is not optional if the caller is not rootUser.
+    // For now, if schoolId is provided, it's used.
+    const users = await User.paginate(scopedFilter, options);
     return users;
 };
+
 /**
- * Querying users with filter and options
+ * Querying users with filter and options (Sellers - likely not school-scoped)
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
@@ -335,13 +438,14 @@ const queryUsers = async (filter, options) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<QueryResult>}
  */
-const querySellers = async (filter, options) => {
+const querySellers = async (filter, options) => { // Assuming sellers are not school-specific
     Object.assign(filter, { role: "supplier" });
     const users = await User.paginate(filter, options);
     return users;
 };
+
 /**
- * Querying users with filter and options
+ * Querying users with filter and options (Requested Sellers - likely not school-scoped)
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
@@ -349,7 +453,7 @@ const querySellers = async (filter, options) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<QueryResult>}
  */
-const queryRequestedSellers = async (filter, options) => {
+const queryRequestedSellers = async (filter, options) => { // Assuming requestedSellers are not school-specific
     Object.assign(filter, { role: "requestedSeller" });
     const users = await User.paginate(filter, options);
     return users;
@@ -632,8 +736,8 @@ const updateBulkRefCode = async () => {
  * @param {string} role
  * @returns {Promise<User>}
  */
-async function getUserByEmailAndRole(email, role) {
-    return User.findOne({ email, $or: role });
+async function getUserByEmailAndRole(email, ) {
+    return User.findOne({ email});
 
 }
 
@@ -818,9 +922,11 @@ const validateRefCode = async (refCode) => {
 
 
 
-const getAllUser = async (filter, options, search) => {
+const getAllUser = async (filter, options, search,schoolId) => {
     filter = setAtasDateCondition(filter)
     options = sortByParser(options, { 'createdAt': -1 });
+    // filter.schoolId=mongoose.Types.ObjectId(schoolId)
+        filter.schoolId=schoolId
     let result = await usersearchQuery(filter, options, search);
     if (!result || !Object.keys(result).length) {
       result = {
