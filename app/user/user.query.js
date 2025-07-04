@@ -52,8 +52,8 @@ const usersearchQuery = async (filter, options, search) => {
             //     city: 1
             // },
             meta:1,
-            rollNumber:1,
-cnic:1
+            rollNumber:1
+
         }
     }
 
