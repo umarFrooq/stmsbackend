@@ -13,6 +13,7 @@ import { TextField } from '@mui/material'; // Removed InputAdornment, SearchIcon
 import debounce from 'lodash.debounce';
 
 import userService from '../../services/userService';
+import { getGrades as fetchGradesService } from '../../services/gradeService'; // Import grade service
 import useAuthStore from '../../store/auth.store';
 // Assuming branchApi.js will be used for fetching branches for filter
 // import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
@@ -40,8 +41,13 @@ const UserManagementPage = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterBranch, setFilterBranch] = useState('');
+  const [filterEmail, setFilterEmail] = useState('');
+  const [filterPhone, setFilterPhone] = useState('');
+  const [filterGrade, setFilterGrade] = useState('');
   const [availableBranches, setAvailableBranches] = useState([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
+  const [availableGrades, setAvailableGrades] = useState([]);
+  const [loadingGrades, setLoadingGrades] = useState(false);
 
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [totalUsers, setTotalUsers] = useState(0);
@@ -60,6 +66,9 @@ const UserManagementPage = () => {
     cStatus,
     cRole,
     cBranch,
+    cEmail,
+    cPhone,
+    cGrade,
     cLimit = paginationModel.pageSize // Use from closure if not passed
   ) => {
     setLoading(true);
@@ -70,10 +79,13 @@ const UserManagementPage = () => {
         limit: cLimit,
         sortBy: 'fullname:asc',
       };
-      if (cSearch) params.search = cSearch;
+      if (cSearch) params.search = cSearch; // Name search
       if (cStatus) params.status = cStatus;
       if (cRole) params.role = cRole;
       if (cBranch) params.branchId = cBranch;
+      if (cEmail) params.email = cEmail;
+      if (cPhone) params.phone = cPhone;
+      if (cGrade) params.gradeId = cGrade;
 
       const response = await userService.getAllUsers(params);
       if (response && response.data && Array.isArray(response.data.results)) {
@@ -113,40 +125,93 @@ const UserManagementPage = () => {
       }
     };
     fetchBranchListForFilter();
+
+    // Fetch Grades
+    setLoadingGrades(true);
+    // For SuperAdmin, fetch all grades, not scoped by a single school unless a school filter is also added
+    // Or, if SuperAdmin always sees grades from a "default" or "primary" school context, adjust params.
+    // Assuming a global list of grades for now, or grades associated with a currently selected school context if any.
+    const gradeParams = { limit: 500, sortBy: 'title:asc' };
+    const fetchGradeListForFilter = async () => {
+      try {
+        const gradesResponse = await fetchGradesService(gradeParams);
+        setAvailableGrades(gradesResponse.results || []);
+      } catch (e) {
+        showToast('Failed to load grades for filter.', 'error');
+        setAvailableGrades([]);
+      } finally {
+        setLoadingGrades(false);
+      }
+    };
+    fetchGradeListForFilter();
   }, []);
 
-  const debouncedFetchUsers = useCallback(debounce((s, st, r, b, limit) => {
-    setPaginationModel(prev => ({ ...prev, page: 0 }));
-    fetchUsers(0, s, st, r, b, limit);
-  }, 500), [fetchUsers]);
+
+  // Debounced function for text-based filters (name search, email, phone)
+  const debouncedFilterUpdate = useCallback(
+    debounce((filterType, value) => {
+      setPaginationModel(prev => ({ ...prev, page: 0 }));
+      if (filterType === 'search') setSearchTerm(value);
+      else if (filterType === 'email') setFilterEmail(value);
+      else if (filterType === 'phone') setFilterPhone(value);
+      // Main useEffect will pick this up
+    }, 500),
+    [] // No dependencies, it's a stable debouncer
+  );
+
 
   useEffect(() => {
-    fetchUsers(paginationModel.page, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize);
-  }, [paginationModel.page, paginationModel.pageSize, searchTerm, filterStatus, filterRole, filterBranch, fetchUsers]);
+    // This effect now triggers fetchUsers whenever any relevant filter or pagination state changes.
+    fetchUsers(
+      paginationModel.page,
+      searchTerm,
+      filterStatus,
+      filterRole,
+      filterBranch,
+      filterEmail,
+      filterPhone,
+      filterGrade,
+      paginationModel.pageSize
+    );
+  }, [
+    paginationModel.page,
+    paginationModel.pageSize,
+    searchTerm,
+    filterStatus,
+    filterRole,
+    filterBranch,
+    filterEmail,
+    filterPhone,
+    filterGrade,
+    fetchUsers
+  ]);
 
   const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-    // The useEffect above will catch the change in searchTerm and trigger debouncedFetchUsers indirectly
-    // or we can call debouncedFetchUsers directly if we remove searchTerm from useEffect's deps
-    // For simplicity with existing useEffect:
-    // debouncedFetchUsers(event.target.value, filterStatus, filterRole, filterBranch, paginationModel.pageSize);
+    debouncedFilterUpdate('search', event.target.value);
   };
 
   const handleFilterChange = (filterTypeChanged, newValue) => {
-    // setPaginationModel(prev => ({ ...prev, page: 0 })); // Done by useEffect triggering fetch
-    if (filterTypeChanged === 'status') {
-      setFilterStatus(newValue);
-    } else if (filterTypeChanged === 'role') {
-      setFilterRole(newValue);
-    } else if (filterTypeChanged === 'branch') {
-      setFilterBranch(newValue);
-    }
-    // The main useEffect will pick up these state changes.
+    setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page for immediate filters like Select
+
+    if (filterTypeChanged === 'status') setFilterStatus(newValue);
+    else if (filterTypeChanged === 'role') setFilterRole(newValue);
+    else if (filterTypeChanged === 'branch') setFilterBranch(newValue);
+    else if (filterTypeChanged === 'grade') setFilterGrade(newValue);
+    // For text fields (email, phone), their specific handlers will use debouncedFilterUpdate
+    // The main useEffect will pick up changes to filterStatus, filterRole, filterBranch, filterGrade.
   };
 
   const handleStatusFilterChange = (event) => handleFilterChange('status', event.target.value);
   const handleRoleFilterChange = (event) => handleFilterChange('role', event.target.value);
   const handleBranchFilterChange = (event) => handleFilterChange('branch', event.target.value);
+  const handleGradeFilterChange = (event) => handleFilterChange('grade', event.target.value);
+
+  const handleEmailFilterChange = (event) => {
+    debouncedFilterUpdate('email', event.target.value);
+  };
+  const handlePhoneFilterChange = (event) => {
+    debouncedFilterUpdate('phone', event.target.value);
+  };
 
   const handleAddUser = () => {
     setEditingUser(null);
@@ -272,17 +337,17 @@ const UserManagementPage = () => {
 
       <Box sx={{ mb: 3, p: 2, border: '1px solid #eee', borderRadius: '4px' }}>
         <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
             <TextField
               fullWidth
-              label="Search (Name, Email, Phone)"
+              label="Search by Name"
               variant="outlined"
               value={searchTerm}
               onChange={handleSearchChange}
               size="small"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
             <FormControl fullWidth size="small" variant="outlined">
               <InputLabel>Status</InputLabel>
               <Select value={filterStatus} onChange={handleStatusFilterChange} label="Status">
@@ -293,7 +358,7 @@ const UserManagementPage = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
             <FormControl fullWidth size="small" variant="outlined">
               <InputLabel>Role</InputLabel>
               <Select value={filterRole} onChange={handleRoleFilterChange} label="Role">
@@ -304,7 +369,7 @@ const UserManagementPage = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
             <FormControl fullWidth size="small" variant="outlined" disabled={loadingBranches}>
               <InputLabel>Branch</InputLabel>
               <Select value={filterBranch} onChange={handleBranchFilterChange} label="Branch">
@@ -313,6 +378,39 @@ const UserManagementPage = () => {
                 {!loadingBranches && availableBranches.length === 0 && <MenuItem value="" disabled><em>No branches found</em></MenuItem>}
                 {availableBranches.map((branch) => (
                   <MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
+            <TextField
+              fullWidth
+              label="Filter by Email"
+              variant="outlined"
+              value={filterEmail}
+              onChange={handleEmailFilterChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
+            <TextField
+              fullWidth
+              label="Filter by Phone"
+              variant="outlined"
+              value={filterPhone}
+              onChange={handlePhoneFilterChange}
+              size="small"
+            />
+          </Grid>
+           <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
+            <FormControl fullWidth size="small" variant="outlined" disabled={loadingGrades}>
+              <InputLabel>Grade</InputLabel>
+              <Select value={filterGrade} onChange={handleGradeFilterChange} label="Grade">
+                <MenuItem value=""><em>All Grades</em></MenuItem>
+                {loadingGrades && <MenuItem value="" disabled><em>Loading grades...</em></MenuItem>}
+                {!loadingGrades && availableGrades.length === 0 && <MenuItem value="" disabled><em>No grades found</em></MenuItem>}
+                {availableGrades.map((grade) => (
+                  <MenuItem key={grade.id} value={grade.id}>{grade.title || grade.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -340,7 +438,7 @@ const UserManagementPage = () => {
         onClose={handleUserFormClose}
         user={editingUser}
         onSubmit={handleUserFormSubmit}
-        availableRoles={SUPERADMIN_MANAGEABLE_ROLES}
+         availableRoles={ALL_ROLES_FOR_FILTER}
       />
 
       <ConfirmationDialog
