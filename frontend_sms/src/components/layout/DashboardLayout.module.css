@@ -1,0 +1,62 @@
+/* DashboardLayout.module.css */
+
+.appBar {
+  /* Styles for the Navbar when the drawer is permanent (sm screens and up) */
+}
+
+.appBarShift {
+  /* Styles for the Navbar when the drawer is open and permanent */
+  /* This will dynamically adjust width and margin */
+}
+
+.menuButton {
+  margin-right: 1rem; /* Or use Bootstrap spacing utilities if preferred */
+}
+
+.hide {
+  display: none;
+}
+
+.title {
+  flex-grow: 1;
+}
+
+.avatarButton {
+  padding: 0; /* Replicate IconButton sx={{ p:0 }} */
+}
+
+.avatar {
+  width: 32px; /* Example size, adjust as needed */
+  height: 32px;
+  font-size: 1rem; /* For initial letter avatar */
+  background-color: #3f51b5; /* Example color, match to MUI Avatar or theme */
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.userMenu {
+  margin-top: 45px; /* From MUI Menu sx={{ mt: '45px' }} */
+}
+
+/* Add any other custom styles needed for the Navbar or its elements */
+.navDropdownItemHeader {
+  font-weight: bold;
+  justify-content: center !important; /* Important to override default alignment if needed */
+}
+
+.navDropdownItemSubHeader {
+  font-size: 0.8rem;
+  justify-content: center !important;
+  padding-top: 0 !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.navDropdownItemIcon {
+ /* React-Bootstrap NavDropdown.Item doesn't directly support an icon like ListItemIcon.
+    We might need custom styling if icons are desired here, or use a library that extends NavDropdown.
+    For simplicity, icons in dropdown might be omitted or handled with Unicode characters / custom CSS.
+  */
+  margin-right: 8px; /* Example if we add icons manually */
+}

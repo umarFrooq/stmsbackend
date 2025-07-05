@@ -1,99 +1,76 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import {
-  AppBar,
+  // AppBar, // Replaced
   Box,
   CssBaseline,
   Drawer,
-  IconButton,
+  // IconButton, // Replaced where it was part of AppBar
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListItemButton, // For better click behavior and styling
-  Toolbar,
-  Typography,
-  Avatar,
-  Menu,
-  MenuItem,
+  ListItemButton,
+  // Toolbar, // Replaced
+  Typography, // Still used in Drawer
+  // Avatar, // Replaced
+  // Menu, // Replaced
+  // MenuItem, // Replaced
   Divider,
-  Tooltip,
+  Tooltip, // Can still be used, or use React-Bootstrap OverlayTrigger + Tooltip
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { Navbar, Nav, NavDropdown, Container, Image, Button as BsButton, Offcanvas } from 'react-bootstrap'; // Added BsButton for menu icon on mobile
+import MenuIcon from '@mui/icons-material/Menu'; // Keep for toggle, or use Navbar.Toggle's default
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; // SuperAdmin
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'; // Admin
-import SchoolIcon from '@mui/icons-material/School'; // Teacher
-import FaceIcon from '@mui/icons-material/Face'; // Student & Parent (use different for parent if needed)
-import SettingsIcon from '@mui/icons-material/Settings'; // Generic settings
-import DomainIcon from '@mui/icons-material/Domain'; // For School Management (Root Admin)
-import ClassIcon from '@mui/icons-material/Class'; // For Grade Management
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import SchoolIcon from '@mui/icons-material/School';
+import FaceIcon from '@mui/icons-material/Face';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DomainIcon from '@mui/icons-material/Domain';
+import ClassIcon from '@mui/icons-material/Class';
 
 import useAuthStore from '../../store/auth.store';
+import styles from './DashboardLayout.module.css'; // Import CSS module
 
 const drawerWidth = 240;
 
 const DashboardLayout = (props) => {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorElUser, setAnchorElUser] = useState(null);
+  // const [anchorElUser, setAnchorElUser] = useState(null); // Not needed for NavDropdown
   const navigate = useNavigate();
 
   const { user, roles, logout, hasRole, hasPermission } = useAuthStore();
-  // Fallback for user if it's null or undefined during initial render or after logout
   const userName = user?.fullname || user?.email || 'User';
   const userEmail = user?.email || '';
-
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
+  // handleOpenUserMenu and handleCloseUserMenu are not strictly needed for NavDropdown
+  // as it handles its own open/close state.
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-    handleCloseUserMenu();
   };
 
   const handleProfile = () => {
     navigate('/profile');
-    handleCloseUserMenu();
   }
 
-  // Define navigation items based on roles/permissions
-  // This can be further refined and moved to a separate config file if it grows large
   const navItems = [
-    { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'superadmin', 'rootUser', 'parent'] }, // Added rootUser here for general dashboard access
-
-    // Root Admin specific (New)
+    { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'superadmin', 'rootUser', 'parent'] },
     { text: 'School Management', icon: <DomainIcon />, path: '/rootadmin/schools', requiredRoles: ['rootUser'] },
-    // Potentially other rootUser links like a Root Dashboard
-    // { text: 'Root Dashboard', icon: <AdminPanelSettingsIcon />, path: '/rootadmin', requiredRoles: ['rootUser'] },
-
-
-    // Super Admin specific (school admin)
-    { text: 'School Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['superadmin'] }, // Main dashboard for superadmin
-    { text: 'School Users', icon: <SupervisorAccountIcon />, path: '/superadmin/users', requiredRoles: ['superadmin'], permission: 'viewSchoolUsers' }, // Link to user management for their school
-    { text: 'School Branches', icon: <DomainIcon />, path: '/superadmin/branches', requiredRoles: ['superadmin'], permission: 'viewBranches' }, // Link to branch management for their school
-    { text: 'Grade Management', icon: <ClassIcon />, path: '/superadmin/grades', requiredRoles: ['superadmin'], permission: 'manageGrades' }, // Added for SuperAdmin
-    // Add links for other modules a superadmin should manage, e.g.:
-    // { text: 'School Subjects', icon: <SomeIcon />, path: '/superadmin/subjects', requiredRoles: ['superadmin'], permission: 'viewSubjects' },
-    // { text: 'School Settings', icon: <SettingsIcon />, path: '/superadmin/settings', requiredRoles: ['superadmin'], permission: 'manageOwnSchoolDetails' }, // Example
-
-
-    // Admin specific (This might be a different type of admin, or could be merged/clarified based on system design)
-    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'superadmin'] }, // If superadmin also has 'admin' rights
-    // Show Admin's Grade Management link only if the user is 'admin' BUT NOT 'superadmin' (to avoid duplicate links if a superadmin also has admin role)
+    { text: 'School Dashboard', icon: <AdminPanelSettingsIcon />, path: '/superadmin', requiredRoles: ['superadmin'] },
+    { text: 'School Users', icon: <SupervisorAccountIcon />, path: '/superadmin/users', requiredRoles: ['superadmin'], permission: 'viewSchoolUsers' },
+    { text: 'School Branches', icon: <DomainIcon />, path: '/superadmin/branches', requiredRoles: ['superadmin'], permission: 'viewBranches' },
+    { text: 'Grade Management', icon: <ClassIcon />, path: '/superadmin/grades', requiredRoles: ['superadmin'], permission: 'manageGrades' },
+    { text: 'Admin Dashboard', icon: <SupervisorAccountIcon />, path: '/admin', requiredRoles: ['admin', 'superadmin'] },
     {
       text: 'Grade Management',
       icon: <ClassIcon />,
@@ -102,36 +79,29 @@ const DashboardLayout = (props) => {
       permission: 'manageGrades',
       condition: (userRoles) => userRoles.includes('admin') && !userRoles.includes('superadmin')
     },
-
-    // Teacher specific
     { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'superadmin'] },
-
-    // Student specific
     { text: 'Student Dashboard', icon: <FaceIcon />, path: '/student', requiredRoles: ['student', 'superadmin'] },
-
-    // Parent specific - Assuming 'parent' role exists
-    // { text: 'Parent Dashboard', icon: <FaceIcon />, path: '/parent', requiredRoles: ['parent', 'superadmin'] },
   ];
 
-  const drawer = (
+  const drawerContent = ( // Renamed from drawer to avoid conflict with MUI Drawer
     <div>
-      <Toolbar>
+      {/* Toolbar equivalent for spacing and title */}
+      <div className="d-flex align-items-center justify-content-center p-3" style={{ height: '64px' }}> {/* Approx Toolbar height */}
         <Typography variant="h6" noWrap component="div">
           SMS Portal
         </Typography>
-      </Toolbar>
+      </div>
       <Divider />
       <List>
         {navItems.map((item) => {
           const hasRequiredRole = item.requiredRoles.some(role => hasRole(role));
           const hasRequiredPermission = !item.permission || hasPermission(item.permission);
-          // Check additional condition if it exists
-          const meetsCondition = !item.condition || item.condition(roles); // `roles` from useAuthStore
+          const meetsCondition = !item.condition || item.condition(roles);
 
           if (hasRequiredRole && hasRequiredPermission && meetsCondition) {
             return (
               <ListItem key={item.text} disablePadding>
-                <ListItemButton onClick={() => navigate(item.path)}>
+                <ListItemButton onClick={() => { navigate(item.path); if(mobileOpen) handleDrawerToggle(); }}>
                   <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.text} />
                 </ListItemButton>
@@ -142,11 +112,10 @@ const DashboardLayout = (props) => {
         })}
       </List>
       <Divider />
-      {/* Example for a settings link with permission check */}
-      {hasPermission('manageSystemSettings') && ( // Example permission
+      {hasPermission('manageSystemSettings') && (
          <List>
             <ListItem disablePadding>
-                <ListItemButton onClick={() => navigate('/settings')}> {/* Define /settings route */}
+                <ListItemButton onClick={() => { navigate('/settings'); if(mobileOpen) handleDrawerToggle(); }}>
                     <ListItemIcon><SettingsIcon /></ListItemIcon>
                     <ListItemText primary="System Settings" />
                 </ListItemButton>
@@ -158,97 +127,105 @@ const DashboardLayout = (props) => {
 
   const container = window !== undefined ? () => window().document.body : undefined;
 
+  // Calculate style for Navbar based on drawer state (for larger screens)
+  const navbarStyle = {
+    transition: 'margin .2s ease-out, width .2s ease-out', // Smooth transition
+  };
+  // On small screens (sm and down), Navbar takes full width.
+  // On medium screens (md and up) where permanent drawer is shown, adjust Navbar.
+  // This logic can be tricky with media queries vs. dynamic styling.
+  // Bootstrap's Navbar is typically full-width unless inside a container that limits it.
+  // The `fixed="top"` makes it full viewport width.
+  // The main content area then gets padding/margin.
+
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}> {/* Ensure Box takes full height */}
       <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-        }}
+
+      <Navbar
+        bg="primary"
+        variant="dark"
+        expand="sm" // Hamburger menu appears on 'sm' and smaller
+        fixed="top"
+        className={styles.appBar} // Base class
+        style={navbarStyle} // Dynamic styles for drawer offset
       >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
+        <Container fluid style={{ paddingLeft: mobileOpen && document.documentElement.clientWidth >= 600 ? `${drawerWidth}px` : (document.documentElement.clientWidth >= 600 ? `${drawerWidth}px` : undefined) , width: mobileOpen && document.documentElement.clientWidth >= 600 ? `calc(100% - ${drawerWidth}px)` : (document.documentElement.clientWidth >= 600 ? `calc(100% - ${drawerWidth}px)` : '100%')}}>
+          {/* IconButton for mobile drawer toggle - using Navbar.Toggle now */}
+          <BsButton
+            variant="outline-light"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            className="d-sm-none me-2" // Display only on extra-small to small screens
+            aria-label="open drawer"
           >
             <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          </BsButton>
+          <Navbar.Brand href="#home" onClick={(e) => {e.preventDefault(); navigate('/dashboard');}} className={styles.title}>
             Student Management System
-          </Typography>
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt={userName}>
-                  {userName ? userName.charAt(0).toUpperCase() : <PersonIcon />}
-                </Avatar>
-              </IconButton>
+          </Navbar.Brand>
+          {/* Navbar.Toggle for Bootstrap's built-in responsive menu (if we had Nav links in AppBar) */}
+          {/* <Navbar.Toggle aria-controls="responsive-navbar-nav" /> */}
+          {/* <Navbar.Collapse id="responsive-navbar-nav"> */}
+            {/* <Nav className="me-auto"> */}
+              {/* Future Nav.Link items if any */}
+            {/* </Nav> */}
+          {/* </Navbar.Collapse> */}
+          <Nav className="ms-auto"> {/* ms-auto to push to the right */}
+            <Tooltip title="User menu">
+              <NavDropdown
+                title={
+                  <Image
+                    src={user?.profilePictureUrl || undefined} // Placeholder or actual image
+                    alt={userName}
+                    roundedCircle
+                    style={{ width: 32, height: 32, backgroundColor: '#fff', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {/* Fallback to initial if no image */}
+                    {(!user?.profilePictureUrl && userName) ? userName.charAt(0).toUpperCase() : <PersonIcon style={{color: '#333'}}/>}
+                  </Image>
+                }
+                id="user-nav-dropdown"
+                align="end"
+              >
+                <NavDropdown.ItemText className="text-center">
+                  <div className={styles.navDropdownItemHeader}>{userName}</div>
+                  <div className={styles.navDropdownItemSubHeader}>{userEmail}</div>
+                </NavDropdown.ItemText>
+                <NavDropdown.Divider />
+                <NavDropdown.Item onClick={handleProfile}>
+                  <PersonIcon fontSize="small" className={styles.navDropdownItemIcon} /> Profile
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={handleLogout}>
+                  <ExitToAppIcon fontSize="small" className={styles.navDropdownItemIcon} /> Logout
+                </NavDropdown.Item>
+              </NavDropdown>
             </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              <MenuItem disabled>
-                <Typography textAlign="center" fontWeight="bold">{userName}</Typography>
-              </MenuItem>
-              <MenuItem disabled sx={{ justifyContent: 'center', fontSize: '0.8rem', pb:1, pt:0 }}>
-                <Typography variant="caption">{userEmail}</Typography>
-              </MenuItem>
-              <Divider sx={{mb: 1}}/>
-              <MenuItem onClick={handleProfile}>
-                <ListItemIcon>
-                  <PersonIcon fontSize="small" />
-                </ListItemIcon>
-                <Typography textAlign="center">Profile</Typography>
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>
-                 <ListItemIcon>
-                  <ExitToAppIcon fontSize="small" />
-                </ListItemIcon>
-                <Typography textAlign="center">Logout</Typography>
-              </MenuItem>
-            </Menu>
-          </Box>
-        </Toolbar>
-      </AppBar>
+          </Nav>
+        </Container>
+      </Navbar>
+
+      {/* Sidebar Navigation (Drawer) */}
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        <Drawer
+        {/* Temporary Drawer for mobile */}
+        <Drawer // Using MUI Drawer for mobile off-canvas
           container={container}
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
+          ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', sm: 'none' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
         >
-          {drawer}
+          {drawerContent}
         </Drawer>
-        <Drawer
+        {/* Permanent Drawer for desktop */}
+        <Drawer // Using MUI Drawer for permanent sidebar
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
@@ -256,22 +233,24 @@ const DashboardLayout = (props) => {
           }}
           open
         >
-          {drawer}
+          {drawerContent}
         </Drawer>
       </Box>
+
+      {/* Main Content Area */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px', // For AppBar height
-          overflowX: 'hidden', // Prevent this main content area from scrolling horizontally
+          // width: { sm: `calc(100% - ${drawerWidth}px)` }, // Width is handled by flexGrow
+          mt: '64px', // AppBar height (Bootstrap default can be 56px or more)
+          overflowX: 'hidden',
+          marginLeft: { sm: `${drawerWidth}px` } // Adjust margin when drawer is permanent
         }}
+        style={{ width: `calc(100% - ${drawerWidth}px)`}} // Ensure this works with flexGrow
       >
-        {/* Toolbar spacer for content to be below AppBar - already handled by mt above */}
-        {/* <Toolbar />  */}
-        <Outlet /> {/* This is where nested route components will render */}
+        <Outlet />
       </Box>
     </Box>
   );
