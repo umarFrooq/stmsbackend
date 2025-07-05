@@ -1,17 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Container,
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Paper,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import { Container, Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import authService from '../../services/auth.service';
-import useAuthStore from '../../store/auth.store';
+// import useAuthStore from '../../store/auth.store'; // loginAction was unused as per previous lint, and store is updated by authService
+import styles from './LoginPage.module.css'; // Import CSS Module
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -21,16 +13,15 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const loginAction = useAuthStore((state) => state.login);
+  // const loginAction = useAuthStore((state) => state.login); // Unused
 
-  const from = location.state?.from?.pathname || '/dashboard'; // Redirect to dashboard or previous page
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
     setLoading(true);
 
-    // Basic validation
     if (!email || !password) {
       setError('Email and password are required.');
       setLoading(false);
@@ -41,9 +32,7 @@ const LoginPage = () => {
 
     setLoading(false);
     if (result.success) {
-      // The store is updated by authService.login via useAuthStore.getState().login
-      // No need to call loginAction(result.token, result.user, result.roles, result.permissions); here
-      // as it's handled within the service on successful API call.
+      // authService.login updates the store directly via useAuthStore.getState().login(...)
       navigate(from, { replace: true });
     } else {
       setError(result.error || 'Login failed. Please check your credentials.');
@@ -51,82 +40,76 @@ const LoginPage = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper
-        elevation={3}
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: 4,
-        }}
-      >
-        <Typography component="h1" variant="h5">
-          SMS Login
-        </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+    <div className={styles.loginContainer}>
+      <div className={styles.loginPaper}>
+        <h1 className={styles.loginTitle}>SMS Login</h1>
+        <Form onSubmit={handleSubmit} noValidate>
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert variant="danger" className={styles.errorMessage}>
               {error}
             </Alert>
           )}
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-          />
+          <Form.Group className="mb-3" controlId="email">
+            <Form.Label>Email Address</Form.Label>
+            <Form.Control
+              type="email"
+              placeholder="Enter email"
+              name="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              required
+              autoFocus
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3" controlId="password">
+            <Form.Label>Password</Form.Label>
+            <Form.Control
+              type="password"
+              placeholder="Password"
+              name="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              required
+            />
+          </Form.Group>
+
           {/* TODO: Add remember me if needed */}
-          {/* <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
-          /> */}
+          {/* <Form.Group className="mb-3" controlId="formBasicCheckbox">
+            <Form.Check type="checkbox" label="Remember me" />
+          </Form.Group> */}
+
           <Button
+            variant="primary"
             type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            className={`w-100 ${styles.submitButton}`}
             disabled={loading}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+            {loading ? (
+              <Spinner animation="border" size="sm" role="status" aria-hidden="true">
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+            ) : (
+              'Sign In'
+            )}
           </Button>
+
           {/* TODO: Add links for Forgot Password or Register if applicable */}
-          {/* <Grid container>
-            <Grid item xs>
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-            </Grid>
-            <Grid item>
-              <Link href="#" variant="body2">
-                {"Don't have an account? Sign Up"}
-              </Link>
-            </Grid>
-          </Grid> */}
-        </Box>
-      </Paper>
-    </Container>
+          {/* <Row className="mt-3">
+            <Col xs>
+              <a href="#forgot-password">Forgot password?</a>
+            </Col>
+            <Col xs className="text-end">
+              <a href="#register">Don't have an account? Sign Up</a>
+            </Col>
+          </Row> */}
+        </Form>
+      </div>
+    </div>
   );
 };
 

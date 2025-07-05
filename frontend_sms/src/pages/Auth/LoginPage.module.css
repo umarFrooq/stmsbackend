@@ -1,0 +1,35 @@
+/* LoginPage.module.css */
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5; /* Similar to MUI's default page background */
+}
+
+.loginPaper {
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2),
+              0 4px 5px 0 rgba(0,0,0,0.14),
+              0 1px 10px 0 rgba(0,0,0,0.12); /* Similar to MUI Paper elevation 3 */
+  max-width: 400px;
+  width: 100%;
+  text-align: center; /* Center title and form elements by default */
+}
+
+.loginTitle {
+  margin-bottom: 1.5rem;
+  /* text-align: center; -- Handled by loginPaper */
+}
+
+.errorMessage {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.submitButton {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
