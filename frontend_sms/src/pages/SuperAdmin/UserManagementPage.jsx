@@ -9,16 +9,14 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import UserFormDialog from './UserFormDialog';
 import NotificationToast from '../../components/common/NotificationToast';
-import { TextField } from '@mui/material'; // Removed InputAdornment, SearchIcon if not used directly here
+import { TextField } from '@mui/material';
 import debounce from 'lodash.debounce';
 
 import userService from '../../services/userService';
-import { getGrades as fetchGradesService } from '../../services/gradeService'; // Import grade service
-// import useAuthStore from '../../store/auth.store'; // Was unused after removing currentUser
-// Assuming branchApi.js will be used for fetching branches for filter
-// import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
+import { getGrades as fetchGradesService } from '../../services/gradeService';
+// import useAuthStore from '../../store/auth.store'; // Was unused
 
-const ALL_ROLES_FOR_FILTER = ['superadmin', 'admin', 'teacher', 'student', 'parent', 'rootUser']; // Example
+const ALL_ROLES_FOR_FILTER = ['superadmin', 'admin', 'teacher', 'student', 'parent', 'rootUser'];
 const USER_STATUS_ENUM = { ACTIVE: 'active', INACTIVE: 'inactive' };
 
 const UserManagementPage = () => {
@@ -52,7 +50,7 @@ const UserManagementPage = () => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [totalUsers, setTotalUsers] = useState(0);
 
-  // const { user: currentUser } = useAuthStore(); // currentUser was unused
+  // const { user: currentUser } = useAuthStore(); // Was unused
 
   const showToast = (message, severity = 'success') => {
     setToastMessage(message);
@@ -69,20 +67,13 @@ const UserManagementPage = () => {
     cEmail,
     cPhone,
     cGrade,
-    cLimit = paginationModel.pageSize // Use from closure if not passed
+    cLimit = paginationModel.pageSize
   ) => {
     setLoading(true);
     setError(null);
     try {
-      const params = {
-        page: cPage + 1,
-        limit: cLimit,
-        // sortBy: 'fullname:asc',
-      };
-      if (cSearch) {
-        params.name = 'fullname';
-        params.value = cSearch;
-      }
+      const params = { page: cPage + 1, limit: cLimit };
+      if (cSearch) { params.name = 'fullname'; params.value = cSearch; }
       if (cStatus) params.status = cStatus;
       if (cRole) params.role = cRole;
       if (cBranch) params.branchId = cBranch;
@@ -110,7 +101,7 @@ const UserManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [paginationModel.pageSize]); // Depends on pageSize from closure if cLimit not provided by caller.
+  }, [paginationModel.pageSize]);
 
   useEffect(() => {
     setLoadingBranches(true);
@@ -120,7 +111,7 @@ const UserManagementPage = () => {
         const { getBranches: fetchBranchesApi } = await import('../../services/branchApi.js');
         const branchesResponse = await fetchBranchesApi(branchParams);
         setAvailableBranches(branchesResponse.results || []);
-      } catch (_e) { // Mark as intentionally unused or remove if not logging/using it
+      } catch (_e) { // Mark as intentionally unused
         showToast('Failed to load branches for filter.', 'error');
         setAvailableBranches([]);
       } finally {
@@ -129,17 +120,13 @@ const UserManagementPage = () => {
     };
     fetchBranchListForFilter();
 
-    // Fetch Grades
     setLoadingGrades(true);
-    // For SuperAdmin, fetch all grades, not scoped by a single school unless a school filter is also added
-    // Or, if SuperAdmin always sees grades from a "default" or "primary" school context, adjust params.
-    // Assuming a global list of grades for now, or grades associated with a currently selected school context if any.
     const gradeParams = { limit: 500, sortBy: 'title:asc' };
     const fetchGradeListForFilter = async () => {
       try {
         const gradesResponse = await fetchGradesService(gradeParams);
         setAvailableGrades(gradesResponse.results || []);
-      } catch (_e) { // Mark as intentionally unused or remove if not logging/using it
+      } catch (_e) { // Mark as intentionally unused
         showToast('Failed to load grades for filter.', 'error');
         setAvailableGrades([]);
       } finally {
@@ -149,24 +136,18 @@ const UserManagementPage = () => {
     fetchGradeListForFilter();
   }, []);
 
-
-  // Debounced function for text-based filters (name search, email, phone)
   const debouncedFilterUpdate = useCallback(
     debounce((filterType, value) => {
       setPaginationModel(prev => ({ ...prev, page: 0 }));
       if (filterType === 'search') setSearchTerm(value);
       else if (filterType === 'email') setFilterEmail(value);
       else if (filterType === 'phone') setFilterPhone(value);
-      // Main useEffect will pick this up
     }, 500),
-    [setPaginationModel, setSearchTerm, setFilterEmail, setFilterPhone] // Add stable setters to satisfy exhaustive-deps
+    [setPaginationModel, setSearchTerm, setFilterEmail, setFilterPhone]
   );
 
-
   useEffect(() => {
-    // This effect now triggers fetchUsers whenever any relevant filter or pagination state changes.
     const canSearchName = searchTerm.length === 0 || searchTerm.length >= 3;
-
     if (canSearchName) {
       fetchUsers(
         paginationModel.page,
@@ -179,9 +160,6 @@ const UserManagementPage = () => {
         filterGrade,
         paginationModel.pageSize
       );
-    } else {
-      // Optional: Clear list or show message if searchTerm is 1 or 2 chars.
-      // For now, leaves previous results.
     }
   }, [
     paginationModel.page,
@@ -201,14 +179,11 @@ const UserManagementPage = () => {
   };
 
   const handleFilterChange = (filterTypeChanged, newValue) => {
-    setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page for immediate filters like Select
-
+    setPaginationModel(prev => ({ ...prev, page: 0 }));
     if (filterTypeChanged === 'status') setFilterStatus(newValue);
     else if (filterTypeChanged === 'role') setFilterRole(newValue);
     else if (filterTypeChanged === 'branch') setFilterBranch(newValue);
     else if (filterTypeChanged === 'grade') setFilterGrade(newValue);
-    // For text fields (email, phone), their specific handlers will use debouncedFilterUpdate
-    // The main useEffect will pick up changes to filterStatus, filterRole, filterBranch, filterGrade.
   };
 
   const handleStatusFilterChange = (event) => handleFilterChange('status', event.target.value);
@@ -248,8 +223,8 @@ const UserManagementPage = () => {
     try {
       await userService.deleteUser(userToDelete.id);
       showToast(`User "${userToDelete.fullname}" deleted successfully.`, 'success');
-      fetchUsers(0, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize); // Fetch from page 0
-      setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page
+      fetchUsers(0, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize);
+      setPaginationModel(prev => ({ ...prev, page: 0 }));
     } catch (err) {
       showToast(err.message || (err.data && err.data.message) || "Failed to delete user.", 'error');
     } finally {
@@ -269,8 +244,8 @@ const UserManagementPage = () => {
         showToast('User created successfully!', 'success');
       }
       setIsUserFormOpen(false);
-      fetchUsers(0, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize); // Fetch from page 0
-      setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page
+      fetchUsers(0, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize);
+      setPaginationModel(prev => ({ ...prev, page: 0 }));
       return true;
     } catch (apiError) {
       showToast(apiError.message || (apiError.data && apiError.data.message) || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
@@ -286,52 +261,14 @@ const UserManagementPage = () => {
   const columns = [
     { field: 'fullname', headerName: 'Full Name', flex: 1, minWidth: 180 },
     { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
-    {
-      field: 'role',
-      headerName: 'Role',
-      width: 120,
-      renderCell: (params) => <Chip label={params.value} size="small"
-        color={params.value === 'superAdmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} />
-    },
-      {
-      field: 'rollNumber',
-      headerName: 'Roll NO',
-      width: 120,
-      renderCell: (params) => <Chip label={params.value} size="small"
-        color={params.value === 'superAdmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} />
-    },
-      {
-      field: 'branch',
-      headerName: 'Branch/Campus',
-      width: 180,
-      renderCell: (params) => params?.row?.branchId?.name || 'N/A'
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 100,
-      renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'active' ? 'success' : 'error'} />
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 150,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
+    { field: 'role', headerName: 'Role', width: 120, renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'superAdmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} /> },
+    { field: 'rollNumber', headerName: 'Roll NO', width: 120, renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'superAdmin' ? 'secondary' : params.value === 'admin' ? 'primary' : 'default'} /> },
+    { field: 'branch', headerName: 'Branch/Campus', width: 180, renderCell: (params) => params?.row?.branchId?.name || 'N/A' },
+    { field: 'status', headerName: 'Status', width: 100, renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'active' ? 'success' : 'error'} /> },
+    { field: 'actions', headerName: 'Actions', width: 150, sortable: false, filterable: false, renderCell: (params) => (
         <Box>
-          <Tooltip title="Edit User">
-            <IconButton onClick={() => handleEditUser(params.row)} size="small">
-              <EditIcon />
-            </IconButton>
-          </Tooltip>
-          {params.row.role !== 'superAdmin' && (
-            <Tooltip title="Delete User">
-              <IconButton onClick={() => handleDeleteUser(params.row)} size="small" color="error">
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+          <Tooltip title="Edit User"><IconButton onClick={() => handleEditUser(params.row)} size="small"><EditIcon /></IconButton></Tooltip>
+          {params.row.role !== 'superAdmin' && (<Tooltip title="Delete User"><IconButton onClick={() => handleDeleteUser(params.row)} size="small" color="error"><DeleteIcon /></IconButton></Tooltip>)}
         </Box>
       ),
     },
@@ -342,126 +279,59 @@ const UserManagementPage = () => {
   }
 
   return (
-    // The outermost Box provides padding for the entire page.
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      {/* This Box is for the page title and Add User button, will be sticky */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2, // Adjusted margin
-          flexWrap: 'wrap',
-          gap: 2,
-          position: 'sticky',
-          top: 0,
-          zIndex: 1100, // Common zIndex for app bars in MUI, ensure it's above other content
-          backgroundColor: 'background.paper', // Or use theme.palette.background.paper
-          // Add padding to match the parent's padding if needed, or ensure parent padding doesn't interfere
-          // For example, if the parent <Box sx={{ p: ... }}> creates an issue, this sticky box might need negative margins
-          // or the parent padding should be on a different element.
-          // Let's assume for now the existing padding `p` on the root Box is fine.
-          // If content scrolls under this, may need to match root padding here or adjust structure.
-        }}
-      >
-        <Typography variant="h5" component="h1">
-          User Management
-        </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddUser}>
-          Add User
-        </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2, position: 'sticky', top: 0, zIndex: 1100, backgroundColor: 'background.paper' }}>
+        <Typography variant="h5" component="h1">User Management</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddUser}>Add User</Button>
       </Box>
-
-      {/* This Box is for the filters, will also be sticky */}
-      <Box
-        sx={{
-          mb: 2, // Adjusted margin
-          p: 2,
-          border: '1px solid #eee',
-          borderRadius: '4px',
-          position: 'sticky',
-          top: '72px', // Approximate height of the title/button bar above. This might need dynamic calculation or refinement.
-                      // For example, if the title bar wraps, this value will be insufficient.
-          zIndex: 1090, // Slightly lower than the title bar
-          backgroundColor: 'background.paper', // Or use theme.palette.background.paper
-        }}
-      >
+      <Box sx={{ mb: 2, p: 2, border: '1px solid #eee', borderRadius: '4px', position: 'sticky', top: '72px', zIndex: 1090, backgroundColor: 'background.paper' }}>
         <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
-            <TextField
-              fullWidth
-              label="Search by Name"
-              variant="outlined"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              size="small"
-            />
+          <Grid item xs={12} sm={6} md={2}>
+            <TextField fullWidth label="Search by Name" variant="outlined" value={searchTerm} onChange={handleSearchChange} size="small" />
           </Grid>
-          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
+          <Grid item xs={12} sm={6} md={2}>
             <FormControl fullWidth size="small" variant="outlined">
               <InputLabel>Status</InputLabel>
               <Select value={filterStatus} onChange={handleStatusFilterChange} label="Status">
                 <MenuItem value=""><em>All Statuses</em></MenuItem>
-                {Object.entries(USER_STATUS_ENUM).map(([key, value]) => (
-                  <MenuItem key={key} value={value}>{key.charAt(0) + key.slice(1).toLowerCase()}</MenuItem>
-                ))}
+                {Object.entries(USER_STATUS_ENUM).map(([key, value]) => (<MenuItem key={key} value={value}>{key.charAt(0) + key.slice(1).toLowerCase()}</MenuItem>))}
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
+          <Grid item xs={12} sm={6} md={2}>
             <FormControl fullWidth size="small" variant="outlined">
               <InputLabel>Role</InputLabel>
               <Select value={filterRole} onChange={handleRoleFilterChange} label="Role">
                 <MenuItem value=""><em>All Roles</em></MenuItem>
-                {ALL_ROLES_FOR_FILTER.map((role) => (
-                  <MenuItem key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</MenuItem>
-                ))}
+                {ALL_ROLES_FOR_FILTER.map((role) => (<MenuItem key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</MenuItem>))}
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
+          <Grid item xs={12} sm={6} md={2}>
             <FormControl fullWidth size="small" variant="outlined" disabled={loadingBranches}>
               <InputLabel>Branch</InputLabel>
               <Select value={filterBranch} onChange={handleBranchFilterChange} label="Branch">
                 <MenuItem value=""><em>All Branches</em></MenuItem>
                 {loadingBranches && <MenuItem value="" disabled><em>Loading branches...</em></MenuItem>}
                 {!loadingBranches && availableBranches.length === 0 && <MenuItem value="" disabled><em>No branches found</em></MenuItem>}
-                {availableBranches.map((branch) => (
-                  <MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>
-                ))}
+                {availableBranches.map((branch) => (<MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>))}
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
-            <TextField
-              fullWidth
-              label="Filter by Email"
-              variant="outlined"
-              value={filterEmail}
-              onChange={handleEmailFilterChange}
-              size="small"
-            />
+          <Grid item xs={12} sm={6} md={2}>
+            <TextField fullWidth label="Filter by Email" variant="outlined" value={filterEmail} onChange={handleEmailFilterChange} size="small" />
           </Grid>
-          <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
-            <TextField
-              fullWidth
-              label="Filter by Phone"
-              variant="outlined"
-              value={filterPhone}
-              onChange={handlePhoneFilterChange}
-              size="small"
-            />
+          <Grid item xs={12} sm={6} md={2}>
+            <TextField fullWidth label="Filter by Phone" variant="outlined" value={filterPhone} onChange={handlePhoneFilterChange} size="small" />
           </Grid>
-           <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
+          <Grid item xs={12} sm={6} md={2}>
             <FormControl fullWidth size="small" variant="outlined" disabled={loadingGrades}>
               <InputLabel>Grade</InputLabel>
               <Select value={filterGrade} onChange={handleGradeFilterChange} label="Grade">
                 <MenuItem value=""><em>All Grades</em></MenuItem>
                 {loadingGrades && <MenuItem value="" disabled><em>Loading grades...</em></MenuItem>}
                 {!loadingGrades && availableGrades.length === 0 && <MenuItem value="" disabled><em>No grades found</em></MenuItem>}
-                {availableGrades.map((grade) => (
-                  <MenuItem key={grade.id} value={grade.id}>{grade.title || grade.name}</MenuItem>
-                ))}
+                {availableGrades.map((grade) => (<MenuItem key={grade.id} value={grade.id}>{grade.title || grade.name}</MenuItem>))}
               </Select>
             </FormControl>
           </Grid>
@@ -470,25 +340,27 @@ const UserManagementPage = () => {
 
       {error && !loading && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <StyledDataGrid
-        rows={users}
-        columns={columns}
-        loading={loading}
-        error={null}
-        getRowId={(row) => row.id}
-        minHeight={500}
-        rowCount={totalUsers}
-        paginationModel={paginationModel}
-        onPaginationModelChange={setPaginationModel}
-        paginationMode="server"
-      />
+      <Box sx={{ width: '100%', overflow: 'hidden' }}>
+        <StyledDataGrid
+          rows={users}
+          columns={columns}
+          loading={loading}
+          error={null}
+          getRowId={(row) => row.id}
+          minHeight={500}
+          rowCount={totalUsers}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          paginationMode="server"
+        />
+      </Box>
 
       <UserFormDialog
         open={isUserFormOpen}
         onClose={handleUserFormClose}
         user={editingUser}
         onSubmit={handleUserFormSubmit}
-         availableRoles={ALL_ROLES_FOR_FILTER}
+        availableRoles={ALL_ROLES_FOR_FILTER}
       />
 
       <ConfirmationDialog

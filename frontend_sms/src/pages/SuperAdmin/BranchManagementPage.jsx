@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -8,9 +8,9 @@ import StyledDataGrid from '../../components/common/StyledDataGrid';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import NotificationToast from '../../components/common/NotificationToast';
-import BranchFormDialog from './BranchFormDialog'; // Import the actual dialog
+import BranchFormDialog from './BranchFormDialog';
 
-// Mock service for branches
+// Mock service for branches (keeping as is, assuming it's for local dev/testing)
 const mockBranchService = {
   getBranches: async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -31,7 +31,6 @@ const mockBranchService = {
     const newBranch = { ...branchData, id: `branch_${Date.now()}` };
     branches.push(newBranch);
     localStorage.setItem('mock_branches', JSON.stringify(branches));
-    console.log('Branch added (mocked):', newBranch);
     return { success: true, data: newBranch };
   },
   updateBranch: async (branchId, branchData) => {
@@ -39,7 +38,6 @@ const mockBranchService = {
     let branches = JSON.parse(localStorage.getItem('mock_branches')) || [];
     branches = branches.map(b => (b.id === branchId ? { ...b, ...branchData } : b));
     localStorage.setItem('mock_branches', JSON.stringify(branches));
-    console.log(`Branch ${branchId} updated (mocked):`, branchData);
     return { success: true, data: branches.find(b => b.id === branchId) };
   },
   deleteBranch: async (branchId) => {
@@ -47,7 +45,6 @@ const mockBranchService = {
     let branches = JSON.parse(localStorage.getItem('mock_branches')) || [];
     branches = branches.filter(b => b.id !== branchId);
     localStorage.setItem('mock_branches', JSON.stringify(branches));
-    console.log(`Branch ${branchId} deleted (mocked)`);
     return { success: true };
   }
 };
@@ -72,9 +69,8 @@ const BranchManagementPage = () => {
     setToastMessage(message);
     setToastSeverity(severity);
     setToastOpen(true);
-  }, [setToastMessage, setToastSeverity, setToastOpen]); // Dependencies for showToast
+  }, [setToastMessage, setToastSeverity, setToastOpen]);
 
-  // Wrap fetchBranches in useCallback
   const fetchBranches = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -134,20 +130,18 @@ const BranchManagementPage = () => {
         await mockBranchService.addBranch(values);
         showToast('Branch created successfully!', 'success');
       }
-      setIsBranchFormOpen(false); // Close dialog
-      fetchBranches(); // Refresh data
-      return true; // Indicate success to form if needed
+      setIsBranchFormOpen(false);
+      fetchBranches();
+      return true;
     } catch (apiError) {
       showToast(apiError.message || `Failed to ${isEditingMode ? 'update' : 'create'} branch.`, 'error');
-      return false; // Indicate failure to form
+      return false;
     }
   };
 
   const handleBranchFormClose = () => { // Removed unused submittedSuccessfully parameter
     setIsBranchFormOpen(false);
     setEditingBranch(null);
-    // No need to call fetchBranches here if submittedSuccessfully is true,
-    // as handleBranchFormSubmit already calls it.
   };
 
   const columns = [
@@ -156,30 +150,11 @@ const BranchManagementPage = () => {
     { field: 'contactPerson', headerName: 'Contact Person', width: 180 },
     { field: 'contactEmail', headerName: 'Contact Email', width: 200 },
     { field: 'contactPhone', headerName: 'Contact Phone', width: 150 },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 100,
-      renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'active' ? 'success' : 'error'} />
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 130,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
+    { field: 'status', headerName: 'Status', width: 100, renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'active' ? 'success' : 'error'} /> },
+    { field: 'actions', headerName: 'Actions', width: 130, sortable: false, filterable: false, renderCell: (params) => (
         <Box>
-          <Tooltip title="Edit Branch">
-            <IconButton onClick={() => handleEditBranch(params.row)} size="small">
-              <EditIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete Branch">
-            <IconButton onClick={() => handleDeleteBranch(params.row)} size="small" color="error">
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
+          <Tooltip title="Edit Branch"><IconButton onClick={() => handleEditBranch(params.row)} size="small"><EditIcon /></IconButton></Tooltip>
+          <Tooltip title="Delete Branch"><IconButton onClick={() => handleDeleteBranch(params.row)} size="small" color="error"><DeleteIcon /></IconButton></Tooltip>
         </Box>
       ),
     },
@@ -191,47 +166,27 @@ const BranchManagementPage = () => {
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      {/* This Box is for the page title and Add Branch button, will be sticky */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2, // Adjusted margin
-          flexWrap: 'wrap', // Added for consistency, in case button/title wraps
-          gap: 2,         // Added for consistency
-          position: 'sticky',
-          top: 0,
-          zIndex: 1100,
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <Typography variant="h5" component="h1">
-          Branch Management
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddBranch}
-        >
-          Add Branch
-        </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2, position: 'sticky', top: 0, zIndex: 1100, backgroundColor: 'background.paper' }}>
+        <Typography variant="h5" component="h1">Branch Management</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddBranch}>Add Branch</Button>
       </Box>
 
       {error && !loading && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <StyledDataGrid
-        rows={branches}
-        columns={columns}
-        loading={loading}
-        error={null}
-        getRowId={(row) => row.id}
-        minHeight={500}
-      />
+      <Box sx={{ width: '100%', overflow: 'hidden' }}>
+        <StyledDataGrid
+          rows={branches}
+          columns={columns}
+          loading={loading}
+          error={null}
+          getRowId={(row) => row.id}
+          minHeight={500}
+        />
+      </Box>
 
       <BranchFormDialog
         open={isBranchFormOpen}
-        onClose={handleBranchFormClose} // Pass the correct close handler
+        onClose={handleBranchFormClose}
         branch={editingBranch}
         onSubmit={handleBranchFormSubmit}
       />
