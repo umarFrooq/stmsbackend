@@ -15,24 +15,35 @@ const DUMMY_PASSWORD = 'Password@123'; // Users should be forced to change this.
  * @param {string} adminEmail - Email for the superadmin
  * @returns {Promise<{school: School, user: User}>}
  */
-const createSchoolAndAdmin = async (schoolPayload, adminEmail) => {
-  const { nameOfSchool } = schoolPayload;
+const createSchoolAndAdmin = async (schoolData, adminEmail) => {
+  // schoolData now includes nameOfSchool, schoolCode, status, type, address from validation
+  const { nameOfSchool, schoolCode, status, type, address } = schoolData;
 
   // Check if school name is taken
   if (await School.isNameTaken(nameOfSchool)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'School name already taken.');
   }
-
-  // Check if admin email is taken
-  if (await User.isEmailTaken(adminEmail)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Admin email already taken.');
+  // Check if school code is taken
+  if (await School.findOne({ schoolCode: schoolCode.toUpperCase() })) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'School code already taken.');
   }
 
-  // Create school
-  const school = await School.create({ name: nameOfSchool });
+  // Check if admin email is taken for a superadmin role
+  if (await User.isEmailTakenWithRole(adminEmail, roles.find(r => r === 'superadmin'))) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Admin email already taken for a superadmin role.');
+  }
+
+  const schoolCreationPayload = {
+    name: nameOfSchool,
+    schoolCode: schoolCode.toUpperCase(),
+    status: status || 'pending_approval', // Default if not provided, though validation now sets it
+    type: type,
+    address: address
+  };
+  const school = await School.create(schoolCreationPayload);
 
   // Create superadmin user for the school
-  const hashedPassword = await bcrypt.hash(DUMMY_PASSWORD, 8); // Salt rounds based on user.model.js
+  const hashedPassword = await bcrypt.hash(DUMMY_PASSWORD, 8);
 
   const superAdminData = {
     fullname: `${nameOfSchool} Admin`, // Or a more generic "School Super Admin"
@@ -87,7 +98,40 @@ const createSchoolAndAdmin = async (schoolPayload, adminEmail) => {
  * @returns {Promise<QueryResult>}
  */
 const querySchools = async (filter, options) => {
-  const schools = await School.paginate(filter, options);
+  const queryFilter = {};
+
+  // Handle generic search for name and schoolCode
+  if (filter.search) {
+    const searchRegex = new RegExp(filter.search, 'i');
+    queryFilter.$or = [
+      { name: searchRegex },
+      { schoolCode: searchRegex },
+    ];
+  }
+
+  // Handle status filter
+  if (filter.status) {
+    queryFilter.status = filter.status;
+  }
+
+  // Handle type filter
+  if (filter.type) {
+    queryFilter.type = filter.type;
+  }
+
+  // Handle city filter (assuming address.city path)
+  if (filter.city) {
+    queryFilter['address.city'] = new RegExp(filter.city, 'i');
+  }
+
+  // If there was an exact name filter from before, it's now covered by search.
+  // If direct 'name' filter is still needed for exact match:
+  // if (filter.name) {
+  //   queryFilter.name = filter.name;
+  // }
+
+
+  const schools = await School.paginate(queryFilter, options);
   return schools;
 };
 

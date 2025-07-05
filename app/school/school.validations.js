@@ -1,20 +1,37 @@
 const Joi = require('joi');
 const { objectId, emptyVal } = require("../auth/custom.validation");
 
+const schoolStatusEnum = ['active', 'inactive', 'pending_approval', 'suspended'];
+const schoolTypeEnum = ['public', 'private', 'charter', 'international', 'special_education', 'other'];
+
 const createSchool = {
   body: Joi.object().keys({
     nameOfSchool: Joi.string().required().min(1).trim(),
     adminEmail: Joi.string().required().email(),
-    // Add other fields for school creation payload if they become necessary
+    schoolCode: Joi.string().required().trim().uppercase(),
+    status: Joi.string().valid(...schoolStatusEnum).default('pending_approval'),
+    type: Joi.string().valid(...schoolTypeEnum).trim().allow('', null),
+    address: Joi.object({
+      street: Joi.string().trim().allow('', null),
+      city: Joi.string().trim().allow('', null),
+      state: Joi.string().trim().allow('', null),
+      postalCode: Joi.string().trim().allow('', null),
+      country: Joi.string().trim().allow('', null),
+    }).allow(null),
   }),
 };
 
 const getSchools = {
   query: Joi.object().keys({
-    name: Joi.string(),
+    // name: Joi.string(), // Will be covered by 'search'
+    search: Joi.string().allow('', null).description('Search by school name or code'),
+    status: Joi.string().valid(...schoolStatusEnum, '').allow(null).description('Filter by status'),
+    type: Joi.string().valid(...schoolTypeEnum, '').allow(null).description('Filter by type'),
+    city: Joi.string().trim().allow('', null).description('Filter by city'),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+    populate: Joi.string().allow('', null), // Allow populate if needed in future
   }),
 };
 
@@ -31,9 +48,18 @@ const updateSchool = {
   body: Joi.object()
     .keys({
       nameOfSchool: Joi.string().min(1).trim(),
-      // Add other updatable fields here
+      schoolCode: Joi.string().trim().uppercase(),
+      status: Joi.string().valid(...schoolStatusEnum),
+      type: Joi.string().valid(...schoolTypeEnum).trim().allow('', null),
+      address: Joi.object({
+        street: Joi.string().trim().allow('', null),
+        city: Joi.string().trim().allow('', null),
+        state: Joi.string().trim().allow('', null),
+        postalCode: Joi.string().trim().allow('', null),
+        country: Joi.string().trim().allow('', null),
+      }).allow(null),
     })
-    .min(1), // At least one field must be provided for an update
+    .min(1),
 };
 
 const deleteSchool = {

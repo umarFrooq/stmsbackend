@@ -9,7 +9,34 @@ const schoolSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    schoolCode: {
+      type: String,
+      required: true,
+      unique: true, // School codes should be unique
+      trim: true,
+      uppercase: true,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'pending_approval', 'suspended'],
+      default: 'pending_approval',
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['public', 'private', 'charter', 'international', 'special_education', 'other'], // Example types
+      required: false, // Making type optional for now
+      trim: true,
+    },
+    address: { // Simple address for now, can be expanded or refactored to use Address model later
+      street: { type: String, trim: true },
+      city: { type: String, trim: true },
+      state: { type: String, trim: true },
+      postalCode: { type: String, trim: true },
+      country: { type: String, trim: true },
+    },
     // Add other school-specific fields here later if needed
+    // For example: contactPerson, phone, email, website, logoUrl etc.
   },
   {
     timestamps: true,

@@ -5,7 +5,7 @@ const API_ENDPOINT = '/schools'; // Base endpoint for schools
 /**
  * Creates a new school and its admin.
  * @param {object} schoolData - The data for the new school.
- *                               Expected format: { nameOfSchool: string, adminEmail: string }
+ *                               Expected format: { nameOfSchool: string, adminEmail: string, schoolCode: string, status?: string, type?: string, address?: object }
  * @returns {Promise<object>} A promise that resolves to the created school and admin user data.
  */
 export const createSchool = async (schoolData) => {
@@ -53,7 +53,7 @@ export const getSchoolById = async (schoolId) => {
  * Updates an existing school.
  * @param {string} schoolId - The ID of the school to update.
  * @param {object} schoolData - The data to update for the school.
- *                              Expected format: { nameOfSchool?: string } (or other updatable fields)
+ *                              Expected format: { nameOfSchool?: string, schoolCode?: string, status?: string, type?: string, address?: object }
  * @returns {Promise<object>} A promise that resolves to the updated school data.
  */
 export const updateSchool = async (schoolId, schoolData) => {

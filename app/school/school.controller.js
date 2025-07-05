@@ -12,8 +12,9 @@ const createSchoolHandler = catchAsync(async (req, res) => {
 });
 
 const getSchoolsHandler = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name']); // Add other filterable fields if needed
-  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  // Updated to pick new filter parameters: search, status, type, city
+  const filter = pick(req.query, ['search', 'status', 'type', 'city']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']); // Added populate
   const result = await schoolService.querySchools(filter, options);
   res.send(result);
 });
