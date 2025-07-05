@@ -28,7 +28,7 @@ const TeacherDashboardPage = () => {
             title="Attendance"
             value="Take & View"
             icon={<HowToRegIcon fontSize="large" color="secondary" />}
-            linkTo="/teacher/attendance" // Define this route
+            linkTo="/teacher/my-classes" // Changed to navigate to My Classes page first
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
