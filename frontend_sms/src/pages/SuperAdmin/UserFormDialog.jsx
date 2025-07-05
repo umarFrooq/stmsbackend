@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button as BsButton, Spinner, Form as BsForm, Col, Row } from 'react-bootstrap';
-import {
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  Chip,
-} from '@mui/material'; // Keep necessary MUI form components for now
-import { Formik, Form } from 'formik';
+// Removed MUI Select related imports, Chip. Kept Grid for now if any part is missed, but aim to remove.
+// import { Grid } from '@mui/material'; // Will be fully replaced by Row/Col
+import { Formik, Form } from 'formik'; // Formik's Form
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 import { getAllBranches } from '../../services/branchService';
 import gradeService from '../../services/gradeService';
-// import useAuthStore from '../../store/auth.store'; // Not used after currentUser removal
+// import useAuthStore from '../../store/auth.store'; // Not used
 import styles from './UserFormDialog.module.css';
 
 const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) => {
   const isEditing = Boolean(user);
-  // const { user: currentUser } = useAuthStore(); // currentUser was not used after refactor
+  // const { user: currentUser } = useAuthStore(); // Not used
 
   const [availableBranches, setAvailableBranches] = useState([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
@@ -41,7 +34,6 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     cnic: user?.cnic || '',
   };
 
-  // Effect for fetching branches - This runs when the dialog opens.
   useEffect(() => {
     if (open) {
       setLoadingBranches(true);
@@ -61,7 +53,6 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     }
   }, [open]);
 
-  // Effect for fetching grades initially when dialog opens if user is student
   useEffect(() => {
     if (open && user && user.role === 'student' && (user.branchId?._id || user.branchId)) {
       setLoadingGrades(true);
@@ -72,19 +63,17 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
       gradeService.getGrades(params)
         .then(response => setAvailableGrades(response.results || []))
         .catch(error => {
-          console.error("Failed to load initial grades:", error); // Added console.error
+          console.error("Failed to load initial grades:", error);
           setGradeError("Failed to load initial grades.");
           setAvailableGrades([]);
         })
         .finally(() => setLoadingGrades(false));
     } else if (open) {
-        // Clear grades if not a student or no branch on open
         setAvailableGrades([]);
         setLoadingGrades(false);
         setGradeError(null);
     }
   }, [open, user]);
-
 
   const validationSchema = Yup.object().shape({
     fullname: Yup.string().trim()
@@ -189,35 +178,27 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     setSubmitting(false);
   };
 
-  // This function will be called by Formik's Select onChange for Role and Branch
-  // to dynamically fetch grades.
   const fetchGradesForFormValues = async (formikRole, formikBranchId) => {
     if (formikRole === 'student' && formikBranchId) {
       setLoadingGrades(true);
       setGradeError(null);
       let params = { limit: 200, populate: 'branchId', branchId: formikBranchId };
-      // Potentially add schoolScope if no branchId and creating new student
-      // if (!params.branchId && currentUser?.schoolScope) {
-      //   params.schoolId = currentUser.schoolScope;
-      // }
-
       try {
         const response = await gradeService.getGrades(params);
         setAvailableGrades(response.results || []);
       } catch (error) {
-        console.error("Failed to load grades for form values:", error); // Added console.error
+        console.error("Failed to load grades for form values:", error);
         setGradeError("Failed to load grades for selection.");
         setAvailableGrades([]);
       } finally {
         setLoadingGrades(false);
       }
     } else {
-      setAvailableGrades([]); // Clear grades if role is not student or no branch
+      setAvailableGrades([]);
       setLoadingGrades(false);
       setGradeError(null);
     }
   };
-
 
   return (
     <Modal show={open} onHide={() => onClose(false)} size="lg" backdrop={isEditing ? true : "static"} keyboard={!isEditing}>
@@ -231,8 +212,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
         enableReinitialize
         context={{ isEditing }}
       >
-        {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue, getFieldProps }) => (
-            // Formik's Form component provides context
+        {({ errors, touched, isSubmitting, values, handleChange, setFieldValue, getFieldProps }) => ( // Removed handleBlur
             <Form>
               <Modal.Body>
                 <Row className="mb-3">
@@ -295,55 +275,84 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                   </>
                 )}
 
-                <Grid container spacing={3}> {/* Still using MUI Grid for these selects */}
-                  <Grid item xs={12} sm={values.role === 'student' ? 4 : 6}>
-                    <FormControl fullWidth error={touched.role && Boolean(errors.role)} disabled={isSubmitting}>
-                      <InputLabel id="role-select-label" required>Role</InputLabel>
-                      <Select
-                        labelId="role-select-label" name="role" value={values.role} label="Role"
-                        onChange={(e) => {
-                            handleChange(e); // Formik's default handler
-                            const newRole = e.target.value;
-                            if (values.role === 'student' && newRole !== 'student') {
-                                setFieldValue('gradeId', ''); // Clear grade
-                            }
-                            fetchGradesForFormValues(newRole, values.branchId); // Fetch grades based on new role and current branch
-                        }}
-                        onBlur={handleBlur} required
-                      >
-                        {availableRoles.map((role) => (
-                          <MenuItem key={role} value={role}>
-                            <Chip label={role.charAt(0).toUpperCase() + role.slice(1)} size="small" />
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {touched.role && errors.role && <FormHelperText>{errors.role}</FormHelperText>}
-                    </FormControl>
-                  </Grid>
+                <Row className="mb-3">
+                  <BsForm.Group as={Col} xs={12} sm={values.role === 'student' ? 4 : 6} controlId="formRole">
+                    <BsForm.Label>Role <span className="text-danger">*</span></BsForm.Label>
+                    <BsForm.Select
+                      {...getFieldProps('role')}
+                      isInvalid={touched.role && !!errors.role}
+                      disabled={isSubmitting}
+                      onChange={(e) => {
+                        handleChange(e); // Formik's default handler
+                        const newRole = e.target.value;
+                        if (values.role === 'student' && newRole !== 'student') {
+                            setFieldValue('gradeId', '');
+                        }
+                        fetchGradesForFormValues(newRole, values.branchId);
+                      }}
+                    >
+                      <option value="">Select Role</option>
+                      {availableRoles.map((role) => (
+                        <option key={role} value={role}>
+                          {role.charAt(0).toUpperCase() + role.slice(1)}
+                        </option>
+                      ))}
+                    </BsForm.Select>
+                    <BsForm.Control.Feedback type="invalid">
+                      {errors.role}
+                    </BsForm.Control.Feedback>
+                  </BsForm.Group>
 
-                 <Grid item xs={12} sm={values.role === 'student' ? 4 : 6}>
-                    <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting || loadingBranches}>
-                      <InputLabel id="branch-select-label" required>Branch/Campus</InputLabel>
-                      <Select
-                        labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch/Campus"
-                        onChange={(e) => {
-                            handleChange(e); // Formik's default handler
-                            fetchGradesForFormValues(values.role, e.target.value); // Fetch grades based on current role and new branch
-                        }}
-                        onBlur={handleBlur} required
-                      >
-                        <MenuItem value=""><em>{loadingBranches ? 'Loading...' : branchError ? 'Error loading' : 'Select Branch'}</em></MenuItem>
-                        {availableBranches.map((branch) => (
-                          <MenuItem key={branch.id} value={branch.id}>{branch.name || branch.id}</MenuItem>
-                        ))}
-                      </Select>
-                      {touched.branchId && errors.branchId && <FormHelperText>{errors.branchId}</FormHelperText>}
-                      {branchError && !loadingBranches && <FormHelperText error>{branchError}</FormHelperText>}
-                    </FormControl>
-                  </Grid>
+                  <BsForm.Group as={Col} xs={12} sm={values.role === 'student' ? 4 : 6} controlId="formBranch">
+                    <BsForm.Label>Branch/Campus <span className="text-danger">*</span></BsForm.Label>
+                    <BsForm.Select
+                      {...getFieldProps('branchId')}
+                      isInvalid={touched.branchId && !!errors.branchId}
+                      disabled={isSubmitting || loadingBranches}
+                      onChange={(e) => {
+                        handleChange(e);
+                        fetchGradesForFormValues(values.role, e.target.value);
+                      }}
+                    >
+                      <option value="">{loadingBranches ? 'Loading...' : branchError ? 'Error loading' : 'Select Branch'}</option>
+                      {availableBranches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>{branch.name || branch.id}</option>
+                      ))}
+                    </BsForm.Select>
+                    <BsForm.Control.Feedback type="invalid">
+                      {errors.branchId}
+                    </BsForm.Control.Feedback>
+                    {branchError && !loadingBranches && <BsForm.Text muted className="text-danger">{branchError}</BsForm.Text>}
+                  </BsForm.Group>
 
-                  <Grid item xs={12} sm={values.role === 'student' ? 6 : 6}>
-                    <BsForm.Group controlId="formCnic">
+                  {values.role === 'student' && (
+                     <BsForm.Group as={Col} xs={12} sm={4} controlId="formGrade">
+                        <BsForm.Label>Grade <span className="text-danger">*</span></BsForm.Label>
+                        <BsForm.Select
+                          {...getFieldProps('gradeId')}
+                          isInvalid={touched.gradeId && !!errors.gradeId}
+                          disabled={isSubmitting || loadingGrades || !values.branchId}
+                        >
+                          <option value="">
+                            {loadingGrades ? 'Loading...' : gradeError ? 'Error loading grades' : (!values.branchId && !availableGrades.length ? 'Select Branch first' : 'Select Grade')}
+                          </option>
+                          {availableGrades.map((grade) => (
+                            <option key={grade.id} value={grade.id}>
+                              {grade.title} {grade.levelCode && `(${grade.levelCode})`}
+                            </option>
+                          ))}
+                        </BsForm.Select>
+                        <BsForm.Control.Feedback type="invalid">
+                          {errors.gradeId}
+                        </BsForm.Control.Feedback>
+                        {gradeError && !loadingGrades && <BsForm.Text muted className="text-danger">{gradeError}</BsForm.Text>}
+                        {!values.branchId && !availableGrades.length && !loadingGrades && values.role === 'student' && <BsForm.Text muted>Please select a branch to see available grades.</BsForm.Text>}
+                     </BsForm.Group>
+                  )}
+                </Row>
+
+                <Row className="mb-3">
+                    <BsForm.Group as={Col} xs={12} sm={6} controlId="formCnic">
                         <BsForm.Label>CNIC (e.g., 12345-1234567-1)</BsForm.Label>
                         <BsForm.Control
                           type="text"
@@ -355,46 +364,24 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                         <BsForm.Control.Feedback type="invalid">
                           {errors.cnic}
                         </BsForm.Control.Feedback>
-                      </BsForm.Group>
-                  </Grid>
+                    </BsForm.Group>
 
-                  {values.role === 'student' && (
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || loadingGrades || !values.branchId}>
-                        <InputLabel id="grade-select-label" required>Grade</InputLabel>
-                        <Select
-                          labelId="grade-select-label" name="gradeId" value={values.gradeId} label="Grade"
-                          onChange={handleChange} onBlur={handleBlur} required
+                    <BsForm.Group as={Col} xs={12} sm={6} controlId="formStatus">
+                        <BsForm.Label>Status <span className="text-danger">*</span></BsForm.Label>
+                        <BsForm.Select
+                          {...getFieldProps('status')}
+                          isInvalid={touched.status && !!errors.status}
+                          disabled={isSubmitting}
                         >
-                          <MenuItem value="">
-                            <em>{loadingGrades ? 'Loading...' : gradeError ? 'Error loading grades' : (!values.branchId && !availableGrades.length ? 'Select Branch first' : 'Select Grade')}</em>
-                          </MenuItem>
-                          {availableGrades.map((grade) => (
-                            <MenuItem key={grade.id} value={grade.id}>
-                              {grade.title} {grade.levelCode && `(${grade.levelCode})`}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {touched.gradeId && errors.gradeId && <FormHelperText>{errors.gradeId}</FormHelperText>}
-                        {gradeError && !loadingGrades && <FormHelperText error>{gradeError}</FormHelperText>}
-                        {!values.branchId && !availableGrades.length && !loadingGrades && <FormHelperText>Please select a branch to see available grades.</FormHelperText>}
-                      </FormControl>
-                    </Grid>
-                  )}
-                  <Grid item xs={12} sm={values.role === 'student' ? 12 : 6}>
-                     <FormControl fullWidth error={touched.status && Boolean(errors.status)} disabled={isSubmitting}>
-                        <InputLabel id="status-select-label" required>Status</InputLabel>
-                        <Select
-                          labelId="status-select-label" name="status" value={values.status} label="Status"
-                          onChange={handleChange} onBlur={handleBlur} required
-                        >
-                          <MenuItem value="active">Active</MenuItem>
-                          <MenuItem value="inactive">Inactive</MenuItem>
-                        </Select>
-                        {touched.status && errors.status && <FormHelperText>{errors.status}</FormHelperText>}
-                      </FormControl>
-                  </Grid>
-                </Grid>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </BsForm.Select>
+                        <BsForm.Control.Feedback type="invalid">
+                          {errors.status}
+                        </BsForm.Control.Feedback>
+                    </BsForm.Group>
+                </Row>
+
               </Modal.Body>
               <Modal.Footer className={styles.dialogFooter}>
                 <BsButton variant="outline-secondary" onClick={() => onClose(false)} disabled={isSubmitting}>
