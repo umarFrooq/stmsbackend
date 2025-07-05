@@ -164,8 +164,21 @@ const queryAttendances = async (filter, options, schoolId) => {
   // The paginate plugin should handle population if specified in options.populate
   // The manual population logic here might be redundant or conflict with the paginate plugin's way.
   // Assuming standard usage of mongoose-paginate-v2 where options.populate is an object or string.
-  const attendances = await Attendance.paginate(schoolScopedFilter, restOptions);
-  return attendances;
+  // --- MODIFICATION START ---
+  // The custom paginate plugin (utils/mongoose/mongoose.paginate.js) does not seem to handle 'populate' in options.
+  // So, we'll call paginate and then manually populate the results if 'populate' option is provided.
+  const paginatedResults = await Attendance.paginate(schoolScopedFilter, restOptions);
+
+  if (options.populate && paginatedResults.results && paginatedResults.results.length > 0) {
+    // Mongoose populate can accept a comma or space-separated string for paths.
+    const populationPaths = options.populate.split(',').map(field => field.trim()).join(' ');
+    // Ensure the paths actually exist on the Attendance model and are refs.
+    // Example: 'studentId subjectId markedBy gradeId branchId'
+    await Attendance.populate(paginatedResults.results, populationPaths);
+  }
+
+  return paginatedResults;
+  // --- MODIFICATION END ---
 };
 
 /**

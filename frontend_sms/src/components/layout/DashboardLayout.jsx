@@ -30,6 +30,7 @@ import FaceIcon from '@mui/icons-material/Face'; // Student & Parent (use differ
 import SettingsIcon from '@mui/icons-material/Settings'; // Generic settings
 import DomainIcon from '@mui/icons-material/Domain'; // For School Management (Root Admin)
 import ClassIcon from '@mui/icons-material/Class'; // For Grade Management
+import EventNoteIcon from '@mui/icons-material/EventNote'; // For Attendance Log
 
 import useAuthStore from '../../store/auth.store';
 
@@ -74,6 +75,15 @@ const DashboardLayout = (props) => {
   // This can be further refined and moved to a separate config file if it grows large
   const navItems = [
     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'superadmin', 'rootUser', 'parent'] }, // Added rootUser here for general dashboard access
+
+    // Shared Pages
+    {
+      text: 'Attendance Log',
+      icon: <EventNoteIcon />,
+      path: '/attendance-log',
+      requiredRoles: ['admin', 'superadmin', 'teacher'],
+      permission: 'viewAttendances'
+    },
 
     // Root Admin specific (New)
     { text: 'School Management', icon: <DomainIcon />, path: '/rootadmin/schools', requiredRoles: ['rootUser'] },

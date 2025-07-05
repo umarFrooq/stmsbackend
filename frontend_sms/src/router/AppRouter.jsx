@@ -45,6 +45,9 @@ import NotFoundPage from '../pages/NotFoundPage.jsx'; // Ensured .jsx
 // Protected Route HOC
 import ProtectedRoute from './ProtectedRoute.jsx'; // Ensured .jsx
 
+// Shared Pages
+import AttendanceLogPage from '../pages/Shared/AttendanceLogPage.jsx'; // Added for shared attendance log
+
 // Example Profile Page (generic for now)
 const UserProfilePage = () => <div>User Profile Page (Accessible by all logged-in users)</div>;
 
@@ -95,6 +98,16 @@ const AppRouter = () => {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<HomePage />}/>
           <Route path="profile" element={<UserProfilePage />} />
+
+          {/* Shared Attendance Log Page */}
+          <Route
+            path="attendance-log"
+            element={
+              <ProtectedRoute roles={['admin', 'superadmin', 'teacher']} permission="viewAttendances">
+                <AttendanceLogPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Super Admin Routes */}
           <Route
