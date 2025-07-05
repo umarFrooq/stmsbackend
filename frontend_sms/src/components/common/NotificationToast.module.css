@@ -1,0 +1,105 @@
+/* NotificationToast.module.css */
+
+/* Default positioning classes for ToastContainer */
+.toastContainer {
+  z-index: 1070; /* Higher than typical modals (1050-1060 for Bootstrap) */
+  position: fixed; /* Default to fixed, can be overridden by more specific classes */
+}
+
+.topStart {
+  top: 1rem;
+  left: 1rem;
+}
+
+.topCenter {
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.topEnd {
+  top: 1rem;
+  right: 1rem;
+}
+
+.middleStart {
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+}
+
+.middleCenter {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.middleEnd {
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+}
+
+.bottomStart {
+  bottom: 1rem;
+  left: 1rem;
+}
+
+.bottomCenter {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bottomEnd {
+  bottom: 1rem;
+  right: 1rem;
+}
+
+/* Custom styling for toast variants if Bootstrap bg-* classes are not enough */
+/* These are examples and can be expanded or removed if Bootstrap's default styling is preferred */
+
+.toastHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+/*
+.toastInfo {
+  background-color: #e0f7fa;
+  color: #006064;
+  border-color: #b2ebf2;
+}
+.toastInfo .toastHeader {
+  color: #006064;
+}
+
+.toastSuccess {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border-color: #c8e6c9;
+}
+.toastSuccess .toastHeader {
+   color: #1b5e20;
+}
+
+.toastWarning {
+  background-color: #fff3e0;
+  color: #e65100;
+  border-color: #ffe0b2;
+}
+.toastWarning .toastHeader {
+   color: #e65100;
+}
+
+.toastError {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #ffcdd2;
+}
+.toastError .toastHeader {
+  color: #c62828;
+}
+*/
