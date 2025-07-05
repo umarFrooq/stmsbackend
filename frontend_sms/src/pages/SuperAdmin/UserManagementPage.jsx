@@ -1,20 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+// MUI components to be replaced for filter bar: Grid, FormControl, InputLabel, Select, MenuItem, TextField
+// MUI components to be kept for now (for data grid): IconButton, Tooltip, Chip
+import {
+    IconButton, Tooltip, Chip
+} from '@mui/material';
+import { Container, Button as BsButton, Alert as BsAlert, Row, Col, Form as BsForm } from 'react-bootstrap';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import StyledDataGrid from '../../components/common/StyledDataGrid';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import ConfirmationDialog from '../../components/common/ConfirmationDialog';
-import UserFormDialog from './UserFormDialog';
-import NotificationToast from '../../components/common/NotificationToast';
-import { TextField } from '@mui/material';
+import StyledDataGrid from '../../components/common/StyledDataGrid'; // Still MUI based
+import LoadingSpinner from '../../components/common/LoadingSpinner'; // Needs conversion later
+import ConfirmationDialog from '../../components/common/ConfirmationDialog'; // Bootstrap
+import UserFormDialog from './UserFormDialog'; // Bootstrap
+import NotificationToast from '../../components/common/NotificationToast'; // Bootstrap
 import debounce from 'lodash.debounce';
 
 import userService from '../../services/userService';
 import { getGrades as fetchGradesService } from '../../services/gradeService';
-// import useAuthStore from '../../store/auth.store'; // Was unused
+import styles from './UserManagementPage.module.css'; // Import CSS module
 
 const ALL_ROLES_FOR_FILTER = ['superadmin', 'admin', 'teacher', 'student', 'parent', 'rootUser'];
 const USER_STATUS_ENUM = { ACTIVE: 'active', INACTIVE: 'inactive' };
@@ -50,8 +54,6 @@ const UserManagementPage = () => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [totalUsers, setTotalUsers] = useState(0);
 
-  // const { user: currentUser } = useAuthStore(); // Was unused
-
   const showToast = (message, severity = 'success') => {
     setToastMessage(message);
     setToastSeverity(severity);
@@ -59,15 +61,7 @@ const UserManagementPage = () => {
   };
 
   const fetchUsers = useCallback(async (
-    cPage,
-    cSearch,
-    cStatus,
-    cRole,
-    cBranch,
-    cEmail,
-    cPhone,
-    cGrade,
-    cLimit = paginationModel.pageSize
+    cPage, cSearch, cStatus, cRole, cBranch, cEmail, cPhone, cGrade, cLimit = paginationModel.pageSize
   ) => {
     setLoading(true);
     setError(null);
@@ -80,27 +74,19 @@ const UserManagementPage = () => {
       if (cEmail) params.email = cEmail;
       if (cPhone) params.phone = cPhone;
       if (cGrade) params.gradeId = cGrade;
-
       const response = await userService.getAllUsers(params);
       if (response && response.data && Array.isArray(response.data.results)) {
         setUsers(response.data.results);
         setTotalUsers(response.data.totalResults || 0);
       } else {
         console.error("Unexpected user list response structure:", response);
-        setUsers([]);
-        setTotalUsers(0);
-        setError('Failed to fetch users: Unexpected response.');
+        setUsers([]); setTotalUsers(0); setError('Failed to fetch users: Unexpected response.');
         showToast('Failed to fetch users: Unexpected response.', 'error');
       }
     } catch (err) {
       const errorMessage = err.message || (err.data && err.data.message) || 'Failed to fetch users.';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
-      setUsers([]);
-      setTotalUsers(0);
-    } finally {
-      setLoading(false);
-    }
+      setError(errorMessage); showToast(errorMessage, 'error'); setUsers([]); setTotalUsers(0);
+    } finally { setLoading(false); }
   }, [paginationModel.pageSize]);
 
   useEffect(() => {
@@ -111,27 +97,26 @@ const UserManagementPage = () => {
         const { getBranches: fetchBranchesApi } = await import('../../services/branchApi.js');
         const branchesResponse = await fetchBranchesApi(branchParams);
         setAvailableBranches(branchesResponse.results || []);
-      } catch (_e) { // Mark as intentionally unused
+      } catch (error) {
+        console.error("Failed to load branches for filter:", error);
         showToast('Failed to load branches for filter.', 'error');
         setAvailableBranches([]);
-      } finally {
-        setLoadingBranches(false);
       }
+      finally { setLoadingBranches(false); }
     };
     fetchBranchListForFilter();
-
     setLoadingGrades(true);
     const gradeParams = { limit: 500, sortBy: 'title:asc' };
     const fetchGradeListForFilter = async () => {
       try {
         const gradesResponse = await fetchGradesService(gradeParams);
         setAvailableGrades(gradesResponse.results || []);
-      } catch (_e) { // Mark as intentionally unused
+      } catch (error) {
+        console.error("Failed to load grades for filter:", error);
         showToast('Failed to load grades for filter.', 'error');
         setAvailableGrades([]);
-      } finally {
-        setLoadingGrades(false);
       }
+      finally { setLoadingGrades(false); }
     };
     fetchGradeListForFilter();
   }, []);
@@ -148,36 +133,10 @@ const UserManagementPage = () => {
 
   useEffect(() => {
     const canSearchName = searchTerm.length === 0 || searchTerm.length >= 3;
-    if (canSearchName) {
-      fetchUsers(
-        paginationModel.page,
-        searchTerm,
-        filterStatus,
-        filterRole,
-        filterBranch,
-        filterEmail,
-        filterPhone,
-        filterGrade,
-        paginationModel.pageSize
-      );
-    }
-  }, [
-    paginationModel.page,
-    paginationModel.pageSize,
-    searchTerm,
-    filterStatus,
-    filterRole,
-    filterBranch,
-    filterEmail,
-    filterPhone,
-    filterGrade,
-    fetchUsers
-  ]);
+    if (canSearchName) { fetchUsers(paginationModel.page, searchTerm, filterStatus, filterRole, filterBranch, filterEmail, filterPhone, filterGrade, paginationModel.pageSize); }
+  }, [paginationModel.page, paginationModel.pageSize, searchTerm, filterStatus, filterRole, filterBranch, filterEmail, filterPhone, filterGrade, fetchUsers]);
 
-  const handleSearchChange = (event) => {
-    debouncedFilterUpdate('search', event.target.value);
-  };
-
+  const handleSearchChange = (event) => { debouncedFilterUpdate('search', event.target.value); };
   const handleFilterChange = (filterTypeChanged, newValue) => {
     setPaginationModel(prev => ({ ...prev, page: 0 }));
     if (filterTypeChanged === 'status') setFilterStatus(newValue);
@@ -185,78 +144,38 @@ const UserManagementPage = () => {
     else if (filterTypeChanged === 'branch') setFilterBranch(newValue);
     else if (filterTypeChanged === 'grade') setFilterGrade(newValue);
   };
-
   const handleStatusFilterChange = (event) => handleFilterChange('status', event.target.value);
   const handleRoleFilterChange = (event) => handleFilterChange('role', event.target.value);
   const handleBranchFilterChange = (event) => handleFilterChange('branch', event.target.value);
   const handleGradeFilterChange = (event) => handleFilterChange('grade', event.target.value);
-
-  const handleEmailFilterChange = (event) => {
-    debouncedFilterUpdate('email', event.target.value);
-  };
-  const handlePhoneFilterChange = (event) => {
-    debouncedFilterUpdate('phone', event.target.value);
-  };
-
-  const handleAddUser = () => {
-    setEditingUser(null);
-    setIsUserFormOpen(true);
-  };
-
-  const handleEditUser = (user) => {
-    setEditingUser(user);
-    setIsUserFormOpen(true);
-  };
-
+  const handleEmailFilterChange = (event) => { debouncedFilterUpdate('email', event.target.value); };
+  const handlePhoneFilterChange = (event) => { debouncedFilterUpdate('phone', event.target.value); };
+  const handleAddUser = () => { setEditingUser(null); setIsUserFormOpen(true); };
+  const handleEditUser = (user) => { setEditingUser(user); setIsUserFormOpen(true); };
   const handleDeleteUser = (user) => {
     if (user.role === 'superadmin' && users.filter(u => u.role === 'superadmin').length <= 1) {
-      showToast("Cannot delete the only SuperAdmin account.", "warning");
-      return;
-    }
-    setUserToDelete(user);
-    setConfirmDialogOpen(true);
+      showToast("Cannot delete the only SuperAdmin account.", "warning"); return;
+    } setUserToDelete(user); setConfirmDialogOpen(true);
   };
-
   const confirmUserDelete = async () => {
-    if (!userToDelete) return;
-    setIsDeleting(true);
+    if (!userToDelete) return; setIsDeleting(true);
     try {
       await userService.deleteUser(userToDelete.id);
       showToast(`User "${userToDelete.fullname}" deleted successfully.`, 'success');
       fetchUsers(0, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize);
       setPaginationModel(prev => ({ ...prev, page: 0 }));
-    } catch (err) {
-      showToast(err.message || (err.data && err.data.message) || "Failed to delete user.", 'error');
-    } finally {
-      setIsDeleting(false);
-      setConfirmDialogOpen(false);
-      setUserToDelete(null);
-    }
+    } catch (err) { showToast(err.message || (err.data && err.data.message) || "Failed to delete user.", 'error'); }
+    finally { setIsDeleting(false); setConfirmDialogOpen(false); setUserToDelete(null); }
   };
-
   const handleUserFormSubmit = async (values, isEditingMode, userId) => {
     try {
-      if (isEditingMode) {
-        await userService.updateUser(userId, values);
-        showToast('User updated successfully!', 'success');
-      } else {
-        await userService.addUser(values);
-        showToast('User created successfully!', 'success');
-      }
-      setIsUserFormOpen(false);
-      fetchUsers(0, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize);
-      setPaginationModel(prev => ({ ...prev, page: 0 }));
-      return true;
-    } catch (apiError) {
-      showToast(apiError.message || (apiError.data && apiError.data.message) || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
-      return false;
-    }
+      if (isEditingMode) { await userService.updateUser(userId, values); showToast('User updated successfully!', 'success'); }
+      else { await userService.addUser(values); showToast('User created successfully!', 'success'); }
+      setIsUserFormOpen(false); fetchUsers(0, searchTerm, filterStatus, filterRole, filterBranch, paginationModel.pageSize);
+      setPaginationModel(prev => ({ ...prev, page: 0 })); return true;
+    } catch (apiError) { showToast(apiError.message || (apiError.data && apiError.data.message) || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error'); return false; }
   };
-
-  const handleUserFormClose = () => {
-    setIsUserFormOpen(false);
-    setEditingUser(null);
-  };
+  const handleUserFormClose = () => { setIsUserFormOpen(false); setEditingUser(null); };
 
   const columns = [
     { field: 'fullname', headerName: 'Full Name', flex: 1, minWidth: 180 },
@@ -266,10 +185,10 @@ const UserManagementPage = () => {
     { field: 'branch', headerName: 'Branch/Campus', width: 180, renderCell: (params) => params?.row?.branchId?.name || 'N/A' },
     { field: 'status', headerName: 'Status', width: 100, renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'active' ? 'success' : 'error'} /> },
     { field: 'actions', headerName: 'Actions', width: 150, sortable: false, filterable: false, renderCell: (params) => (
-        <Box>
+        <div style={{ display: 'flex' }}>
           <Tooltip title="Edit User"><IconButton onClick={() => handleEditUser(params.row)} size="small"><EditIcon /></IconButton></Tooltip>
           {params.row.role !== 'superAdmin' && (<Tooltip title="Delete User"><IconButton onClick={() => handleDeleteUser(params.row)} size="small" color="error"><DeleteIcon /></IconButton></Tooltip>)}
-        </Box>
+        </div>
       ),
     },
   ];
@@ -278,69 +197,109 @@ const UserManagementPage = () => {
     return <LoadingSpinner fullScreen message="Loading users..." />;
   }
 
+  const estimatedTitleBarHeight = '72px';
+
   return (
-    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2, position: 'sticky', top: 0, zIndex: 1100, backgroundColor: 'background.paper' }}>
-        <Typography variant="h5" component="h1">User Management</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddUser}>Add User</Button>
-      </Box>
-      <Box sx={{ mb: 2, p: 2, border: '1px solid #eee', borderRadius: '4px', position: 'sticky', top: '72px', zIndex: 1090, backgroundColor: 'background.paper' }}>
-        <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={12} sm={6} md={2}>
-            <TextField fullWidth label="Search by Name" variant="outlined" value={searchTerm} onChange={handleSearchChange} size="small" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth size="small" variant="outlined">
-              <InputLabel>Status</InputLabel>
-              <Select value={filterStatus} onChange={handleStatusFilterChange} label="Status">
-                <MenuItem value=""><em>All Statuses</em></MenuItem>
-                {Object.entries(USER_STATUS_ENUM).map(([key, value]) => (<MenuItem key={key} value={value}>{key.charAt(0) + key.slice(1).toLowerCase()}</MenuItem>))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth size="small" variant="outlined">
-              <InputLabel>Role</InputLabel>
-              <Select value={filterRole} onChange={handleRoleFilterChange} label="Role">
-                <MenuItem value=""><em>All Roles</em></MenuItem>
-                {ALL_ROLES_FOR_FILTER.map((role) => (<MenuItem key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</MenuItem>))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth size="small" variant="outlined" disabled={loadingBranches}>
-              <InputLabel>Branch</InputLabel>
-              <Select value={filterBranch} onChange={handleBranchFilterChange} label="Branch">
-                <MenuItem value=""><em>All Branches</em></MenuItem>
-                {loadingBranches && <MenuItem value="" disabled><em>Loading branches...</em></MenuItem>}
-                {!loadingBranches && availableBranches.length === 0 && <MenuItem value="" disabled><em>No branches found</em></MenuItem>}
-                {availableBranches.map((branch) => (<MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <TextField fullWidth label="Filter by Email" variant="outlined" value={filterEmail} onChange={handleEmailFilterChange} size="small" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <TextField fullWidth label="Filter by Phone" variant="outlined" value={filterPhone} onChange={handlePhoneFilterChange} size="small" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth size="small" variant="outlined" disabled={loadingGrades}>
-              <InputLabel>Grade</InputLabel>
-              <Select value={filterGrade} onChange={handleGradeFilterChange} label="Grade">
-                <MenuItem value=""><em>All Grades</em></MenuItem>
-                {loadingGrades && <MenuItem value="" disabled><em>Loading grades...</em></MenuItem>}
-                {!loadingGrades && availableGrades.length === 0 && <MenuItem value="" disabled><em>No grades found</em></MenuItem>}
-                {availableGrades.map((grade) => (<MenuItem key={grade.id} value={grade.id}>{grade.title || grade.name}</MenuItem>))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Box>
+    <Container fluid className="p-3 p-md-4">
+      <div className={styles.pageHeader}>
+        <h2 className={styles.pageTitle}>User Management</h2>
+        <BsButton variant="primary" onClick={handleAddUser}>
+          <AddIcon fontSize="small" style={{ marginRight: '0.5rem' }} />
+          Add User
+        </BsButton>
+      </div>
 
-      {error && !loading && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <div
+        className={`${styles.filterBar} border rounded p-3 mb-3`} // Added Bootstrap classes for border/padding/margin
+        style={{ top: estimatedTitleBarHeight }}
+      >
+        <Row className="g-2"> {/* g-2 for gutter between columns */}
+          <Col xs={12} sm={6} md={2} className={styles.filterControlCol}>
+            <BsForm.Group controlId="searchTerm">
+              {/* <BsForm.Label visuallyHidden>Search by Name</BsForm.Label> */}
+              <BsForm.Control
+                type="text"
+                placeholder="Search by Name"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                size="sm"
+              />
+            </BsForm.Group>
+          </Col>
+          <Col xs={12} sm={6} md={2} className={styles.filterControlCol}>
+            <BsForm.Group controlId="filterStatus">
+              {/* <BsForm.Label visuallyHidden>Status</BsForm.Label> */}
+              <BsForm.Select value={filterStatus} onChange={handleStatusFilterChange} size="sm">
+                <option value="">All Statuses</option>
+                {Object.entries(USER_STATUS_ENUM).map(([key, value]) => (
+                  <option key={key} value={value}>{key.charAt(0) + key.slice(1).toLowerCase()}</option>
+                ))}
+              </BsForm.Select>
+            </BsForm.Group>
+          </Col>
+          <Col xs={12} sm={6} md={2} className={styles.filterControlCol}>
+            <BsForm.Group controlId="filterRole">
+              {/* <BsForm.Label visuallyHidden>Role</BsForm.Label> */}
+              <BsForm.Select value={filterRole} onChange={handleRoleFilterChange} size="sm">
+                <option value="">All Roles</option>
+                {ALL_ROLES_FOR_FILTER.map((role) => (
+                  <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
+                ))}
+              </BsForm.Select>
+            </BsForm.Group>
+          </Col>
+          <Col xs={12} sm={6} md={2} className={styles.filterControlCol}>
+            <BsForm.Group controlId="filterBranch">
+              {/* <BsForm.Label visuallyHidden>Branch</BsForm.Label> */}
+              <BsForm.Select value={filterBranch} onChange={handleBranchFilterChange} size="sm" disabled={loadingBranches}>
+                <option value="">{loadingBranches ? 'Loading Branches...' : 'All Branches'}</option>
+                {availableBranches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                ))}
+              </BsForm.Select>
+            </BsForm.Group>
+          </Col>
+          <Col xs={12} sm={6} md={2} className={styles.filterControlCol}>
+             <BsForm.Group controlId="filterEmail">
+                {/* <BsForm.Label visuallyHidden>Filter by Email</BsForm.Label> */}
+                <BsForm.Control
+                    type="text"
+                    placeholder="Filter by Email"
+                    value={filterEmail}
+                    onChange={handleEmailFilterChange}
+                    size="sm"
+                />
+            </BsForm.Group>
+          </Col>
+          <Col xs={12} sm={6} md={2} className={styles.filterControlCol}>
+            <BsForm.Group controlId="filterPhone">
+                {/* <BsForm.Label visuallyHidden>Filter by Phone</BsForm.Label> */}
+                <BsForm.Control
+                    type="text"
+                    placeholder="Filter by Phone"
+                    value={filterPhone}
+                    onChange={handlePhoneFilterChange}
+                    size="sm"
+                />
+            </BsForm.Group>
+          </Col>
+          <Col xs={12} sm={6} md={2} className={styles.filterControlCol}> {/* Ensure this fits or adjust md values */}
+            <BsForm.Group controlId="filterGrade">
+              {/* <BsForm.Label visuallyHidden>Grade</BsForm.Label> */}
+              <BsForm.Select value={filterGrade} onChange={handleGradeFilterChange} size="sm" disabled={loadingGrades}>
+                <option value="">{loadingGrades ? 'Loading Grades...' : 'All Grades'}</option>
+                {availableGrades.map((grade) => (
+                  <option key={grade.id} value={grade.id}>{grade.title || grade.name}</option>
+                ))}
+              </BsForm.Select>
+            </BsForm.Group>
+          </Col>
+        </Row>
+      </div>
 
-      <Box sx={{ width: '100%', overflow: 'hidden' }}>
+      {error && !loading && <BsAlert variant="danger" className="mt-3">{error}</BsAlert>}
+
+      <div style={{ width: '100%', overflow: 'hidden' }} className="mt-3">
         <StyledDataGrid
           rows={users}
           columns={columns}
@@ -353,7 +312,7 @@ const UserManagementPage = () => {
           onPaginationModelChange={setPaginationModel}
           paginationMode="server"
         />
-      </Box>
+      </div>
 
       <UserFormDialog
         open={isUserFormOpen}
@@ -362,7 +321,6 @@ const UserManagementPage = () => {
         onSubmit={handleUserFormSubmit}
         availableRoles={ALL_ROLES_FOR_FILTER}
       />
-
       <ConfirmationDialog
         open={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}
@@ -372,14 +330,13 @@ const UserManagementPage = () => {
         isLoading={isDeleting}
         confirmButtonColor="error"
       />
-
       <NotificationToast
         open={toastOpen}
         message={toastMessage}
         severity={toastSeverity}
         handleClose={() => setToastOpen(false)}
       />
-    </Box>
+    </Container>
   );
 };
 

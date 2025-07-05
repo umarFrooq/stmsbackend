@@ -1,0 +1,39 @@
+/* UserManagementPage.module.css */
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem; /* Bootstrap mb-3 */
+  flex-wrap: wrap;
+  gap: 0.5rem; /* Bootstrap gap-2 */
+
+  position: sticky;
+  top: 0; /* Relative to scroll container from DashboardLayout */
+  background-color: var(--bs-body-bg, #fff);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  z-index: 1021; /* Slightly higher than default sticky-top, but below modals/navbars */
+}
+
+.pageTitle {
+  margin-bottom: 0;
+}
+
+.filterBar {
+  margin-bottom: 1rem; /* Bootstrap mb-3 */
+  padding: 1rem; /* Bootstrap p-3 */
+  border: 1px solid #dee2e6; /* Bootstrap default border color */
+  border-radius: 0.375rem; /* Bootstrap default border-radius */
+
+  position: sticky;
+  /* top: value needs to be calculated or estimated based on .pageHeader height */
+  /* Example: top: 72px; */
+  background-color: var(--bs-body-bg, #fff);
+  z-index: 1020; /* Below .pageHeader */
+}
+
+/* Adjustments for filter bar items if needed */
+.filterControlCol {
+  /* margin-bottom: 0.5rem; /* Add some bottom margin for stacked items on small screens */
+}
