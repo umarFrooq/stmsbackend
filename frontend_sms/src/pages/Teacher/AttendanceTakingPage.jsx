@@ -16,12 +16,11 @@ import NotificationToast from '../../components/common/NotificationToast';
 // Real services
 import attendanceService from '../../services/attendanceService';
 import userService from '../../services/userService'; // To get students
-// import classScheduleService from '../../services/classScheduleService'; // Hypothetical service to get class details
-// For now, classId is assumed to provide context like gradeId, subjectId, section, branchId directly or via a fetched class object
+import classScheduleService from '../../services/classScheduleService'; // Service to get class details by classId
 
 import useAuthStore from '../../store/auth.store';
 
-const ATTENDANCE_STATUS_OPTIONS = ["present", "absent", "leave", "sick_leave", "half_day_leave"]; // Consider making 'late' an option if required
+const ATTENDANCE_STATUS_OPTIONS = ["present", "absent", "leave", "sick_leave", "half_day_leave"];
 
 const AttendanceTakingPage = () => {
   const { classId } = useParams(); // This classId might be an ID of a class schedule or a specific session
@@ -52,39 +51,40 @@ const AttendanceTakingPage = () => {
   // 1. Fetch Class Context (subject, grade, section etc.) based on classId
   useEffect(() => {
     const fetchClassContextDetails = async () => {
-      if (!classId) return;
-      setLoading(true); setError(null); setPageMessage(null);
-      try {
-        // HYPOTHETICAL: Replace with actual service call to get class details by classId
-        // const classData = await classScheduleService.getClassDetailsById(classId);
-        // For now, let's mock it. This data is CRUCIAL for other API calls.
-        // This classData should contain subjectId, gradeId, section, branchId, subjectName, gradeName
-        // Example:
-        const mockClassData = {
-          id: classId, // Assuming classId is the ID of the class/session
-          subjectId: 'mockSubjectId1', // Replace with actual
-          gradeId: 'mockGradeId1',     // Replace with actual
-          section: 'A',                // Replace with actual
-          branchId: 'mockBranchId1',   // Replace with actual
-          subjectName: 'Mathematics',
-          gradeName: 'Grade 5',
-          // schoolId: teacherUser.schoolId // Might be needed if not inferred by backend
-        };
-        // TODO: Replace MOCK with actual service call
-        if (!mockClassData.subjectId || !mockClassData.gradeId) {
-            throw new Error("Class details (subject or grade) are missing. Cannot proceed.");
-        }
-        setClassContext(mockClassData);
-
-      } catch (err) {
-        setError(err.message || 'Failed to load class details.');
-        showToast(err.message || 'Failed to load class details.', 'error');
+      if (!classId) {
+        setError("No Class ID provided in the URL.");
         setLoading(false);
+        return;
       }
-      // setLoading(false) will be handled after students are also fetched in the next effect if classContext is set
+      setLoading(true);
+      setError(null);
+      setPageMessage(null);
+      setClassContext(null); // Reset class context on classId change
+      setStudents([]); // Reset students
+      setAttendance({}); // Reset attendance
+
+      try {
+        console.log(`Fetching class context for classId: ${classId}`);
+        const classData = await classScheduleService.getClassScheduleById(classId);
+
+        if (!classData || !classData.subjectId || !classData.gradeId || !classData.section || !classData.branchId || !classData.schoolId) {
+          throw new Error("Fetched class details are incomplete. Missing one or more required IDs (subject, grade, section, branch, school).");
+        }
+        console.log("Fetched class context:", classData);
+        setClassContext(classData);
+        // Student fetching will be triggered by the change in classContext in another useEffect
+      } catch (err) {
+        const errMsg = err.message || 'Failed to load class details.';
+        setError(errMsg);
+        showToast(errMsg, 'error');
+        console.error("Error in fetchClassContextDetails:", err);
+        setLoading(false); // Stop loading if class context fails, as students can't be fetched.
+      }
+      // Note: setLoading(false) is primarily handled in the student fetching useEffect,
+      // but if class context fetching fails, we must stop loading here.
     };
     fetchClassContextDetails();
-  }, [classId]);
+  }, [classId, showToast]); // Added showToast to dependencies
 
 
   // 2. Fetch Students once Class Context is available
@@ -245,7 +245,8 @@ const AttendanceTakingPage = () => {
       if (studentAtt && !studentAtt.isMarked) {
         recordsToSave.push({
           studentId: student.id,
-          schoolId: classContext.schoolId || teacherUser.schoolId, // Important: ensure schoolId is available
+          // Ensure all necessary IDs are present in classContext before attempting to save
+          schoolId: classContext.schoolId,
           subjectId: classContext.subjectId,
           gradeId: classContext.gradeId,
           section: classContext.section,
@@ -265,33 +266,36 @@ const AttendanceTakingPage = () => {
     }
 
     try {
-      // Using markBulkAttendance as it's more suitable for multiple entries
-      const response = await attendanceService.markBulkAttendance(recordsToSave); // Assuming service expects array
-      if (response.errors && response.errors.length > 0) {
-        // Handle partial success / errors
-        const errorMessages = response.errors.map(err => `Student ${students.find(s => s.id === err.entry?.studentId)?.fullname || err.entry?.studentId}: ${err.error}`).join('; ');
-        showToast(`Some records failed: ${errorMessages}`, 'warning');
-         // Re-fetch to update UI with successfully saved entries
-        const currentLoading = loading; // Store current loading state to restore later
-        if (!currentLoading) { // Avoid triggering fetch if already loading
-            const tempStudents = [...students]; // Create a shallow copy
-            setStudents([]); // Temporarily clear students to trigger useEffect for attendance fetch if it depends on students.length
-            setTimeout(() => setStudents(tempStudents), 0); // Restore students to trigger the effect
-        }
+      const response = await attendanceService.markBulkAttendance(recordsToSave);
 
+      let successfulSaves = response.success ? response.success.length : 0;
+      let errorsPresent = response.errors && response.errors.length > 0;
+
+      if (errorsPresent) {
+        const errorMessages = response.errors.map(err => {
+            const studentName = students.find(s => s.id === err.entry?.studentId)?.fullname || err.entry?.studentId || "Unknown student";
+            return `${studentName}: ${err.error}`;
+        }).join('; ');
+        showToast(`Some records failed: ${errorMessages}. ${successfulSaves} records saved.`, 'warning');
       } else {
         showToast('Attendance saved successfully!', 'success');
-        // After successful save, re-fetch to update isMarked status for all
-        // This will also naturally show the "fully recorded" message if applicable
-        const currentLoading = loading; // Store current loading state to restore later
-        if (!currentLoading) { // Avoid triggering fetch if already loading
-            const tempStudents = [...students];
-            setStudents([]);
-            setTimeout(() => setStudents(tempStudents), 0);
-        }
       }
+
+      // Re-fetch attendance data to update the UI correctly, regardless of partial or full success
+      // This ensures `isMarked` status is updated for all successfully saved entries.
+      // Triggering the useEffect that fetches existing attendance:
+      // A robust way is to ensure its dependencies correctly capture changes.
+      // Forcing a re-fetch by slightly altering a dependency or using a dedicated refetch trigger.
+      // One simple way is to re-set the students array, which is a dependency of the attendance fetching useEffect.
+      // This ensures that the logic to determine `isMarked` runs again with fresh data.
+      const currentStudents = [...students];
+      setStudents([]); // Clear to ensure the effect re-runs when students are re-added
+      setTimeout(() => setStudents(currentStudents), 0);
+
+
     } catch (err) {
-      const apiErrorMessage = err.message || (err.data && err.data.message) || 'Failed to save attendance.';
+      // This catch block is for network errors or unexpected errors from markBulkAttendance itself
+      const apiErrorMessage = err.message || (err.data && err.data.message) || 'Failed to save attendance due to a system error.';
       showToast(apiErrorMessage, 'error');
       console.error("Save attendance error:", err);
     } finally {
