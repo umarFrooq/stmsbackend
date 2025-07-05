@@ -1,0 +1,17 @@
+/* ConfirmationDialog.module.css */
+
+/* Optional: Add custom styles if Bootstrap defaults aren't sufficient */
+/* For example, specific spacing or button styling if needed */
+.dialogFooter {
+  /* Add any custom footer styling if needed */
+}
+
+.confirmButton {
+  /* Add any specific styling to the confirm button if needed */
+  min-width: 100px; /* Example: ensure a minimum width for the confirm button */
+}
+
+.cancelButton {
+    /* Add any specific styling to the cancel button if needed */
+    min-width: 100px; /* Example: ensure a minimum width for the cancel button */
+}

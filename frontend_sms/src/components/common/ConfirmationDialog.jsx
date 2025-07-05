@@ -1,58 +1,89 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-  CircularProgress,
-} from '@mui/material';
+import { Modal, Button, Spinner } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import styles from './ConfirmationDialog.module.css'; // Assuming you might add styles later
 
 const ConfirmationDialog = ({
-  open,
+  open, // Will be mapped to `show` for React-Bootstrap Modal
   onClose,
   onConfirm,
   title,
   contentText,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  isLoading = false, // To show a loader on the confirm button
-  confirmButtonColor = 'primary', // 'primary', 'secondary', 'error', etc.
-  children, // Optional: To render custom content within the dialog
+  isLoading = false,
+  confirmButtonColor = 'primary', // MUI color prop
+  children,
 }) => {
+  // Map MUI color to Bootstrap variant
+  const getButtonVariant = (muiColor) => {
+    switch (muiColor) {
+      case 'error':
+        return 'danger';
+      case 'secondary':
+        return 'secondary';
+      case 'success':
+        return 'success';
+      case 'warning':
+        return 'warning';
+      case 'info':
+        return 'info';
+      case 'primary':
+      default:
+        return 'primary';
+    }
+  };
+
+  const buttonVariant = getButtonVariant(confirmButtonColor);
+
   return (
-    <Dialog
-      open={open}
-      onClose={isLoading ? null : onClose} // Prevent closing while loading
+    <Modal
+      show={open}
+      onHide={isLoading ? null : onClose} // Prevent closing while loading by not providing onHide
+      backdrop={isLoading ? 'static' : true} // 'static' prevents closing on backdrop click
+      keyboard={!isLoading} // Prevent closing with Esc key while loading
       aria-labelledby="confirmation-dialog-title"
-      aria-describedby="confirmation-dialog-description"
+      centered
     >
-      <DialogTitle id="confirmation-dialog-title">{title}</DialogTitle>
-      <DialogContent>
-        {contentText && (
-          <DialogContentText id="confirmation-dialog-description">
-            {contentText}
-          </DialogContentText>
-        )}
+      <Modal.Header closeButton={!isLoading}>
+        <Modal.Title id="confirmation-dialog-title">{title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {contentText && <p>{contentText}</p>}
         {children}
-      </DialogContent>
-      <DialogActions sx={{ p: '16px 24px' }}>
-        <Button onClick={onClose} color="inherit" disabled={isLoading}>
+      </Modal.Body>
+      <Modal.Footer className={styles.dialogFooter}>
+        <Button
+          variant="outline-secondary"
+          onClick={onClose}
+          disabled={isLoading}
+          className={styles.cancelButton}
+        >
           {cancelText}
         </Button>
         <Button
+          variant={buttonVariant}
           onClick={onConfirm}
-          color={confirmButtonColor}
-          variant="contained"
           disabled={isLoading}
-          startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}
+          className={styles.confirmButton}
         >
-          {confirmText}
+          {isLoading ? (
+            <>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+              />
+              <span className="visually-hidden">Loading...</span>
+            </>
+          ) : (
+            confirmText
+          )}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </Modal.Footer>
+    </Modal>
   );
 };
 
@@ -66,8 +97,8 @@ ConfirmationDialog.propTypes = {
   confirmText: PropTypes.string,
   cancelText: PropTypes.string,
   isLoading: PropTypes.bool,
-  confirmButtonColor: PropTypes.oneOf([
-    'inherit',
+  confirmButtonColor: PropTypes.oneOf([ // Keep MUI names for now, map internally
+    'inherit', // will map to default or secondary
     'primary',
     'secondary',
     'success',
