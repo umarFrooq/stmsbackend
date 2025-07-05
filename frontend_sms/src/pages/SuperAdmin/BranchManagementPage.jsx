@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -68,13 +68,14 @@ const BranchManagementPage = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
 
-  const showToast = (message, severity = 'success') => {
+  const showToast = useCallback((message, severity = 'success') => {
     setToastMessage(message);
     setToastSeverity(severity);
     setToastOpen(true);
-  };
+  }, [setToastMessage, setToastSeverity, setToastOpen]); // Dependencies for showToast
 
-  const fetchBranches = async () => {
+  // Wrap fetchBranches in useCallback
+  const fetchBranches = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -87,11 +88,11 @@ const BranchManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, setError, setBranches, showToast]);
 
   useEffect(() => {
     fetchBranches();
-  }, []);
+  }, [fetchBranches]);
 
   const handleAddBranch = () => {
     setEditingBranch(null);
@@ -142,7 +143,7 @@ const BranchManagementPage = () => {
     }
   };
 
-  const handleBranchFormClose = (submittedSuccessfully) => {
+  const handleBranchFormClose = () => { // Removed unused submittedSuccessfully parameter
     setIsBranchFormOpen(false);
     setEditingBranch(null);
     // No need to call fetchBranches here if submittedSuccessfully is true,
@@ -190,7 +191,21 @@ const BranchManagementPage = () => {
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      {/* This Box is for the page title and Add Branch button, will be sticky */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2, // Adjusted margin
+          flexWrap: 'wrap', // Added for consistency, in case button/title wraps
+          gap: 2,         // Added for consistency
+          position: 'sticky',
+          top: 0,
+          zIndex: 1100,
+          backgroundColor: 'background.paper',
+        }}
+      >
         <Typography variant="h5" component="h1">
           Branch Management
         </Typography>

@@ -14,7 +14,7 @@ import debounce from 'lodash.debounce';
 
 import userService from '../../services/userService';
 import { getGrades as fetchGradesService } from '../../services/gradeService'; // Import grade service
-import useAuthStore from '../../store/auth.store';
+// import useAuthStore from '../../store/auth.store'; // Was unused after removing currentUser
 // Assuming branchApi.js will be used for fetching branches for filter
 // import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
 
@@ -52,7 +52,7 @@ const UserManagementPage = () => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [totalUsers, setTotalUsers] = useState(0);
 
-  const { user: currentUser } = useAuthStore();
+  // const { user: currentUser } = useAuthStore(); // currentUser was unused
 
   const showToast = (message, severity = 'success') => {
     setToastMessage(message);
@@ -120,7 +120,7 @@ const UserManagementPage = () => {
         const { getBranches: fetchBranchesApi } = await import('../../services/branchApi.js');
         const branchesResponse = await fetchBranchesApi(branchParams);
         setAvailableBranches(branchesResponse.results || []);
-      } catch (e) {
+      } catch (_e) { // Mark as intentionally unused or remove if not logging/using it
         showToast('Failed to load branches for filter.', 'error');
         setAvailableBranches([]);
       } finally {
@@ -139,7 +139,7 @@ const UserManagementPage = () => {
       try {
         const gradesResponse = await fetchGradesService(gradeParams);
         setAvailableGrades(gradesResponse.results || []);
-      } catch (e) {
+      } catch (_e) { // Mark as intentionally unused or remove if not logging/using it
         showToast('Failed to load grades for filter.', 'error');
         setAvailableGrades([]);
       } finally {
@@ -159,7 +159,7 @@ const UserManagementPage = () => {
       else if (filterType === 'phone') setFilterPhone(value);
       // Main useEffect will pick this up
     }, 500),
-    [] // No dependencies, it's a stable debouncer
+    [setPaginationModel, setSearchTerm, setFilterEmail, setFilterPhone] // Add stable setters to satisfy exhaustive-deps
   );
 
 
@@ -342,8 +342,28 @@ const UserManagementPage = () => {
   }
 
   return (
+    // The outermost Box provides padding for the entire page.
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+      {/* This Box is for the page title and Add User button, will be sticky */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2, // Adjusted margin
+          flexWrap: 'wrap',
+          gap: 2,
+          position: 'sticky',
+          top: 0,
+          zIndex: 1100, // Common zIndex for app bars in MUI, ensure it's above other content
+          backgroundColor: 'background.paper', // Or use theme.palette.background.paper
+          // Add padding to match the parent's padding if needed, or ensure parent padding doesn't interfere
+          // For example, if the parent <Box sx={{ p: ... }}> creates an issue, this sticky box might need negative margins
+          // or the parent padding should be on a different element.
+          // Let's assume for now the existing padding `p` on the root Box is fine.
+          // If content scrolls under this, may need to match root padding here or adjust structure.
+        }}
+      >
         <Typography variant="h5" component="h1">
           User Management
         </Typography>
@@ -352,7 +372,20 @@ const UserManagementPage = () => {
         </Button>
       </Box>
 
-      <Box sx={{ mb: 3, p: 2, border: '1px solid #eee', borderRadius: '4px' }}>
+      {/* This Box is for the filters, will also be sticky */}
+      <Box
+        sx={{
+          mb: 2, // Adjusted margin
+          p: 2,
+          border: '1px solid #eee',
+          borderRadius: '4px',
+          position: 'sticky',
+          top: '72px', // Approximate height of the title/button bar above. This might need dynamic calculation or refinement.
+                      // For example, if the title bar wraps, this value will be insufficient.
+          zIndex: 1090, // Slightly lower than the title bar
+          backgroundColor: 'background.paper', // Or use theme.palette.background.paper
+        }}
+      >
         <Grid container spacing={2} alignItems="flex-start">
           <Grid item xs={12} sm={6} md={2}> {/* Adjusted grid size */}
             <TextField
