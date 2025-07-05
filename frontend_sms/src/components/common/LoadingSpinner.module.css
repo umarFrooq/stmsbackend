@@ -1,0 +1,25 @@
+/* LoadingSpinner.module.css */
+
+.spinnerContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.fullScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.7); /* Optional: semi-transparent overlay */
+  z-index: 1060; /* Bootstrap modals are 1050-1055, Navbars 1030. Toasts 1070. */
+                 /* Ensure it's above most content but potentially below critical toasts if any. */
+}
+
+.spinnerMessage {
+  margin-top: 1rem; /* Bootstrap mt-3 */
+  font-size: 1rem;  /* Bootstrap default font size for p or Typography subtitle1 equivalent */
+}
