@@ -1,0 +1,10 @@
+/* UserFormDialog.module.css */
+
+/* Add custom styles for UserFormDialog here as needed during conversion */
+.dialogFooter {
+  /* Example for custom footer styling */
+}
+
+.formRow {
+  margin-bottom: 1rem; /* Example for spacing between form rows if not using Bootstrap's Grid directly */
+}

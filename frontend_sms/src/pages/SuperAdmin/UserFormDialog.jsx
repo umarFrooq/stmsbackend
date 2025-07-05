@@ -1,30 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { Modal, Button as BsButton, Spinner, Form as BsForm, Col, Row } from 'react-bootstrap';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
   Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
-  CircularProgress,
   Chip,
-} from '@mui/material';
-import { Formik, Form } from 'formik'; // Removed Field as it's not directly used
+} from '@mui/material'; // Keep necessary MUI form components for now
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 import { getAllBranches } from '../../services/branchService';
-import gradeService from '../../services/gradeService'; // Import grade service
-import useAuthStore from '../../store/auth.store'; // To get current user/school context
+import gradeService from '../../services/gradeService';
+// import useAuthStore from '../../store/auth.store'; // Not used after currentUser removal
+import styles from './UserFormDialog.module.css';
 
 const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) => {
   const isEditing = Boolean(user);
-  const { user: currentUser } = useAuthStore(); // Get current logged-in user for schoolId if needed
+  // const { user: currentUser } = useAuthStore(); // currentUser was not used after refactor
 
   const [availableBranches, setAvailableBranches] = useState([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
@@ -34,26 +29,25 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
   const [loadingGrades, setLoadingGrades] = useState(false);
   const [gradeError, setGradeError] = useState(null);
 
-  // Moved initialValues declaration before useEffect hooks that might depend on it indirectly or directly.
   const initialValues = {
     fullname: user?.fullname || '',
     email: user?.email || '',
     password: '',
     confirmPassword: '',
     role: user?.role || '',
-    branchId: user?.branchId?._id || user?.branchId || '', // Handle populated vs direct ID for branch
-    gradeId: user?.gradeId?._id || user?.gradeId || '', // Handle populated vs direct ID for grade
+    branchId: user?.branchId?._id || user?.branchId || '',
+    gradeId: user?.gradeId?._id || user?.gradeId || '',
     status: user?.status || 'active',
     cnic: user?.cnic || '',
   };
 
-  // Effect for fetching branches
+  // Effect for fetching branches - This runs when the dialog opens.
   useEffect(() => {
     if (open) {
       setLoadingBranches(true);
       setBranchError(null);
-      getAllBranches() // This should ideally be scoped by school if not already
-        .then((response) => { // Renamed to 'response' for clarity
+      getAllBranches()
+        .then((response) => {
           setAvailableBranches(response && response.results ? response.results : []);
         })
         .catch((error) => {
@@ -67,70 +61,30 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     }
   }, [open]);
 
-  // Effect for fetching grades when role is student or form is open with a student user
-  // Also re-fetch if selected branch changes and role is student
+  // Effect for fetching grades initially when dialog opens if user is student
   useEffect(() => {
-    const shouldFetchGrades = open && (
-      (user?.role === 'student') || // Editing a student
-      (initialValues.role === 'student') // Creating a student (initialValues.role might change via form interaction)
-    );
-
-    if (shouldFetchGrades) {
+    if (open && user && user.role === 'student' && (user.branchId?._id || user.branchId)) {
       setLoadingGrades(true);
       setGradeError(null);
+      const currentBranchId = user.branchId?._id || user.branchId;
+      let params = { limit: 200, populate: 'branchId', branchId: currentBranchId };
 
-      let params = { limit: 200, populate: 'branchId' }; // Fetch many, populate branch
-      // Scoping:
-      // 1. If a branchId is selected in the form, filter grades by that branch.
-      // 2. If no branchId, but editing a user with a branchId, use that.
-      // 3. Fallback to currentUser's schoolScope if available (especially for creating new student before branch selection)
-      const formBranchId = initialValues.branchId; // This will be Formik's current value for branchId
-      const userBranchId = user?.branchId;
-
-      if (formBranchId) {
-        params.branchId = formBranchId;
-      } else if (userBranchId && isEditing) {
-         // If editing a user who already has a branch, and form's branchId hasn't been set/changed yet
-        params.branchId = typeof userBranchId === 'object' ? userBranchId._id : userBranchId;
-      }
-
-      // If no branchId is determined yet, we might need to filter by schoolId for broader selection
-      // This is important if admin creates student, selects role, then branch, then grade.
-      // Or, if admin edits a student and changes their branch.
-      if (!params.branchId && currentUser?.schoolScope) {
-        params.schoolId = currentUser.schoolScope;
-      }
-      // If user is rootUser and a school context is active (e.g. from a higher level component), use that.
-      // This part depends on how `currentSchoolId` is passed or determined for root users.
-      // For now, relying on branchId or general schoolScope from logged-in admin/superadmin.
-
-      if (params.branchId || params.schoolId) { // Only fetch if we have a scope
-        gradeService.getGrades(params)
-          .then(response => {
-            setAvailableGrades(response.results || []);
-          })
-          .catch(error => {
-            console.error("Failed to fetch grades for user form:", error);
-            setGradeError("Failed to load grades.");
-            setAvailableGrades([]);
-          })
-          .finally(() => {
-            setLoadingGrades(false);
-          });
-      } else {
-        setAvailableGrades([]); // Clear grades if no branch/school scope
+      gradeService.getGrades(params)
+        .then(response => setAvailableGrades(response.results || []))
+        .catch(error => {
+          console.error("Failed to load initial grades:", error); // Added console.error
+          setGradeError("Failed to load initial grades.");
+          setAvailableGrades([]);
+        })
+        .finally(() => setLoadingGrades(false));
+    } else if (open) {
+        // Clear grades if not a student or no branch on open
+        setAvailableGrades([]);
         setLoadingGrades(false);
-        // Optionally set a message like "Select a branch to see grades"
-      }
-    } else if (open) { // If form is open but role is not student, clear grades
-      setAvailableGrades([]);
-      setLoadingGrades(false);
-      setGradeError(null);
+        setGradeError(null);
     }
-  // The problematic useEffect was the one for fetching grades, which depended on initialValues.role and initialValues.branchId.
-  // By moving initialValues above all useEffects, this specific ReferenceError should be resolved.
-  // The Formik component itself will also use these initialValues when it mounts.
-  }, [open, user?.role, initialValues.role, initialValues.branchId, isEditing, user?.branchId, currentUser?.schoolScope]);
+  }, [open, user]);
+
 
   const validationSchema = Yup.object().shape({
     fullname: Yup.string().trim()
@@ -168,9 +122,9 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
       }),
     branchId: Yup.string()
       .when('$isEditing', {
-        is: false, // Create mode
+        is: false,
         then: (schema) => schema.required('Branch/Campus is required'),
-        otherwise: (schema) => schema.optional(), // Edit mode
+        otherwise: (schema) => schema.optional(),
       }),
     status: Yup.string()
       .when('$isEditing', {
@@ -178,204 +132,183 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
         then: (schema) => schema.required('Status is required'),
         otherwise: (schema) => schema.optional(),
       }),
-    // For gradeId, it's required if role is 'student' during creation.
-    // During an update (isEditing=true), it's optional even if role is 'student', to allow unsetting it.
-    // If role is changed TO 'student' during an update, this logic implies gradeId is not strictly required by Yup,
-    // but the backend or service layer should handle consistency if a student must have a grade.
     gradeId: Yup.string().when(['$isEditing', 'role'], ([isEditingValue, roleValue], schema) => {
       if (roleValue === 'student') {
         return isEditingValue ? schema.nullable().optional() : schema.required('Grade is required for students.');
       }
       return schema.nullable().optional();
-    }), // Ensure comma here if it was missing before cnic
+    }),
     cnic: Yup.string().trim().optional().nullable()
       .matches(/^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$/, 'Invalid CNIC format. Expected: XXXXX-XXXXXXX-X')
       .test('is-valid-cnic-length', 'CNIC must be exactly 15 characters including hyphens', value => {
-        if (!value) return true; // Optional, so valid if empty
+        if (!value) return true;
         return value.length === 15;
       }),
   });
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleSubmitFormik = async (values, { setSubmitting }) => {
     let submissionPayload = {};
-
     if (isEditing) {
-      // Only include fields that have changed or are always necessary
       if (values.fullname !== user?.fullname) submissionPayload.fullname = values.fullname;
       if (values.role !== user?.role) submissionPayload.role = values.role;
-
       const initialBranchId = user?.branchId?._id || user?.branchId || '';
       if (values.branchId !== initialBranchId) submissionPayload.branchId = values.branchId;
-
       const initialGradeId = user?.gradeId?._id || user?.gradeId || '';
       if (values.gradeId !== initialGradeId) {
-        submissionPayload.gradeId = values.gradeId ? values.gradeId : null; // Send null if cleared
+        submissionPayload.gradeId = values.gradeId ? values.gradeId : null;
       } else if (values.role !== 'student' && initialGradeId) {
-        // If role changed from student to something else, and there was a grade, clear it
         submissionPayload.gradeId = null;
       }
-
-
       if (values.status !== user?.status) submissionPayload.status = values.status;
-      // Password and email are not changed in edit mode via this form typically
       if (values.cnic !== (user?.cnic || null)) {
         submissionPayload.cnic = values.cnic || null;
       }
-    } else { // Create mode
+    } else {
       submissionPayload = { ...values };
       delete submissionPayload.confirmPassword;
       if (submissionPayload.role !== 'student') {
-        delete submissionPayload.gradeId; // Remove gradeId if not a student
+        delete submissionPayload.gradeId;
       }
-      // Ensure CNIC is included, or set to null if empty
       submissionPayload.cnic = values.cnic || null;
     }
 
-    // Ensure gradeId is not sent if role is not student, or set to null if it was cleared
     if (values.role !== 'student') {
-        submissionPayload.gradeId = null; // Explicitly nullify if not student
+        submissionPayload.gradeId = null;
     } else if (!values.gradeId && isEditing && user?.gradeId) {
-        submissionPayload.gradeId = null; // Student's grade was cleared
+        submissionPayload.gradeId = null;
     }
-
-    // Ensure cnic is set to null if it's an empty string and being submitted
-    if (submissionPayload.hasOwnProperty('cnic') && submissionPayload.cnic === '') {
+    if (Object.prototype.hasOwnProperty.call(submissionPayload, 'cnic') && submissionPayload.cnic === '') {
         submissionPayload.cnic = null;
     }
-
 
     if (!isEditing || Object.keys(submissionPayload).length > 0) {
       await onSubmit(submissionPayload, isEditing, user?.id);
     } else {
-      // If editing and no actual changes, we can skip the API call or inform the user.
-      // For now, we call onSubmit which might then decide (e.g., show "no changes" toast from parent).
-      await onSubmit({}, isEditing, user?.id); // Send empty object if no changes
+      await onSubmit({}, isEditing, user?.id);
     }
-
     setSubmitting(false);
   };
 
+  // This function will be called by Formik's Select onChange for Role and Branch
+  // to dynamically fetch grades.
+  const fetchGradesForFormValues = async (formikRole, formikBranchId) => {
+    if (formikRole === 'student' && formikBranchId) {
+      setLoadingGrades(true);
+      setGradeError(null);
+      let params = { limit: 200, populate: 'branchId', branchId: formikBranchId };
+      // Potentially add schoolScope if no branchId and creating new student
+      // if (!params.branchId && currentUser?.schoolScope) {
+      //   params.schoolId = currentUser.schoolScope;
+      // }
 
-  // This function will run when Formik's values.role changes.
-  // It's used to clear gradeId if the role is changed from 'student' to something else.
-  const handleRoleChange = (event, formikHandleChange, setFieldValue, currentValues) => {
-    const newRole = event.target.value;
-    formikHandleChange(event); // Propagate change to Formik
-
-    if (currentValues.role === 'student' && newRole !== 'student') {
-      setFieldValue('gradeId', ''); // Clear grade if role changes away from student
-      setAvailableGrades([]); // Clear grade dropdown options
+      try {
+        const response = await gradeService.getGrades(params);
+        setAvailableGrades(response.results || []);
+      } catch (error) {
+        console.error("Failed to load grades for form values:", error); // Added console.error
+        setGradeError("Failed to load grades for selection.");
+        setAvailableGrades([]);
+      } finally {
+        setLoadingGrades(false);
+      }
+    } else {
+      setAvailableGrades([]); // Clear grades if role is not student or no branch
+      setLoadingGrades(false);
+      setGradeError(null);
     }
-    // Update initialValues.role to trigger re-fetch of grades if newRole is 'student'
-    // This is a bit of a hack; ideally, the useEffect for grades would depend on formik.values.role
-    // For now, the existing useEffect for grades depends on `initialValues.role` which is based on `user.role`
-    // or `''`. A better approach might be to pass `formik.values.role` to that useEffect.
-    // Let's try updating initialValues.role directly in formik's state for now.
-    // No, initialValues should not be mutated. We need to make the useEffect for grades
-    // dependent on `formik.values.role`.
-    // The current useEffect for grades already depends on `initialValues.role` which is based on `user.role` or `''`.
-    // Let's refine the `useEffect` for fetching grades to depend on `values.role` from Formik.
   };
 
 
   return (
-    <Dialog open={open} onClose={() => onClose(false)} maxWidth="md" fullWidth>
-      <DialogTitle>{isEditing ? 'Edit User' : 'Add New User'}</DialogTitle>
+    <Modal show={open} onHide={() => onClose(false)} size="lg" backdrop={isEditing ? true : "static"} keyboard={!isEditing}>
+      <Modal.Header closeButton>
+        <Modal.Title>{isEditing ? 'Edit User' : 'Add New User'}</Modal.Title>
+      </Modal.Header>
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-        enableReinitialize // Important for initialValues to update when 'user' prop changes
-        context={{ isEditing }} // Pass isEditing to Yup context if needed
+        onSubmit={handleSubmitFormik}
+        enableReinitialize
+        context={{ isEditing }}
       >
-        {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => {
-          // Re-fetch grades if role or branch changes
-          useEffect(() => {
-            const shouldFetchGrades = open && values.role === 'student';
-            if (shouldFetchGrades) {
-              setLoadingGrades(true);
-              setGradeError(null);
-              let params = { limit: 200, populate: 'branchId' };
-              if (values.branchId) {
-                params.branchId = values.branchId;
-              } else if (currentUser?.schoolScope) {
-                params.schoolId = currentUser.schoolScope;
-              }
-
-              if (params.branchId || params.schoolId) {
-                gradeService.getGrades(params)
-                  .then(response => setAvailableGrades(response.results || []))
-                  .catch(error => {
-                    setGradeError("Failed to load grades.");
-                    setAvailableGrades([]);
-                  })
-                  .finally(() => setLoadingGrades(false));
-              } else {
-                setAvailableGrades([]);
-                setLoadingGrades(false);
-              }
-            } else if (open) {
-              setAvailableGrades([]);
-              setLoadingGrades(false);
-              setGradeError(null);
-            }
-          }, [open, values.role, values.branchId, currentUser?.schoolScope]);
-
-          return (
+        {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue, getFieldProps }) => (
+            // Formik's Form component provides context
             <Form>
-              <DialogContent dividers>
-                <Grid container spacing={3}>
-                  {/* Full Name */}
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth label="Full Name" name="fullname"
-                      value={values.fullname} onChange={handleChange} onBlur={handleBlur}
-                      error={touched.fullname && Boolean(errors.fullname)}
-                      helperText={touched.fullname && errors.fullname}
-                      disabled={isSubmitting} required
+              <Modal.Body>
+                <Row className="mb-3">
+                  <BsForm.Group as={Col} xs={12} controlId="formFullname">
+                    <BsForm.Label>Full Name <span className="text-danger">*</span></BsForm.Label>
+                    <BsForm.Control
+                      type="text"
+                      {...getFieldProps('fullname')}
+                      isInvalid={touched.fullname && !!errors.fullname}
+                      disabled={isSubmitting}
                     />
-                  </Grid>
+                    <BsForm.Control.Feedback type="invalid">
+                      {errors.fullname}
+                    </BsForm.Control.Feedback>
+                  </BsForm.Group>
+                </Row>
 
-                  {/* Email, Password, Confirm Password - only for create mode */}
-                  {!isEditing && (
-                    <>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth label="Email Address" name="email" type="email"
-                          value={values.email} onChange={handleChange} onBlur={handleBlur}
-                          error={touched.email && Boolean(errors.email)}
-                          helperText={touched.email && errors.email}
-                          disabled={isSubmitting} required
+                {!isEditing && (
+                  <>
+                    <Row className="mb-3">
+                      <BsForm.Group as={Col} xs={12} controlId="formEmail">
+                        <BsForm.Label>Email Address <span className="text-danger">*</span></BsForm.Label>
+                        <BsForm.Control
+                          type="email"
+                          {...getFieldProps('email')}
+                          isInvalid={touched.email && !!errors.email}
+                          disabled={isSubmitting}
                         />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth label="Password" name="password" type="password"
-                          value={values.password} onChange={handleChange} onBlur={handleBlur}
-                          error={touched.password && Boolean(errors.password)}
-                          helperText={touched.password && errors.password}
-                          disabled={isSubmitting} required
+                        <BsForm.Control.Feedback type="invalid">
+                          {errors.email}
+                        </BsForm.Control.Feedback>
+                      </BsForm.Group>
+                    </Row>
+                    <Row className="mb-3">
+                      <BsForm.Group as={Col} xs={12} sm={6} controlId="formPassword">
+                        <BsForm.Label>Password <span className="text-danger">*</span></BsForm.Label>
+                        <BsForm.Control
+                          type="password"
+                          {...getFieldProps('password')}
+                          isInvalid={touched.password && !!errors.password}
+                          disabled={isSubmitting}
                         />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth label="Confirm Password" name="confirmPassword" type="password"
-                          value={values.confirmPassword} onChange={handleChange} onBlur={handleBlur}
-                          error={touched.confirmPassword && Boolean(errors.confirmPassword)}
-                          helperText={touched.confirmPassword && errors.confirmPassword}
-                          disabled={isSubmitting || !values.password} required
+                        <BsForm.Control.Feedback type="invalid">
+                          {errors.password}
+                        </BsForm.Control.Feedback>
+                      </BsForm.Group>
+                      <BsForm.Group as={Col} xs={12} sm={6} controlId="formConfirmPassword">
+                        <BsForm.Label>Confirm Password <span className="text-danger">*</span></BsForm.Label>
+                        <BsForm.Control
+                          type="password"
+                          {...getFieldProps('confirmPassword')}
+                          isInvalid={touched.confirmPassword && !!errors.confirmPassword}
+                          disabled={isSubmitting || !values.password}
                         />
-                      </Grid>
-                    </>
-                  )}
+                        <BsForm.Control.Feedback type="invalid">
+                          {errors.confirmPassword}
+                        </BsForm.Control.Feedback>
+                      </BsForm.Group>
+                    </Row>
+                  </>
+                )}
 
-                  {/* Role */}
+                <Grid container spacing={3}> {/* Still using MUI Grid for these selects */}
                   <Grid item xs={12} sm={values.role === 'student' ? 4 : 6}>
                     <FormControl fullWidth error={touched.role && Boolean(errors.role)} disabled={isSubmitting}>
                       <InputLabel id="role-select-label" required>Role</InputLabel>
                       <Select
                         labelId="role-select-label" name="role" value={values.role} label="Role"
-                        onChange={(e) => handleRoleChange(e, handleChange, setFieldValue, values)}
+                        onChange={(e) => {
+                            handleChange(e); // Formik's default handler
+                            const newRole = e.target.value;
+                            if (values.role === 'student' && newRole !== 'student') {
+                                setFieldValue('gradeId', ''); // Clear grade
+                            }
+                            fetchGradesForFormValues(newRole, values.branchId); // Fetch grades based on new role and current branch
+                        }}
                         onBlur={handleBlur} required
                       >
                         {availableRoles.map((role) => (
@@ -388,13 +321,16 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     </FormControl>
                   </Grid>
 
-                  {/* Branch */}
                  <Grid item xs={12} sm={values.role === 'student' ? 4 : 6}>
                     <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting || loadingBranches}>
                       <InputLabel id="branch-select-label" required>Branch/Campus</InputLabel>
                       <Select
                         labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch/Campus"
-                        onChange={handleChange} onBlur={handleBlur} required
+                        onChange={(e) => {
+                            handleChange(e); // Formik's default handler
+                            fetchGradesForFormValues(values.role, e.target.value); // Fetch grades based on current role and new branch
+                        }}
+                        onBlur={handleBlur} required
                       >
                         <MenuItem value=""><em>{loadingBranches ? 'Loading...' : branchError ? 'Error loading' : 'Select Branch'}</em></MenuItem>
                         {availableBranches.map((branch) => (
@@ -406,25 +342,24 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                     </FormControl>
                   </Grid>
 
-                  {/* CNIC TextField */}
                   <Grid item xs={12} sm={values.role === 'student' ? 6 : 6}>
-                    <TextField
-                      fullWidth
-                      label="CNIC (e.g., 12345-1234567-1)"
-                      name="cnic"
-                      value={values.cnic}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      error={touched.cnic && Boolean(errors.cnic)}
-                      helperText={touched.cnic && errors.cnic}
-                      disabled={isSubmitting}
-                      inputProps={{ maxLength: 15 }} // Optional: guide user input length
-                    />
+                    <BsForm.Group controlId="formCnic">
+                        <BsForm.Label>CNIC (e.g., 12345-1234567-1)</BsForm.Label>
+                        <BsForm.Control
+                          type="text"
+                          {...getFieldProps('cnic')}
+                          isInvalid={touched.cnic && !!errors.cnic}
+                          disabled={isSubmitting}
+                          maxLength={15}
+                        />
+                        <BsForm.Control.Feedback type="invalid">
+                          {errors.cnic}
+                        </BsForm.Control.Feedback>
+                      </BsForm.Group>
                   </Grid>
 
-                  {/* Grade Dropdown - only if role is student */}
                   {values.role === 'student' && (
-                    <Grid item xs={12} sm={6}> {/* Adjusted sm to 6 if CNIC is also 6 */}
+                    <Grid item xs={12} sm={6}>
                       <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || loadingGrades || !values.branchId}>
                         <InputLabel id="grade-select-label" required>Grade</InputLabel>
                         <Select
@@ -446,10 +381,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                       </FormControl>
                     </Grid>
                   )}
-
-                  {/* Status */}
-                  {/* Status */}
-                  <Grid item xs={12} sm={values.role === 'student' ? 12 : 6}> {/* Full width if student, else half. Or always sm={6} if Grade takes the other half */}
+                  <Grid item xs={12} sm={values.role === 'student' ? 12 : 6}>
                      <FormControl fullWidth error={touched.status && Boolean(errors.status)} disabled={isSubmitting}>
                         <InputLabel id="status-select-label" required>Status</InputLabel>
                         <Select
@@ -462,26 +394,29 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                         {touched.status && errors.status && <FormHelperText>{errors.status}</FormHelperText>}
                       </FormControl>
                   </Grid>
-
                 </Grid>
-              </DialogContent>
-
-              <DialogActions sx={{ p: '16px 24px' }}>
-                <Button onClick={() => onClose(false)} color="inherit" disabled={isSubmitting}>Cancel</Button>
-                <Button
+              </Modal.Body>
+              <Modal.Footer className={styles.dialogFooter}>
+                <BsButton variant="outline-secondary" onClick={() => onClose(false)} disabled={isSubmitting}>
+                  Cancel
+                </BsButton>
+                <BsButton
                   type="submit"
-                  variant="contained"
-                  color="primary"
+                  variant="primary"
                   disabled={isSubmitting || loadingBranches || loadingGrades}
-                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
-              >
-                {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create User')}
-              </Button>
-            </DialogActions>
-          </Form>
-        )}}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/>
+                      <span style={{ marginLeft: '5px' }}>{isEditing ? 'Saving...' : 'Creating...'}</span>
+                    </>
+                  ) : (isEditing ? 'Save Changes' : 'Create User')}
+                </BsButton>
+              </Modal.Footer>
+            </Form>
+        )}
       </Formik>
-    </Dialog>
+    </Modal>
   );
 };
 
@@ -490,7 +425,7 @@ UserFormDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   user: PropTypes.object,
   onSubmit: PropTypes.func.isRequired,
-  availableRoles: PropTypes.arrayOf(PropTypes.string), // Added prop type for roles
+  availableRoles: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default UserFormDialog;
