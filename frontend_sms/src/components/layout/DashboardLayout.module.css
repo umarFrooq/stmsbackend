@@ -60,3 +60,55 @@
   */
   margin-right: 8px; /* Example if we add icons manually */
 }
+
+.desktopSidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background-color: #f8f9fa; /* Bootstrap light gray */
+  border-right: 1px solid #dee2e6; /* Bootstrap default border */
+  padding-top: 0; /* Assuming drawerContent's first element provides top spacing (e.g., for logo/title) */
+  overflow-y: auto; /* If sidebar content is taller than viewport */
+  z-index: 1020; /* Below typical fixed navbar z-index (1030) but above page content */
+}
+
+.drawerContent {
+  /* Common styles for the content block rendered in both Offcanvas and desktopSidebar */
+  /* For example, if you want consistent padding or text styling within the nav area */
+}
+
+/* Styles for Bootstrap Nav based navigation items */
+.navLink {
+  display: flex !important; /* Important to override default Nav.Link display if using icons */
+  align-items: center !important;
+  padding: 0.5rem 1rem !important; /* Match ListItemButton padding roughly */
+  color: rgba(0, 0, 0, 0.87) !important; /* Match default text color */
+}
+
+.navLink:hover,
+.navLink:focus,
+.navLinkActive { /* You'll need to handle active state via react-router-dom NavLink */
+  background-color: rgba(0, 0, 0, 0.04) !important; /* Example hover, match ListItemButton */
+  color: #0d6efd !important; /* Example active color */
+}
+
+.navLinkIcon {
+  min-width: 40px !important; /* Match ListItemIcon min-width roughly */
+  display: flex !important;
+  align-items: center !important;
+  color: rgba(0, 0, 0, 0.54) !important; /* Match ListItemIcon color */
+}
+
+.navLinkText {
+  /* Match ListItemText styling if needed */
+}
+
+.sidebarHeader {
+  height: 64px; /* Match Toolbar height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem; /* Bootstrap p-3 horizontal */
+  font-weight: 500; /* Typography h6 weight */
+}

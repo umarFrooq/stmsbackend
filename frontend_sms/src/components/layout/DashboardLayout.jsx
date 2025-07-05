@@ -1,26 +1,16 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useNavigate, NavLink as RouterNavLink } from 'react-router-dom'; // Imported NavLink
 import {
-  // AppBar, // Replaced
   Box,
   CssBaseline,
-  Drawer,
-  // IconButton, // Replaced where it was part of AppBar
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemButton,
-  // Toolbar, // Replaced
-  Typography, // Still used in Drawer
-  // Avatar, // Replaced
-  // Menu, // Replaced
-  // MenuItem, // Replaced
+  // List, ListItem, ListItemIcon, ListItemText, ListItemButton, // MUI List components removed
+  Typography, // Still used for "SMS Portal" title in sidebar header
   Divider,
-  Tooltip, // Can still be used, or use React-Bootstrap OverlayTrigger + Tooltip
-} from '@mui/material';
-import { Navbar, Nav, NavDropdown, Container, Image, Button as BsButton, Offcanvas } from 'react-bootstrap'; // Added BsButton for menu icon on mobile
-import MenuIcon from '@mui/icons-material/Menu'; // Keep for toggle, or use Navbar.Toggle's default
+  Tooltip,
+} from '@mui/material'; // Keep Tooltip for Navbar, Typography for sidebar header
+// Added Nav from react-bootstrap for sidebar
+import { Navbar, Nav, NavDropdown, Container, Image, Button as BsButton, Offcanvas } from 'react-bootstrap';
+import MenuIcon from '@mui/icons-material/Menu'; // MUI Icons are kept
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
@@ -33,14 +23,13 @@ import DomainIcon from '@mui/icons-material/Domain';
 import ClassIcon from '@mui/icons-material/Class';
 
 import useAuthStore from '../../store/auth.store';
-import styles from './DashboardLayout.module.css'; // Import CSS module
+import styles from './DashboardLayout.module.css';
 
 const drawerWidth = 240;
 
-const DashboardLayout = (props) => {
-  const { window } = props;
+const DashboardLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  // const [anchorElUser, setAnchorElUser] = useState(null); // Not needed for NavDropdown
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 600);
   const navigate = useNavigate();
 
   const { user, roles, logout, hasRole, hasPermission } = useAuthStore();
@@ -51,17 +40,16 @@ const DashboardLayout = (props) => {
     setMobileOpen(!mobileOpen);
   };
 
-  // handleOpenUserMenu and handleCloseUserMenu are not strictly needed for NavDropdown
-  // as it handles its own open/close state.
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 600);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const handleProfile = () => {
-    navigate('/profile');
-  }
+  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleProfile = () => { navigate('/profile'); };
 
   const navItems = [
     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard', requiredRoles: ['student', 'teacher', 'admin', 'superadmin', 'rootUser', 'parent'] },
@@ -83,16 +71,14 @@ const DashboardLayout = (props) => {
     { text: 'Student Dashboard', icon: <FaceIcon />, path: '/student', requiredRoles: ['student', 'superadmin'] },
   ];
 
-  const drawerContent = ( // Renamed from drawer to avoid conflict with MUI Drawer
-    <div>
-      {/* Toolbar equivalent for spacing and title */}
-      <div className="d-flex align-items-center justify-content-center p-3" style={{ height: '64px' }}> {/* Approx Toolbar height */}
-        <Typography variant="h6" noWrap component="div">
-          SMS Portal
-        </Typography>
+  const drawerContent = (
+    <div className={styles.drawerContent}>
+      <div className={styles.sidebarHeader}> {/* Use CSS Module for sidebar header */}
+        {/* Typography was MUI, replace with simple h6 or styled div if needed */}
+        <h5 className="m-0">SMS Portal</h5> {/* Bootstrap heading with no margin */}
       </div>
-      <Divider />
-      <List>
+      <Divider /> {/* MUI Divider, can be replaced with <hr className="my-2" /> or similar */}
+      <Nav className="flex-column p-2"> {/* React-Bootstrap Nav, flex-column for vertical layout */}
         {navItems.map((item) => {
           const hasRequiredRole = item.requiredRoles.some(role => hasRole(role));
           const hasRequiredPermission = !item.permission || hasPermission(item.permission);
@@ -100,62 +86,62 @@ const DashboardLayout = (props) => {
 
           if (hasRequiredRole && hasRequiredPermission && meetsCondition) {
             return (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton onClick={() => { navigate(item.path); if(mobileOpen) handleDrawerToggle(); }}>
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
+              <Nav.Item key={item.text}>
+                <Nav.Link
+                  as={RouterNavLink}
+                  to={item.path}
+                  onClick={() => { if(mobileOpen && !isDesktop) handleDrawerToggle(); }}
+                  className={({ isActive }) => isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+                >
+                  <span className={styles.navLinkIcon}>{item.icon}</span>
+                  <span className={styles.navLinkText}>{item.text}</span>
+                </Nav.Link>
+              </Nav.Item>
             );
           }
           return null;
         })}
-      </List>
+      </Nav>
       <Divider />
       {hasPermission('manageSystemSettings') && (
-         <List>
-            <ListItem disablePadding>
-                <ListItemButton onClick={() => { navigate('/settings'); if(mobileOpen) handleDrawerToggle(); }}>
-                    <ListItemIcon><SettingsIcon /></ListItemIcon>
-                    <ListItemText primary="System Settings" />
-                </ListItemButton>
-            </ListItem>
-        </List>
+         <Nav className="flex-column p-2">
+            <Nav.Item>
+                <Nav.Link
+                  as={RouterNavLink}
+                  to="/settings"
+                  onClick={() => { if(mobileOpen && !isDesktop) handleDrawerToggle();}}
+                  className={({ isActive }) => isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+                >
+                    <span className={styles.navLinkIcon}><SettingsIcon /></span>
+                    <span className={styles.navLinkText}>System Settings</span>
+                </Nav.Link>
+            </Nav.Item>
+        </Nav>
       )}
     </div>
   );
 
-  const container = window !== undefined ? () => window().document.body : undefined;
-
-  // Calculate style for Navbar based on drawer state (for larger screens)
-  const navbarStyle = {
-    transition: 'margin .2s ease-out, width .2s ease-out', // Smooth transition
-  };
-  // On small screens (sm and down), Navbar takes full width.
-  // On medium screens (md and up) where permanent drawer is shown, adjust Navbar.
-  // This logic can be tricky with media queries vs. dynamic styling.
-  // Bootstrap's Navbar is typically full-width unless inside a container that limits it.
-  // The `fixed="top"` makes it full viewport width.
-  // The main content area then gets padding/margin.
-
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}> {/* Ensure Box takes full height */}
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
       <CssBaseline />
 
       <Navbar
         bg="primary"
         variant="dark"
-        expand="sm" // Hamburger menu appears on 'sm' and smaller
+        expand={false}
         fixed="top"
-        className={styles.appBar} // Base class
-        style={navbarStyle} // Dynamic styles for drawer offset
+        className={styles.appBar}
+        style={{
+          width: isDesktop ? `calc(100% - ${drawerWidth}px)` : '100%',
+          marginLeft: isDesktop ? `${drawerWidth}px` : '0',
+          transition: 'margin .2s ease-out, width .2s ease-out',
+        }}
       >
-        <Container fluid style={{ paddingLeft: mobileOpen && document.documentElement.clientWidth >= 600 ? `${drawerWidth}px` : (document.documentElement.clientWidth >= 600 ? `${drawerWidth}px` : undefined) , width: mobileOpen && document.documentElement.clientWidth >= 600 ? `calc(100% - ${drawerWidth}px)` : (document.documentElement.clientWidth >= 600 ? `calc(100% - ${drawerWidth}px)` : '100%')}}>
-          {/* IconButton for mobile drawer toggle - using Navbar.Toggle now */}
+        <Container fluid>
           <BsButton
             variant="outline-light"
             onClick={handleDrawerToggle}
-            className="d-sm-none me-2" // Display only on extra-small to small screens
+            className="d-sm-none me-2"
             aria-label="open drawer"
           >
             <MenuIcon />
@@ -163,24 +149,16 @@ const DashboardLayout = (props) => {
           <Navbar.Brand href="#home" onClick={(e) => {e.preventDefault(); navigate('/dashboard');}} className={styles.title}>
             Student Management System
           </Navbar.Brand>
-          {/* Navbar.Toggle for Bootstrap's built-in responsive menu (if we had Nav links in AppBar) */}
-          {/* <Navbar.Toggle aria-controls="responsive-navbar-nav" /> */}
-          {/* <Navbar.Collapse id="responsive-navbar-nav"> */}
-            {/* <Nav className="me-auto"> */}
-              {/* Future Nav.Link items if any */}
-            {/* </Nav> */}
-          {/* </Navbar.Collapse> */}
-          <Nav className="ms-auto"> {/* ms-auto to push to the right */}
+          <Nav className="ms-auto">
             <Tooltip title="User menu">
               <NavDropdown
                 title={
                   <Image
-                    src={user?.profilePictureUrl || undefined} // Placeholder or actual image
+                    src={user?.profilePictureUrl || undefined}
                     alt={userName}
                     roundedCircle
                     style={{ width: 32, height: 32, backgroundColor: '#fff', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    {/* Fallback to initial if no image */}
                     {(!user?.profilePictureUrl && userName) ? userName.charAt(0).toUpperCase() : <PersonIcon style={{color: '#333'}}/>}
                   </Image>
                 }
@@ -204,55 +182,39 @@ const DashboardLayout = (props) => {
         </Container>
       </Navbar>
 
-      {/* Sidebar Navigation (Drawer) */}
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="mailbox folders"
+      <Offcanvas
+        show={mobileOpen && !isDesktop}
+        onHide={handleDrawerToggle}
+        placement="start"
+        className="d-sm-none"
+        style={{ width: `${drawerWidth}px` }}
       >
-        {/* Temporary Drawer for mobile */}
-        <Drawer // Using MUI Drawer for mobile off-canvas
-          container={container}
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
+        <Offcanvas.Header closeButton>
+          {/* Offcanvas title can be here if different from drawerContent's title, or use the one in drawerContent */}
+        </Offcanvas.Header>
+        <Offcanvas.Body className="p-0">
           {drawerContent}
-        </Drawer>
-        {/* Permanent Drawer for desktop */}
-        <Drawer // Using MUI Drawer for permanent sidebar
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
-        >
-          {drawerContent}
-        </Drawer>
-      </Box>
+        </Offcanvas.Body>
+      </Offcanvas>
 
-      {/* Main Content Area */}
+      <div className={`d-none d-sm-block ${styles.desktopSidebar}`} style={{ width: `${drawerWidth}px` }}>
+        {drawerContent}
+      </div>
+
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          // width: { sm: `calc(100% - ${drawerWidth}px)` }, // Width is handled by flexGrow
-          mt: '64px', // AppBar height (Bootstrap default can be 56px or more)
+          mt: '64px',
           overflowX: 'hidden',
-          marginLeft: { sm: `${drawerWidth}px` } // Adjust margin when drawer is permanent
+          marginLeft: { xs: 0, sm: `${drawerWidth}px` },
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` }
         }}
-        style={{ width: `calc(100% - ${drawerWidth}px)`}} // Ensure this works with flexGrow
       >
         <Outlet />
       </Box>
-    </Box>
+    </div>
   );
 };
 
