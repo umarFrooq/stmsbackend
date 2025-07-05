@@ -51,8 +51,31 @@ const querySubjects = async (filter, options, schoolId) => {
   if (!schoolId) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID is required to query subjects.');
   }
-  const schoolScopedFilter = { ...filter, schoolId };
-  const subjects = await Subject.paginate(schoolScopedFilter, options);
+  // const schoolScopedFilter = { ...filter, schoolId }; // Old way
+
+  let queryFilter = { schoolId }; // Start with mandatory schoolId
+
+  // Handle generic search for title and subjectCode
+  if (filter.search) {
+    const searchRegex = new RegExp(filter.search, 'i'); // 'i' for case-insensitive
+    queryFilter.$or = [
+      { title: searchRegex },
+      { subjectCode: searchRegex },
+    ];
+  }
+
+  // Handle specific branchId filter (if provided)
+  if (filter.branchId) {
+    queryFilter.branchId = filter.branchId;
+  }
+
+  // Add other specific filters from 'filter' object if they exist and are valid
+  // For example, if 'title' or 'subjectCode' were still allowed as direct exact match filters:
+  // if (filter.title) queryFilter.title = filter.title;
+  // if (filter.subjectCode) queryFilter.subjectCode = filter.subjectCode;
+
+
+  const subjects = await Subject.paginate(queryFilter, options);
   return subjects;
 };
 
