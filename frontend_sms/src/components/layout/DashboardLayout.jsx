@@ -266,6 +266,7 @@ const DashboardLayout = (props) => {
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: '64px', // For AppBar height
+          overflowX: 'hidden', // Prevent this main content area from scrolling horizontally
         }}
       >
         {/* Toolbar spacer for content to be below AppBar - already handled by mt above */}
