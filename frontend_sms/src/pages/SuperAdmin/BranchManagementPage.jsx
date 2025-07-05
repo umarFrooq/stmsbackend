@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+// Removed Box, Typography, Button, Alert from @mui/material
+// Kept IconButton, Tooltip, Chip from @mui/material for the DataGrid's custom cell renderers for now
+import { IconButton, Tooltip, Chip } from '@mui/material';
+import { Container, Button as BsButton, Alert as BsAlert, Row, Col } from 'react-bootstrap'; // Added BsButton and BsAlert
+import AddIcon from '@mui/icons-material/Add'; // Keep MUI icon for now
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import StyledDataGrid from '../../components/common/StyledDataGrid';
+import StyledDataGrid from '../../components/common/StyledDataGrid'; // Still MUI based internally
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import ConfirmationDialog from '../../components/common/ConfirmationDialog';
-import NotificationToast from '../../components/common/NotificationToast';
-import BranchFormDialog from './BranchFormDialog';
+import ConfirmationDialog from '../../components/common/ConfirmationDialog'; // Already Bootstrap
+import NotificationToast from '../../components/common/NotificationToast';   // Already Bootstrap
+import BranchFormDialog from './BranchFormDialog'; // Already Bootstrap based on UserFormDialog conversion pattern
 
-// Mock service for branches (keeping as is, assuming it's for local dev/testing)
+import styles from './BranchManagementPage.module.css'; // Import CSS module
+
+// Mock service (remains unchanged)
 const mockBranchService = {
   getBranches: async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -139,7 +144,7 @@ const BranchManagementPage = () => {
     }
   };
 
-  const handleBranchFormClose = () => { // Removed unused submittedSuccessfully parameter
+  const handleBranchFormClose = () => {
     setIsBranchFormOpen(false);
     setEditingBranch(null);
   };
@@ -150,39 +155,55 @@ const BranchManagementPage = () => {
     { field: 'contactPerson', headerName: 'Contact Person', width: 180 },
     { field: 'contactEmail', headerName: 'Contact Email', width: 200 },
     { field: 'contactPhone', headerName: 'Contact Phone', width: 150 },
-    { field: 'status', headerName: 'Status', width: 100, renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'active' ? 'success' : 'error'} /> },
-    { field: 'actions', headerName: 'Actions', width: 130, sortable: false, filterable: false, renderCell: (params) => (
-        <Box>
-          <Tooltip title="Edit Branch"><IconButton onClick={() => handleEditBranch(params.row)} size="small"><EditIcon /></IconButton></Tooltip>
-          <Tooltip title="Delete Branch"><IconButton onClick={() => handleDeleteBranch(params.row)} size="small" color="error"><DeleteIcon /></IconButton></Tooltip>
-        </Box>
+    { field: 'status', headerName: 'Status', width: 100,
+      renderCell: (params) => <Chip label={params.value} size="small" color={params.value === 'active' ? 'success' : 'error'} />
+    },
+    { field: 'actions', headerName: 'Actions', width: 130, sortable: false, filterable: false,
+      renderCell: (params) => (
+        // This Box and its children are still MUI. To be addressed when/if StyledDataGrid is converted.
+        <div style={{ display: 'flex' }}> {/* Temporary div, ideally Bootstrap icons or custom components */}
+          <Tooltip title="Edit Branch">
+            <IconButton onClick={() => handleEditBranch(params.row)} size="small">
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete Branch">
+            <IconButton onClick={() => handleDeleteBranch(params.row)} size="small" color="error">
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
       ),
     },
   ];
 
   if (loading && branches.length === 0) {
-    return <LoadingSpinner fullScreen message="Loading branches..." />;
+    return <LoadingSpinner fullScreen message="Loading branches..." />; // This component also needs conversion eventually
   }
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2, position: 'sticky', top: 0, zIndex: 1100, backgroundColor: 'background.paper' }}>
-        <Typography variant="h5" component="h1">Branch Management</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddBranch}>Add Branch</Button>
-      </Box>
+    <Container fluid className="p-3 p-md-4"> {/* Outermost container with padding */}
+      <div className={styles.pageHeader}> {/* Sticky header div */}
+        <h2 className={styles.pageTitle}>Branch Management</h2>
+        <BsButton variant="primary" onClick={handleAddBranch}>
+          <AddIcon fontSize="small" style={{ marginRight: '0.5rem' }} /> {/* MUI Icon with manual spacing */}
+          Add Branch
+        </BsButton>
+      </div>
 
-      {error && !loading && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && !loading && <BsAlert variant="danger" className="mt-3">{error}</BsAlert>}
 
-      <Box sx={{ width: '100%', overflow: 'hidden' }}>
+      {/* This Box wrapper for StyledDataGrid was from previous sticky header work, and is fine. */}
+      <div style={{ width: '100%', overflow: 'hidden' }} className="mt-3">
         <StyledDataGrid
           rows={branches}
           columns={columns}
           loading={loading}
-          error={null}
+          error={null} // Error prop for StyledDataGrid, not the page error
           getRowId={(row) => row.id}
           minHeight={500}
         />
-      </Box>
+      </div>
 
       <BranchFormDialog
         open={isBranchFormOpen}
@@ -198,7 +219,7 @@ const BranchManagementPage = () => {
         title="Confirm Deletion"
         contentText={`Are you sure you want to delete branch "${branchToDelete?.name}"? This action cannot be undone.`}
         isLoading={isDeleting}
-        confirmButtonColor="error"
+        confirmButtonColor="error" // This maps to 'danger' in our Bootstrap ConfirmationDialog
       />
 
       <NotificationToast
@@ -207,7 +228,7 @@ const BranchManagementPage = () => {
         severity={toastSeverity}
         handleClose={() => setToastOpen(false)}
       />
-    </Box>
+    </Container>
   );
 };
 

@@ -1,0 +1,27 @@
+/* BranchManagementPage.module.css */
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem; /* Or use Bootstrap mb-3, mb-4 */
+  flex-wrap: wrap;
+  gap: 0.5rem; /* Or Bootstrap gap-2 */
+
+  /* Styles for stickiness */
+  position: sticky;
+  top: 0; /* This will be relative to the scroll container from DashboardLayout.jsx */
+  background-color: var(--bs-body-bg, #fff); /* Match page background, Bootstrap variable used as fallback */
+  padding-top: 0.75rem; /* Add some padding to prevent content from touching the very top */
+  padding-bottom: 0.75rem;
+  z-index: 1020; /* Bootstrap's default z-index for sticky elements is 1020. Navbar is 1030. */
+                 /* Ensure this is below the main Navbar if DashboardLayout's Navbar is also sticky-top */
+                 /* And above the table content */
+}
+
+.pageTitle {
+  /* Custom styles for page title if needed */
+  margin-bottom: 0; /* Remove default heading margin if using flex alignment */
+}
+
+/* Add other custom styles for the page shell as needed */
