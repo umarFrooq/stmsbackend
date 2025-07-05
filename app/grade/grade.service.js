@@ -43,17 +43,40 @@ const createGrade = async (gradeData, schoolId) => {
  * @returns {Promise<QueryResult>}
  */
 const queryGrades = async (filter, options, schoolId, userRole) => {
-  let queryFilter = { ...filter };
+  let queryFilter = {}; // Initialize an empty filter object
 
-  if (userRole !== 'rootUser') {
+  // Handle schoolId scoping first
+  if (userRole !== 'rootUser') { // Non-root users are strictly scoped
     if (!schoolId) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'School ID context is required for your role to query grades.');
     }
     queryFilter.schoolId = schoolId;
-  } else if (schoolId) { // rootUser provided a specific schoolId
+  } else if (schoolId) { // rootUser explicitly provided a schoolId to filter by (it came via filter.schoolId then passed as schoolId arg)
     queryFilter.schoolId = schoolId;
   }
-  // If rootUser and no schoolId, lists all grades across all schools.
+  // If rootUser and schoolId is undefined here, it means they want to list across all schools (or those matching other criteria).
+
+  // Handle generic search for title and levelCode
+  if (filter.search) {
+    const searchRegex = new RegExp(filter.search, 'i'); // 'i' for case-insensitive
+    queryFilter.$or = [
+      { title: searchRegex },
+      { levelCode: searchRegex },
+    ];
+  }
+
+  // Handle specific branchId filter (if provided)
+  if (filter.branchId) {
+    // Ensure branchId is valid if you want to check here, though Joi validation should handle it.
+    // const isValidBranchId = mongoose.Types.ObjectId.isValid(filter.branchId);
+    // if (!isValidBranchId) {
+    //   throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid branchId format.');
+    // }
+    queryFilter.branchId = filter.branchId;
+  }
+
+  // Note: 'title' and 'levelCode' direct filters are removed as 'search' handles them.
+  // If they were still needed for exact matches alongside 'search', the logic would be more complex.
 
   const grades = await Grade.paginate(queryFilter, options);
   return grades;

@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const mongoose = require('mongoose'); // Added mongoose import
 const catchAsync = require('../../utils/catchAsync');
 const  gradeService  = require('./grade.service'); // Assuming service is exported from index.js
 const pick = require('../../utils/pick');
@@ -22,20 +23,39 @@ const createGradeHandler = catchAsync(async (req, res) => {
 });
 
 const getGradesHandler = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['title', 'levelCode', 'branchId']); // branchId here could be used by rootUser to filter
+  // Updated to pick 'search', 'branchId', and 'schoolId' (for rootUser filtering)
+  const filter = pick(req.query, ['search', 'branchId', 'schoolId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']);
-  const schoolId = req.user.role === 'rootUser' ? req.query.schoolId : req.schoolId;
+  let schoolIdForService = req.user.role === 'rootUser' ? filter.schoolId : req.schoolId;
 
-  if (!schoolId && req.user.role !== 'rootUser') {
+  // Validate schoolId presence for non-root users or if root user intends to list all grades without schoolId
+  if (req.user.role !== 'rootUser' && !schoolIdForService) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required for your role.');
   }
-  if (!schoolId && req.user.role === 'rootUser' && !req.query.schoolId){
-     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID must be provided in query for root users to list grades.');
+  // If root user is listing grades and does not provide a specific schoolId in query (filter.schoolId),
+  // schoolIdForService will be undefined, allowing service to list from all schools (if service supports this).
+  // If root user *does* provide filter.schoolId, that specific school's grades are listed.
+  // The previous check `!schoolId && req.user.role === 'rootUser' && !req.query.schoolId` might be too restrictive
+  // if we want to allow root users to list ALL grades from ALL schools by omitting schoolId.
+  // The service layer will ultimately decide how to handle an undefined schoolId for a rootUser.
+  // For now, we ensure that if a schoolId is expected (non-root or root filtering by school), it's present.
+  if (req.user.role === 'rootUser' && filter.schoolId && !mongoose.Types.ObjectId.isValid(filter.schoolId)) {
+    // This check might be better in validation, but as a safeguard:
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Provided schoolId is invalid.');
   }
-  // If rootUser provides a branchId in filter, the service should ensure that branch belongs to the queried schoolId.
-  // Or, the service could allow rootUser to list all grades if schoolId is omitted (current service requires schoolId).
+  if (req.user.role === 'rootUser' && !filter.schoolId && req.query.schoolId){
+    // This case implies req.query.schoolId was present but not picked into filter if pick was modified,
+    // or if it was an empty string and got filtered out by Joi.
+    // Let's ensure schoolIdForService is correctly derived.
+    // The current `pick` includes 'schoolId', so if it was in req.query, it's in filter.schoolId.
+    // If req.query.schoolId was an empty string, Joi's .allow('', null) handles it, making filter.schoolId undefined.
+    // This is fine if root user wants to list from all schools.
+  }
 
-  const result = await gradeService.queryGrades(filter, options, schoolId, req.user.role); // Pass userRole
+
+  // If rootUser provides a branchId, the service should ensure that branch belongs to the queried schoolId (if any).
+  // For now, schoolIdForService correctly reflects the school context for the query.
+  const result = await gradeService.queryGrades(filter, options, schoolIdForService, req.user.role);
   res.send(result);
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert } from '@mui/material';
+import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -10,9 +10,16 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import GradeFormDialog from '../../components/grade/GradeFormDialog';
 import NotificationToast from '../../components/common/NotificationToast';
-import useAuthStore from '../../store/auth.store';
+import { TextField } from '@mui/material';
+import debounce from 'lodash.debounce';
 
-import gradeService from '../../services/gradeService'; // Assuming default export
+import gradeService from '../../services/gradeService';
+import useAuthStore from '../../store/auth.store';
+// Assuming branchApi.js exists and has getBranches method for the filter
+// import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
+
+// Placeholder for enums, should ideally be imported
+const USER_STATUS_ENUM = { ACTIVE: 'active', INACTIVE: 'inactive' }; // Not used for grades, but example
 
 const GradeManagementPage = () => {
   const [grades, setGrades] = useState([]);
@@ -33,11 +40,15 @@ const GradeManagementPage = () => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [totalGrades, setTotalGrades] = useState(0);
 
-  const { user } = useAuthStore(); // Get user info for schoolId etc.
-  // Assuming schoolId is directly on user object or user.school.id
-  // This needs to be robust based on your actual auth store structure.
+  const { user } = useAuthStore();
   const currentSchoolId = user?.schoolScope || user?.school?.id || user?.school;
 
+  // --- Search and Filter State ---
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(''); // For debounced fetching
+  const [filterBranch, setFilterBranch] = useState('');
+  const [availableBranches, setAvailableBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
 
   const showToast = (message, severity = 'success') => {
     setToastMessage(message);
@@ -45,32 +56,38 @@ const GradeManagementPage = () => {
     setToastOpen(true);
   };
 
-  const fetchGrades = useCallback(async (showLoading = true) => {
-    if (showLoading) setLoading(true);
+  const fetchGrades = useCallback(async (page, search, branch, limit) => {
+    setLoading(true);
     setError(null);
     try {
       const params = {
-        page: paginationModel.page + 1, // API is 1-indexed
-        limit: paginationModel.pageSize,
-        populate: 'branchId,nextGradeId', // Populate branch and nextGrade for display
+        page: page + 1,
+        limit: limit,
+        populate: 'branchId,nextGradeId',
       };
-      // If the user is rootUser, they might need to specify a school or see all.
-      // For admin/superadmin, the backend should scope by their school.
-      // If user is rootUser and no currentSchoolId context is set, they might see all grades.
-      // We can add a school filter here if needed for rootUser.
-      if (user?.role === 'rootUser' && currentSchoolId) {
-        params.schoolId = currentSchoolId; // Example: root user viewing grades for a selected school
-      }
+      if (search) params.search = search;
+      if (branch) params.branchId = branch;
 
+      if (user?.role === 'rootUser' && currentSchoolId) {
+        params.schoolId = currentSchoolId;
+      } else if (user?.role === 'rootUser' && !currentSchoolId) {
+        // For root user to list all grades, backend requires schoolId.
+        // This scenario should ideally be handled by UI (e.g., school selector for root user)
+        // or this page might not be accessible/functional for root without a school context.
+        // For now, if no schoolId for root, we might not fetch or show an error.
+        // showToast("School ID is required for root user to list grades.", "warning");
+        // return; // Or let backend handle validation
+      }
 
       const response = await gradeService.getGrades(params);
       if (response && Array.isArray(response.results)) {
         setGrades(response.results);
         setTotalGrades(response.totalResults || 0);
       } else {
+        console.error("Unexpected grades list response structure:", response);
         setGrades([]);
         setTotalGrades(0);
-        showToast('Failed to fetch grades: Unexpected response structure.', 'error');
+        showToast('Failed to fetch grades: Unexpected response.', 'error');
       }
     } catch (err) {
       const errorMessage = err.message || err.data?.message || 'Failed to fetch grades.';
@@ -79,13 +96,71 @@ const GradeManagementPage = () => {
       setGrades([]);
       setTotalGrades(0);
     } finally {
-      if (showLoading) setLoading(false);
+      setLoading(false);
     }
-  }, [paginationModel.page, paginationModel.pageSize, user?.role, currentSchoolId]);
+  }, [user?.role, currentSchoolId]); // Removed gradeService.getGrades as it's stable
 
   useEffect(() => {
-    fetchGrades();
-  }, [fetchGrades]);
+    setLoadingBranches(true);
+    const branchParams = { limit: 500, sortBy: 'name:asc' };
+    // If current user is admin/superadmin and scoped to a school, you might want to filter branches by their schoolId.
+    // if (currentSchoolId && user?.role !== 'rootUser') {
+    //   branchParams.schoolId = currentSchoolId; // Assuming branchApi.getBranches supports this
+    // }
+    const fetchBranchListForFilter = async () => {
+      try {
+        const { getBranches: fetchBranchesApi } = await import('../../services/branchApi.js');
+        const branchesResponse = await fetchBranchesApi(branchParams);
+        setAvailableBranches(branchesResponse.results || []);
+      } catch (e) {
+        showToast('Failed to load branches for filter.', 'error');
+        setAvailableBranches([]);
+      } finally {
+        setLoadingBranches(false);
+      }
+    };
+    fetchBranchListForFilter();
+  }, []); // Fetch branches once
+
+  // Effect for debouncing search term
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      if (searchTerm !== debouncedSearchTerm) { // Prevent initial unnecessary trigger if searchTerm is empty
+          setPaginationModel(prev => ({ ...prev, page: 0 }));
+          setDebouncedSearchTerm(searchTerm);
+      } else if (!searchTerm && debouncedSearchTerm) { // Handle clearing search
+          setPaginationModel(prev => ({ ...prev, page: 0 }));
+          setDebouncedSearchTerm('');
+      }
+    }, 500);
+    return () => clearTimeout(timerId);
+  }, [searchTerm]); // Intentionally not including debouncedSearchTerm here
+
+  // Main data fetching useEffect
+  useEffect(() => {
+    fetchGrades(paginationModel.page, debouncedSearchTerm, filterBranch, paginationModel.pageSize);
+  }, [
+    paginationModel.page,
+    paginationModel.pageSize,
+    debouncedSearchTerm, // Use the debounced version for fetching
+    filterBranch,
+    fetchGrades,
+  ]);
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value); // Update searchTerm immediately for input field
+  };
+
+  const handleBranchFilterChange = (event) => {
+    setFilterBranch(event.target.value);
+    setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page
+    // Main useEffect will pick up filterBranch change and refetch.
+  };
+
+  const handleRefresh = () => {
+    // Call fetchGrades with current states
+    fetchGrades(paginationModel.page, debouncedSearchTerm, filterBranch, paginationModel.pageSize);
+  };
 
   const handleAddGrade = () => {
     setEditingGrade(null);
@@ -108,12 +183,15 @@ const GradeManagementPage = () => {
     try {
       const params = {};
       if (user?.role === 'rootUser' && currentSchoolId) {
-        // For rootUser, ensure the delete operation is scoped if a school context is active
         params.schoolIdToScopeTo = currentSchoolId;
       }
       await gradeService.deleteGrade(gradeToDelete.id, params);
       showToast(`Grade "${gradeToDelete.title}" deleted successfully.`, 'success');
-      fetchGrades(false); // Refetch without full loading spinner
+      setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset to page 0
+      // Main useEffect will trigger refetch due to paginationModel change (if page actually changes)
+      // or call fetchGrades directly if preferred to ensure immediate update with current filters.
+      fetchGrades(0, debouncedSearchTerm, filterBranch, paginationModel.pageSize);
+
     } catch (err) {
       showToast(err.message || err.data?.message || "Failed to delete grade.", 'error');
     } finally {
@@ -127,12 +205,11 @@ const GradeManagementPage = () => {
     try {
       let payload = { ...values };
       if (user?.role === 'rootUser' && currentSchoolId && !isEditingMode) {
-        payload.schoolIdForGrade = currentSchoolId; // For root user creating grade in a specific school context
+        payload.schoolIdForGrade = currentSchoolId;
       }
       if (user?.role === 'rootUser' && currentSchoolId && isEditingMode) {
-        payload.schoolIdToScopeTo = currentSchoolId; // For root user editing grade in a specific school context
+        payload.schoolIdToScopeTo = currentSchoolId;
       }
-
 
       if (isEditingMode) {
         await gradeService.updateGrade(gradeId, payload);
@@ -142,7 +219,8 @@ const GradeManagementPage = () => {
         showToast('Grade created successfully!', 'success');
       }
       setIsGradeFormOpen(false);
-      fetchGrades(false); // Refetch without full loading spinner
+      setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset to page 0
+      fetchGrades(0, debouncedSearchTerm, filterBranch, paginationModel.pageSize);
       return true;
     } catch (apiError) {
       showToast(apiError.message || apiError.data?.message || `Failed to ${isEditingMode ? 'update' : 'create'} grade.`, 'error');
@@ -153,15 +231,11 @@ const GradeManagementPage = () => {
   const handleGradeFormClose = (submittedSuccessfully) => {
     setIsGradeFormOpen(false);
     setEditingGrade(null);
-    // If not submitted successfully, or if you always want to ensure data is fresh:
-    // if (!submittedSuccessfully) fetchGrades(false);
   };
 
   const handlePaginationModelChange = (newModel) => {
     setPaginationModel(newModel);
-    // fetchGrades will be called by useEffect due to paginationModel change
   };
-
 
   const columns = [
     { field: 'title', headerName: 'Grade Title', flex: 1, minWidth: 180 },
@@ -171,11 +245,7 @@ const GradeManagementPage = () => {
       headerName: 'Branch/Campus',
       flex: 1,
       minWidth: 180,
-      // Using renderCell for more explicit control, though valueGetter should also work.
-      renderCell: (params) => {
-        const branchName = params?.row?.branchId?.name;
-        return branchName || 'N/A';
-      }
+      renderCell: (params) => params?.row?.branchId?.name || 'N/A',
     },
     {
       field: 'sections',
@@ -193,11 +263,7 @@ const GradeManagementPage = () => {
       headerName: 'Next Grade',
       flex: 1,
       minWidth: 180,
-      // Using renderCell for consistency, can also use valueGetter
-      renderCell: (params) => {
-        const nextGradeTitle = params?.row?.nextGradeId?.title;
-        return nextGradeTitle || 'N/A';
-      }
+      renderCell: (params) => params?.row?.nextGradeId?.title || 'N/A',
     },
     {
       field: 'actions',
@@ -222,7 +288,7 @@ const GradeManagementPage = () => {
     },
   ];
 
-  if (loading && grades.length === 0) {
+  if (loading && grades.length === 0 && !searchTerm && !filterBranch ) { // Adjusted condition
     return <LoadingSpinner fullScreen message="Loading grades..." />;
   }
 
@@ -234,7 +300,7 @@ const GradeManagementPage = () => {
         </Typography>
         <Box>
             <Tooltip title="Refresh Grades">
-                <IconButton onClick={() => fetchGrades(true)} sx={{ mr: 1 }}>
+                <IconButton onClick={handleRefresh} sx={{ mr: 1 }}>
                     <RefreshIcon />
                 </IconButton>
             </Tooltip>
@@ -248,6 +314,42 @@ const GradeManagementPage = () => {
         </Box>
       </Box>
 
+      <Box sx={{ mb: 3, p: 2, border: '1px solid #eee', borderRadius: '4px' }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Search (Title, Level Code)"
+              variant="outlined"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small" variant="outlined" disabled={loadingBranches}>
+              <InputLabel>Filter by Branch</InputLabel>
+              <Select
+                value={filterBranch}
+                onChange={handleBranchFilterChange}
+                label="Filter by Branch"
+              >
+                <MenuItem value="">
+                  <em>All Branches</em>
+                </MenuItem>
+                {loadingBranches && <MenuItem value="" disabled><em>Loading branches...</em></MenuItem>}
+                {!loadingBranches && availableBranches.length === 0 && <MenuItem value="" disabled><em>No branches found</em></MenuItem>}
+                {availableBranches.map((branch) => (
+                  <MenuItem key={branch.id || branch._id} value={branch.id || branch._id}>
+                    {branch.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Box>
+
       {error && !loading && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
 
       <StyledDataGrid
@@ -256,12 +358,11 @@ const GradeManagementPage = () => {
         loading={loading}
         rowCount={totalGrades}
         paginationModel={paginationModel}
-        onPaginationModelChange={handlePaginationModelChange}
+        onPaginationModelChange={handlePaginationModelChange} // Changed to use the new handler
         paginationMode="server"
         getRowId={(row) => row.id}
-        autoHeight // Use autoHeight if content is not too long, or set minHeight
+        autoHeight
         minHeight={400}
-        // sx={{ p: 0 }} // Remove padding if Paper from StyledDataGrid has it
       />
 
       <GradeFormDialog
@@ -269,7 +370,7 @@ const GradeManagementPage = () => {
         onClose={handleGradeFormClose}
         grade={editingGrade}
         onSubmit={handleGradeFormSubmit}
-        currentSchoolId={user?.role === 'rootUser' ? currentSchoolId : undefined} // Pass school context for root users
+        currentSchoolId={user?.role === 'rootUser' ? currentSchoolId : undefined}
       />
 
       <ConfirmationDialog

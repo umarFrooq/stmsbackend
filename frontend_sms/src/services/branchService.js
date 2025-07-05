@@ -6,9 +6,9 @@ import apiClient from './api';
  * Example: { page: 1, limit: 10, sortBy: 'name:asc', search: 'Main', status: 'active', type: 'main', schoolId: '...' }
  * @returns {Promise<object>} A promise that resolves to the API response (expected to be paginated: { results: [], ... }).
  */
-export const getAllBranches = async (queryParams = {}) => {
+export const getBranches = async (queryParams = {}) => {
   try {
-    // apiClient is likely cousenfigured for /api/v1, so this calls GET /v1/branches
+    // apiClient is likely configured for /api/v1, so this calls GET /v1/branches
     // The backend now supports 'search', 'status', 'type', 'schoolId' etc.
     const response = await apiClient.get('/branches', { params: queryParams }); // Using /v1 implicitly from apiClient base URL
 
@@ -31,7 +31,7 @@ export const getAllBranches = async (queryParams = {}) => {
 // For now, focusing on the query function for the list page.
 
 export default {
-  getAllBranches, // Renamed from getAllBranches
+  getBranches, // Renamed from getAllBranches
   // Potentially export other functions here if they were defined e.g.
   // createBranch, updateBranch, deleteBranch, getBranchById
 };
