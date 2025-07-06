@@ -16,8 +16,9 @@ const schoolScopeMiddleware = (req, res, next) => {
   const schoolScopedRoles = [
     roles.find(r => r === 'superadmin'),
     roles.find(r => r === 'admin'), // Assuming 'admin' can also be school-scoped
-    roles.find(r => r === 'teacher')
-    // Add other roles like 'student', 'parent' if they are strictly tied to a school context from login
+    roles.find(r => r === 'teacher'),
+    roles.find(r => r === 'student') // Added student role
+    // Add other roles like 'parent' if they are strictly tied to a school context from login
   ].filter(Boolean); // Filter out undefined if a role string isn't found (should not happen if config is correct)
 
 
