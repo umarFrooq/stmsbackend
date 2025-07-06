@@ -13,7 +13,15 @@ const EditClassSchedulePage = () => {
   const { scheduleId } = useParams(); // Get scheduleId from URL
   const { user } = useAuthStore();
 
-  const schoolId = user?.schoolId;
+  // Ensure user and user.schoolId are available and schoolId is a string.
+  let schoolIdString = null;
+  if (user?.schoolId) {
+    if (typeof user.schoolId === 'object' && user.schoolId?.id) {
+      schoolIdString = user.schoolId.id;
+    } else if (typeof user.schoolId === 'string') {
+      schoolIdString = user.schoolId;
+    }
+  }
 
   const handleSave = () => {
     navigate('/admin/schedules'); // Navigate back to the list after save
@@ -27,11 +35,14 @@ const EditClassSchedulePage = () => {
       return <LoadingSpinner fullScreen />;
   }
 
-  if (!schoolId && user && user.role !== 'rootUser') {
-    return (
-      <Container>
-        <Typography color="error">
-          School information is missing for your account. Cannot edit schedules.
+  if (!schoolIdString && user && user.role !== 'rootUser' && user.role !== 'superadmin') {
+     return (
+      <Container sx={{mt: 2}}>
+        <Typography color="error" paragraph>
+          School information is missing or in an incorrect format for your admin account. Cannot edit schedules.
+        </Typography>
+        <Typography variant="body2">
+            Please ensure your user profile is correctly associated with a school. (Expected string ID, got: {JSON.stringify(user?.schoolId)})
         </Typography>
       </Container>
     );
@@ -57,7 +68,7 @@ const EditClassSchedulePage = () => {
       </Box>
       <ClassScheduleForm
         scheduleId={scheduleId}
-        schoolIdFromAdmin={schoolId}
+        schoolIdFromAdmin={schoolIdString}
         onSave={handleSave}
         onCancel={handleCancel}
       />

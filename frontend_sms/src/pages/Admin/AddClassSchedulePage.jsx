@@ -12,9 +12,15 @@ const AddClassSchedulePage = () => {
   const { user } = useAuthStore(); // Get admin user to pass their schoolId
 
   // Admins are scoped to their school. schoolId is needed by the form.
-  // Ensure user and user.schoolId are available.
-  // If not, display an error or loading state.
-  const schoolId = user?.schoolId;
+  // Ensure user and user.schoolId are available and schoolId is a string.
+  let schoolIdString = null;
+  if (user?.schoolId) {
+    if (typeof user.schoolId === 'object' && user.schoolId?.id) {
+      schoolIdString = user.schoolId.id; // If schoolId is an object like { id: '...', name: '...' }
+    } else if (typeof user.schoolId === 'string') {
+      schoolIdString = user.schoolId; // If schoolId is already a string
+    }
+  }
 
   const handleSave = () => {
     navigate('/admin/schedules'); // Navigate back to the list after save
@@ -24,17 +30,23 @@ const AddClassSchedulePage = () => {
     navigate('/admin/schedules'); // Navigate back to the list
   };
 
-  if (!schoolId && user && user.role !== 'rootUser') { // rootUser might not have a direct schoolId
+  if (!schoolIdString && user && user.role !== 'rootUser' && user.role !== 'superadmin') {
+    // Allow superadmin/rootUser to potentially proceed if school selection is handled differently later,
+    // but for 'admin', schoolId is critical.
     return (
-      <Container>
-        <Typography color="error">
-          School information is missing for your account. Cannot add schedules.
+      <Container sx={{mt: 2}}>
+        <Typography color="error" paragraph>
+          School information is missing or in an incorrect format for your admin account. Cannot add schedules.
+        </Typography>
+        <Typography variant="body2">
+          Please ensure your user profile is correctly associated with a school. (Expected string ID, got: {JSON.stringify(user?.schoolId)})
         </Typography>
       </Container>
     );
   }
-  // For rootUser, the form would need a school selector, which is not yet implemented in ClassScheduleForm.
-  // This page is primarily for 'admin' role.
+  // For rootUser/superadmin without a direct schoolId, the ClassScheduleForm would ideally have a school selector.
+  // For now, if schoolIdString is null for these roles, they might not be able to use this specific page effectively
+  // until the form is enhanced. This page is primarily for the 'admin' (school-scoped) role.
 
   return (
     <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
@@ -47,7 +59,7 @@ const AddClassSchedulePage = () => {
         </Typography>
       </Box>
       <ClassScheduleForm
-        schoolIdFromAdmin={schoolId}
+        schoolIdFromAdmin={schoolIdString}
         onSave={handleSave}
         onCancel={handleCancel}
       />
