@@ -86,32 +86,46 @@ const AttendanceLogPage = () => {
   // Fetch data for filter dropdowns
   const fetchFilterData = useCallback(async () => {
     setLoadingFilters(prev => ({ ...prev, students: true, teachers: true, grades: true }));
+
+    let schoolIdForFilter = null;
+    if (user && user.role !== 'rootUser' && user.role !== 'superadmin' && user.schoolId) {
+      if (typeof user.schoolId === 'object' && user.schoolId.id) {
+        schoolIdForFilter = user.schoolId.id;
+      } else if (typeof user.schoolId === 'string') {
+        schoolIdForFilter = user.schoolId;
+      }
+    }
+
     try {
       // Fetch Students
-      const studentParams = { role: 'student', limit: 1000,  };
-      // TODO: Add schoolId or branchId to params if current user is not root and API requires it for scoping
+      const studentParams = { role: 'student', limit: 1000 };
+      if (schoolIdForFilter) studentParams.schoolId = schoolIdForFilter;
       const studentRes = await userService.getAllUsers(studentParams);
       setStudents(studentRes?.data?.results || []);
 
       // Fetch Teachers
-      const teacherParams = { role: 'teacher', limit: 1000, };
-      // TODO: Add schoolId or branchId to params
+      const teacherParams = { role: 'teacher', limit: 1000 };
+      if (schoolIdForFilter) teacherParams.schoolId = schoolIdForFilter;
       const teacherRes = await userService.getAllUsers(teacherParams);
       setTeachers(teacherRes?.data?.results || []);
 
       // Fetch Grades
       const gradeParams = { limit: 1000, sortBy: 'title:asc' };
-      // TODO: Add schoolId or branchId to params
+      if (schoolIdForFilter) gradeParams.schoolId = schoolIdForFilter;
       const gradeRes = await gradeService.getGrades(gradeParams);
       setGrades(gradeRes?.results || []);
 
     } catch (err) {
       showToast('Error loading filter options: ' + (err.message || 'Unknown error'), 'error');
       console.error("Error fetching filter data:", err);
+      // Ensure lists are empty on error so UI doesn't break with old/partial data
+      setStudents([]);
+      setTeachers([]);
+      setGrades([]);
     } finally {
       setLoadingFilters(prev => ({ ...prev, students: false, teachers: false, grades: false }));
     }
-  }, []);
+  }, [user, showToast]); // Added user and showToast (memoized) to dependencies
 
   useEffect(() => {
     fetchFilterData();
