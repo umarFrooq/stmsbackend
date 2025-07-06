@@ -57,18 +57,36 @@ const markBulkAttendanceHandler = catchAsync(async (req, res) => {
 });
 
 const getAttendancesHandler = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['studentId', 'subjectId', 'gradeId', 'section', 'branchId', 'date', 'status', 'markedBy', 'startDate', 'endDate']);
+  let filter = pick(req.query, ['studentId', 'subjectId', 'gradeId', 'section', 'branchId', 'date', 'status', 'markedBy', 'startDate', 'endDate']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']);
   const schoolId = req.user.role === 'rootUser' ? req.query.schoolId : req.schoolId;
 
   if (!schoolId && req.user.role !== 'rootUser') {
     throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required.');
   }
-  if (!schoolId && req.user.role === 'rootUser' && !req.query.schoolId){
-     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID must be provided in query for root users to list attendance.');
+  if (!schoolId && req.user.role === 'rootUser' && !req.query.schoolId && !filter.studentId){ // Allow root user to query by studentId without schoolId if studentId is provided
+     throw new ApiError(httpStatus.BAD_REQUEST, 'School ID must be provided in query for root users to list attendance if not filtering by a specific student.');
   }
 
-  const result = await attendanceService.queryAttendances(filter, options, schoolId);
+  // If the user is a student, force the studentId filter to their own ID
+  if (req.user.role === 'student') {
+    if (filter.studentId && filter.studentId !== req.user.id) {
+      // If a student tries to query for another student's ID, return forbidden
+      throw new ApiError(httpStatus.FORBIDDEN, 'Students can only view their own attendance.');
+    }
+    filter.studentId = req.user.id;
+    // Also ensure they are querying within their school context
+    if (req.schoolId && schoolId !== req.schoolId.toString()){
+        throw new ApiError(httpStatus.FORBIDDEN, 'Students can only view attendance for their own school.');
+    }
+     filter.schoolId = req.schoolId; // Ensure student queries are scoped to their school
+  } else if (req.user.role !== 'rootUser' && !schoolId) {
+    // For non-root, non-student users, schoolId is mandatory from middleware
+     throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required for this role.');
+  }
+
+
+  const result = await attendanceService.queryAttendances(filter, options, schoolId); // schoolId here is for context, actual filtering by schoolId is in service
   res.send(result);
 });
 

@@ -7,6 +7,7 @@ import LoginPage from '../pages/Auth/LoginPage.jsx'; // Ensured .jsx
 import DashboardLayout from '../components/layout/DashboardLayout.jsx'; // Ensured .jsx
 import HomePage from '../pages/HomePage.jsx'; // Ensured .jsx
 import StudentDashboardPage from '../pages/Student/StudentDashboardPage.jsx'; // Ensured .jsx
+import MyAttendancePage from '../pages/Student/MyAttendancePage.jsx'; // Added for student attendance
 
 // Teacher Pages
 import TeacherDashboardPage from '../pages/Teacher/TeacherDashboardPage';
@@ -193,6 +194,14 @@ const AppRouter = () => {
           >
             <Route index element={<StudentDashboardPage />} />
             {/* <Route path="grades" element={<StudentGradesPage />} /> */}
+            <Route
+              path="my-attendance"
+              element={
+                <ProtectedRoute roles={['student']} permission="viewAttendances">
+                  <MyAttendancePage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           {/* Parent Routes */}

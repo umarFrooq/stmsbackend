@@ -28,7 +28,7 @@ const StudentDashboardPage = () => {
             title="My Attendance"
             value="View Records" // Or display "95% Present"
             icon={<EventAvailableIcon fontSize="large" color="secondary" />}
-            linkTo="/student/attendance" // Define this route later
+            linkTo="/student/my-attendance" // Updated route
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
