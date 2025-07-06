@@ -236,7 +236,12 @@ const AttendanceLogPage = () => {
       headerName: 'Subject',
       flex: 1,
       minWidth: 150,
-      valueGetter: (params) => params.row.subjectId?.title || params.row.subjectId?.name || 'N/A'
+      valueGetter: (params) => {
+        if (!params || !params.row) {
+          return 'N/A';
+        }
+        return params.row.subjectId?.title || params.row.subjectId?.name || 'N/A';
+      }
     },
     {
       field: 'gradeName',
