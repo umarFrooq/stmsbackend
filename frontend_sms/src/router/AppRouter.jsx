@@ -19,10 +19,15 @@ import AdminDashboardPage from '../pages/Admin/AdminDashboardPage';
 import AdminUserManagementPage from '../pages/Admin/UserManagementPage';
 import StudentEnrollmentPageAdmin from '../pages/Admin/StudentEnrollmentPage';
 import SubjectManagementPageAdmin from '../pages/Admin/SubjectManagementPage';
-import ClassSchedulingPageAdmin from '../pages/Admin/ClassSchedulingPage';
+// import ClassSchedulingPageAdmin from '../pages/Admin/ClassSchedulingPage'; // Original, to be replaced or complemented
 import AttendanceOversightPageAdmin from '../pages/Admin/AttendanceOversightPage';
 import GradeOversightPageAdmin from '../pages/Admin/GradeOversightPage';
-import GradeManagementPage from '../pages/Admin/GradeManagementPage.jsx'; // Added for Grade Management
+import GradeManagementPage from '../pages/Admin/GradeManagementPage.jsx';
+
+// New Class Schedule Management Pages for Admin
+import ClassScheduleManagementPage from '../pages/Admin/ClassScheduleManagementPage.jsx';
+import AddClassSchedulePage from '../pages/Admin/AddClassSchedulePage.jsx';
+import EditClassSchedulePage from '../pages/Admin/EditClassSchedulePage.jsx';
 
 
 // Super Admin Pages
@@ -149,7 +154,22 @@ const AppRouter = () => {
             <Route path="users" element={<AdminUserManagementPage />} />
             <Route path="enrollment" element={<StudentEnrollmentPageAdmin />} />
             <Route path="subjects" element={<SubjectManagementPageAdmin />} />
-            <Route path="scheduling" element={<ClassSchedulingPageAdmin />} />
+            {/* <Route path="scheduling" element={<ClassSchedulingPageAdmin />} /> Replaced by new schedule routes */}
+            <Route path="schedules" element={
+              <ProtectedRoute roles={['admin', 'superadmin']} permission="viewClassSchedules">
+                <ClassScheduleManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="schedules/new" element={
+              <ProtectedRoute roles={['admin', 'superadmin']} permission="manageClassSchedules">
+                <AddClassSchedulePage />
+              </ProtectedRoute>
+            } />
+            <Route path="schedules/edit/:scheduleId" element={
+              <ProtectedRoute roles={['admin', 'superadmin']} permission="manageClassSchedules">
+                <EditClassSchedulePage />
+              </ProtectedRoute>
+            } />
             <Route path="attendance-oversight" element={<AttendanceOversightPageAdmin />} />
             <Route path="grade-oversight" element={<GradeOversightPageAdmin />} />
             <Route path="grades" element={<GradeManagementPage />} /> {/* Added Grade Management for Admin */}
