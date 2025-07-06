@@ -12,8 +12,10 @@ const createSubjectHandler = catchAsync(async (req, res) => {
 const getSubjectsHandler = catchAsync(async (req, res) => {
   console.log('Backend subject.controller.js - getSubjectsHandler - req.user:', JSON.stringify(req.user, null, 2));
   console.log('Backend subject.controller.js - getSubjectsHandler - req.user.schoolId:', req.user && req.user.schoolId);
+  console.log('Backend subject.controller.js - getSubjectsHandler - req.query:', JSON.stringify(req.query, null, 2));
 
   const filter = pick(req.query, ['title', 'subjectCode', 'branchId', 'defaultTeacher', 'gradeId', 'creditHours']);
+  console.log('Backend subject.controller.js - getSubjectsHandler - constructed filter:', JSON.stringify(filter, null, 2));
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
 
   // Ensure req.user and req.user.schoolId are available before proceeding

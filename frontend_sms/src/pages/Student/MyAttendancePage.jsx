@@ -24,44 +24,55 @@ const MyAttendancePage = () => {
   const [error, setError] = useState('');
   const { user } = useAuthStore();
 
-  console.log("MyAttendancePage - user object from store:", user); // Added for debugging
+  console.log("MyAttendancePage - user object from store (for school and gradeId check):", user);
+  if (user) {
+    console.log("MyAttendancePage - user.school:", user.school);
+    console.log("MyAttendancePage - user.gradeId:", user.gradeId);
+  }
+
 
   const attendanceStatuses = ["present", "absent", "leave", "sick_leave", "half_day_leave"];
 
   const fetchStudentSubjects = useCallback(async () => {
-    console.log("MyAttendancePage - fetchStudentSubjects - user object:", user); // Added for debugging
+    console.log("MyAttendancePage - fetchStudentSubjects - user object (checking school and gradeId):", user);
     if (!user || !user.id) {
-        // This case should ideally not happen if user is on this page, means auth issue
         setError('User information is missing. Cannot load subjects.');
         console.warn('User object or user ID is missing for subject fetching. User:', user);
         setSubjects([]);
         return;
     }
-    if (!user.school) {
-        setError('User school information is not available. Subjects cannot be loaded. Please ensure your profile is complete or try logging out and back in.');
-        console.warn('User school information (user.school) is missing for subject fetching. User:', user);
-        setSubjects([]); // Set to empty if school info is missing
+    if (!user.school || !user.gradeId) {
+        let missingInfo = [];
+        if (!user.school) missingInfo.push("school information");
+        if (!user.gradeId) missingInfo.push("grade information");
+        const errorMessage = `User ${missingInfo.join(' and ')} is not available. Subjects cannot be loaded. Please ensure your profile is complete or try logging out and back in.`;
+        setError(errorMessage);
+        console.warn(`User information missing for subject fetching: ${missingInfo.join(', ')}. User:`, user);
+        setSubjects([]);
         return;
     }
+
     setError(''); // Clear previous errors before new fetch
+    setLoading(true); // Show loading indicator for subject fetching as well
+
     try {
-      // Assuming subjectService.getSubjects can be filtered by schoolId if applicable
-      // or it fetches subjects relevant to the user's context (e.g., their enrolled school)
-      // Adjust if student's subjects are fetched differently (e.g., by grade or direct enrollment list)
+      console.log(`Fetching subjects for school: ${user.school}, grade: ${user.gradeId}`);
       const response = await subjectService.getSubjects({
           schoolId: user.school,
-          // Potentially add other filters like gradeId if available on user object and relevant for subjects
-          // gradeId: user.gradeId
+          gradeId: user.gradeId
       });
       setSubjects(response.results || []);
       if (!response.results || response.results.length === 0) {
-        console.warn("No subjects found for school:", user.school);
-        // setError("No subjects found for your school."); // Optional: inform user if no subjects are configured
+        console.warn(`No subjects found for school: ${user.school}, grade: ${user.gradeId}`);
+        // Optionally, set a soft error or message indicating no subjects found for this criteria
+        // setError(`No subjects found for your school and grade.`);
       }
     } catch (err) {
       console.error('Error fetching subjects:', err);
       setError(`Failed to load subjects: ${err.message || 'Unknown error'}`);
       setSubjects([]);
+    } finally {
+      setLoading(false);
     }
   }, [user]);
 
