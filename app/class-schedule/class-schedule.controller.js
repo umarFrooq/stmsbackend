@@ -3,7 +3,6 @@ const pick = require('../../utils/pick');
 const ApiError = require('../../utils/ApiError');
 const catchAsync = require('../../utils/catchAsync');
 const { classScheduleService } = require('./index'); // Assuming service is exported via index.js
-const { successResponse } = require('../../utils/responseWrapper'); // Assuming a response wrapper
 
 const createClassScheduleHandler = catchAsync(async (req, res) => {
   // schoolId should be available from schoolScopeMiddleware or req.user for root users
@@ -19,7 +18,8 @@ const createClassScheduleHandler = catchAsync(async (req, res) => {
   const scheduleBodyWithSchool = { ...req.body, schoolId: req.body.schoolId || schoolId };
 
   const schedule = await classScheduleService.createClassSchedule(scheduleBodyWithSchool, req.user.id);
-  res.status(httpStatus.CREATED).send(successResponse(schedule, 'Class Schedule created successfully'));
+  // res.status(httpStatus.CREATED).send(schedule);
+  res.status(httpStatus.CREATED).send({ success: true, data: schedule, message: 'Class Schedule created successfully' });
 });
 
 const getClassSchedulesHandler = catchAsync(async (req, res) => {
@@ -55,7 +55,8 @@ const getClassSchedulesHandler = catchAsync(async (req, res) => {
 
 
   const result = await classScheduleService.queryClassSchedules(filter, options);
-  res.send(successResponse(result));
+  // res.send(result); // Paginate plugin returns the full object with results, totalResults, etc.
+  res.status(httpStatus.OK).send({ success: true, data: result });
 });
 
 const getClassScheduleHandler = catchAsync(async (req, res) => {
@@ -69,7 +70,8 @@ const getClassScheduleHandler = catchAsync(async (req, res) => {
   const populateOptions = req.query.populate;
   const schedule = await classScheduleService.getClassScheduleById(req.params.scheduleId, schoolIdForScope, populateOptions);
   // Service throws 404 if not found or not in scope (if schoolIdForScope was provided)
-  res.send(successResponse(schedule));
+  // res.send(schedule);
+  res.status(httpStatus.OK).send({ success: true, data: schedule });
 });
 
 const updateClassScheduleHandler = catchAsync(async (req, res) => {
@@ -83,7 +85,8 @@ const updateClassScheduleHandler = catchAsync(async (req, res) => {
   // The service handles preventing schoolId field changes directly.
 
   const schedule = await classScheduleService.updateClassScheduleById(req.params.scheduleId, req.body, req.user.id, schoolIdForScope);
-  res.send(successResponse(schedule, 'Class Schedule updated successfully'));
+  // res.send(schedule);
+  res.status(httpStatus.OK).send({ success: true, data: schedule, message: 'Class Schedule updated successfully' });
 });
 
 const deleteClassScheduleHandler = catchAsync(async (req, res) => {
@@ -95,7 +98,8 @@ const deleteClassScheduleHandler = catchAsync(async (req, res) => {
   }
 
   await classScheduleService.deleteClassScheduleById(req.params.scheduleId, schoolIdForScope);
-  res.status(httpStatus.OK).send(successResponse(null, 'Class Schedule deleted successfully', httpStatus.OK)); // Or NO_CONTENT
+  // res.status(httpStatus.NO_CONTENT).send();
+  res.status(httpStatus.OK).send({ success: true, data: null, message: 'Class Schedule deleted successfully' });
 });
 
 module.exports = {
