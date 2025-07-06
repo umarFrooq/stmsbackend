@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Grid, TextField, Select, MenuItem, FormControl, InputLabel, Button, CircularProgress, Alert, TableContainer, Table, TableHead, TableRow, TableCell, TableBody
 } from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3'; // Corrected adapter import
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; // Standard import path
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format } from 'date-fns'; // For formatting dates
