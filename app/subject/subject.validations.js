@@ -23,6 +23,7 @@ const getSubjects = {
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+    schoolId:Joi.string().custom(objectId),
   }),
 };
 

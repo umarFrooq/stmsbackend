@@ -20,6 +20,7 @@ const getGrades = {
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
     populate: Joi.string(), // e.g., "nextGradeId,branchId"
+    schoolId:Joi.string().custom(objectId),
   }),
 };
 

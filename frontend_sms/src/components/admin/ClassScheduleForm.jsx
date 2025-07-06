@@ -98,7 +98,7 @@ const ClassScheduleForm = ({ scheduleId, schoolIdFromAdmin, onSave, onCancel }) 
       setSubjects(subjectRes.results || []);
 
       // Fetch Teachers for the admin's school
-      const teacherParams = { schoolId: schoolIdFromAdmin, role: 'teacher', limit: 500, sortBy: 'fullname:asc' };
+      const teacherParams = { schoolId: schoolIdFromAdmin, role: 'teacher', limit: 500,  };
       const teacherRes = await userService.getAllUsers(teacherParams); // Assuming getAllUsers returns { data: { results: [] } }
       setTeachers(teacherRes.data?.results || []);
 
