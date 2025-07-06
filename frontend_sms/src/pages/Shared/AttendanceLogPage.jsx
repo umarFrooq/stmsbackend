@@ -229,14 +229,14 @@ const AttendanceLogPage = () => {
       headerName: 'Student',
       flex: 1,
       minWidth: 150,
-      valueGetter: (params) => params.row.studentId?.fullname || params.row.studentId?.name || 'N/A'
+      renderCell: (params) => params.row.studentId?.fullname || params.row.studentId?.name || 'N/A'
     },
     {
       field: 'subjectName',
       headerName: 'Subject',
       flex: 1,
       minWidth: 150,
-      valueGetter: (params) => {
+      renderCell: (params) => {
         if (typeof params === 'undefined') {
           console.error('AttendanceLogPage subjectName valueGetter: params is undefined');
           return 'N/A (p_undef)';
@@ -275,7 +275,7 @@ const AttendanceLogPage = () => {
       field: 'gradeName',
       headerName: 'Grade',
       width: 120,
-      valueGetter: (params) => params.row.gradeId?.title || params.row.gradeId?.name || 'N/A'
+      renderCell: (params) => params.row.gradeId?.title || params.row.gradeId?.name || 'N/A'
     },
     { field: 'section', headerName: 'Section', width: 100 },
     {
@@ -301,7 +301,7 @@ const AttendanceLogPage = () => {
       headerName: 'Marked By',
       flex: 1,
       minWidth: 150,
-      valueGetter: (params) => params.row.markedBy?.fullname || params.row.markedBy?.name || 'N/A'
+      renderCell: (params) => params.row.markedBy?.fullname || params.row.markedBy?.name || 'N/A'
     },
     { field: 'remarks', headerName: 'Remarks', flex: 1, minWidth: 150 },
   ];
