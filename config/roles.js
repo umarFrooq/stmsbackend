@@ -21,31 +21,34 @@ roleRights.set(roles[1], [ // teacher
   "manageFirebase", "manageWallet", "refund", "manageRefund", "manageVoucher", "manageGroupBuy", "manageLogs", "print", "manageSiteMap", "adminOrder", "manageAllProducts",
   "pushNotification","manageDeals",  "pushNotification", "getOrderTransaction", "updateSlug", "manageCollections","manageBulkOp","manageSeller","manageDashboard","manageGA","manageTranslation",
   "manageStore","manageReport","productImport","manageSetting","socialToken","managePromotion","manageVector","manageCurrency","manageToken","manageFeedSync","manageVideoUpload", "videoCount","manageRevenue","manageStatus",  "apiKey",
-  "manageTransaction","attendanceManagement", "viewAttendances", "testManagement","testResultManagement","subject", "viewGrades"
+  "manageTransaction","attendanceManagement", "viewAttendances", "testManagement","testResultManagement","subject", "viewGrades",
+  "viewOwnClassSchedule" // Teacher can view their own schedule
 ]);
 
-roleRights.set(roles[2], [ // admin
+roleRights.set(roles[2], [ // admin (School Admin)
   "reportgeneration", "manageProfile", 'manageProducts', 'manageAddress', "createShippment", "viewPhone", "manageStats",
   "manageOrders", "getOrders", "manageSellerDetail", "subjectManagement", "manageVideo", "manageSellerConfidentialDetail", "print", "notification",
   "firebaseToken", "changePassword", "csvUpload", "manageRefund", "refund", "userManageAddress",  "pushNotification","manageAnswer", "manageSeller", "manageDashboard", "manageTranslation", "manageStatus",
   "manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting","getUsers",
-  "gradeManagement", "viewGrades", "attendanceManagement", "viewAttendances", "testManagement","testResultManagement","manageUser","manageUsers","subject", "viewBranches"
+  "gradeManagement", "viewGrades", "attendanceManagement", "viewAttendances", "testManagement","testResultManagement","manageUser","manageUsers","subject", "viewBranches",
+  "manageClassSchedules", "viewClassSchedules" // School admin can manage and view all schedules in their school
 ]);
 
-roleRights.set(roles[3], [ // superadmin (school-level admin)
+roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple schools if system designed for it, or top-level school admin)
   // Profile & Basic School Details
   "manageProfile",
-  "manageOwnSchoolDetails", // General config for their own school
-  // User Management within their school
-  "manageSchoolUsers", // Covers creating/updating/deleting teachers, students, staff within their school
-  "viewSchoolUsers",   // Covers listing users within their school
-  // Branch Management (within their school)
+  "manageOwnSchoolDetails", // General config for their own school (if superadmin is tied to one school) or manages all schools
+  // User Management within their school(s)
+  "manageSchoolUsers", // Covers creating/updating/deleting teachers, students, staff within their school(s)
+  "viewSchoolUsers",   // Covers listing users within their school(s)
+  // Branch Management (within their school(s))
   "manageBranches",
   "viewBranches",
   // Academic Configuration
   "manageGrades", "viewGrades",
-  "manageSubjects", "viewSubjects", // Assuming subjectManagement covers this
-  "manageTimetables", "viewTimetables",
+  "manageSubjects", "viewSubjects",
+  // "manageTimetables", "viewTimetables", // Replaced by ClassSchedules
+  "manageClassSchedules", "viewClassSchedules", // Superadmin can manage schedules
   // Academic Operations
   "manageAttendances", "viewAttendances",
   "manageTests", "viewTests",

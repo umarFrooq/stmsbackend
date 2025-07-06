@@ -1,80 +1,77 @@
 import apiClient from './api';
 
-const API_BASE_URL = '/class-schedules'; // Example base URL, adjust as per actual API
+const API_BASE_URL = '/class-schedules'; // Base URL for class schedules API
 
 /**
- * Fetches the details of a specific class schedule/session by its ID.
- * This should return an object containing subjectId, gradeId, section, branchId, schoolId,
- * and display names like subjectName, gradeName.
+ * Fetches the details of a specific class schedule by its ID.
+ * Expected to return an object containing subjectId, gradeId, section, branchId, schoolId,
+ * and potentially populated names like subjectName, gradeName if requested via populate.
  *
- * @param {string} classId - The ID of the class schedule/session.
+ * @param {string} scheduleId - The ID of the class schedule.
+ * @param {string} [populate] - Optional comma-separated string of fields to populate (e.g., "subjectId,gradeId,teacherId").
  * @returns {Promise<object>} The class schedule details.
  */
-const getClassScheduleById = async (classId) => {
-  if (!classId) {
-    throw new Error('Class ID is required to fetch schedule details.');
+const getClassScheduleById = async (scheduleId, populate = '') => {
+  if (!scheduleId) {
+    throw new Error('Class Schedule ID is required to fetch schedule details.');
   }
   try {
-    // TODO: Replace this with an actual API call to your backend
-    // Example: const response = await apiClient.get(`${API_BASE_URL}/${classId}`);
-    // return response.data;
-
-    // **** START OF CRITICAL PLACEHOLDER / SIMULATION ****
-    // This is a placeholder. In a real application, this function MUST call a backend API
-    // that resolves the classId into its constituent parts (subjectId, gradeId, section, branchId, schoolId)
-    // and any necessary display names.
-    console.warn(`classScheduleService.getClassScheduleById is using placeholder data for classId: ${classId}. Replace with a real API call.`);
-    await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
-
-    // Based on common `classId` values used in mocks or tests, return some plausible (but still mock) data.
-    // THIS MOCK LOGIC NEEDS TO BE REMOVED ENTIRELY WHEN THE REAL API IS READY.
-    if (classId === 'class1') {
-      return {
-        id: classId,
-        subjectId: 'subj1', // Example: Mathematics
-        gradeId: 'grade2',   // Example: Grade 2
-        section: 'A',
-        branchId: 'branch1', // Example: Main Campus
-        schoolId: 'school1', // Example: Sunnyvale High
-        subjectName: 'Mathematics',
-        gradeName: 'Grade 2',
-      };
-    } else if (classId === 'class2') {
-      return {
-        id: classId,
-        subjectId: 'subj2', // Example: English
-        gradeId: 'grade1',   // Example: Grade 1
-        section: 'B',
-        branchId: 'branch1',
-        schoolId: 'school1',
-        subjectName: 'English',
-        gradeName: 'Grade 1',
-      };
-    } else {
-      // Fallback mock for any other classId - this will likely cause issues if not matched
-      // or if the backend doesn't actually have these IDs.
-      return {
-        id: classId,
-        subjectId: `mockSubjectId_for_${classId}`,
-        gradeId: `mockGradeId_for_${classId}`,
-        section: 'X',
-        branchId: `mockBranchId_for_${classId}`,
-        schoolId: `mockSchoolId_for_${classId}`,
-        subjectName: `Mock Subject for ${classId}`,
-        gradeName: `Mock Grade for ${classId}`,
-      };
+    const params = {};
+    if (populate) {
+      params.populate = populate;
     }
-    // **** END OF CRITICAL PLACEHOLDER / SIMULATION ****
-
+    const response = await apiClient.get(`${API_BASE_URL}/${scheduleId}`, { params });
+    // Assuming the backend returns data in a structure like { success: true, data: {...}, message: "..." }
+    // And the actual schedule object is in response.data.data
+    if (response.data && response.data.success) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch class schedule details due to server response.');
+    }
   } catch (error) {
-    console.error(`Error fetching class schedule details for ID ${classId}:`, error.response?.data || error.message);
-    // Rethrow a more generic error or the specific API error
-    throw error.response?.data || new Error(`Failed to fetch class schedule details for ID ${classId}.`);
+    const errMsg = error.response?.data?.message || error.message || `Failed to fetch class schedule details for ID ${scheduleId}.`;
+    console.error(`Error fetching class schedule details for ID ${scheduleId}:`, errMsg);
+    throw new Error(errMsg);
   }
 };
 
+/**
+ * Fetches class schedules for the currently authenticated teacher.
+ * Uses the '/my-classes' endpoint.
+ * @param {object} params - Optional query parameters (e.g., for pagination, filtering by day).
+ *                          `populate` is useful here: e.g. { populate: 'subjectId,gradeId,branchId,schoolId' }
+ * @returns {Promise<object>} Paginated list of class schedules for the teacher.
+ *                            Expected format from backend: { results: [], totalResults, totalPages, page, limit }
+ */
+const getTeacherClassSchedules = async (params = {}) => {
+  try {
+    const response = await apiClient.get(`${API_BASE_URL}/my-classes`, { params });
+    // Assuming backend returns data in structure { success: true, data: { results: [...], ... }, message: "..." }
+    if (response.data && response.data.success) {
+      return response.data.data; // This should be the paginated result object
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch teacher class schedules due to server response.');
+    }
+  } catch (error) {
+    const errMsg = error.response?.data?.message || error.message || 'Failed to fetch teacher class schedules.';
+    console.error('Error fetching teacher class schedules:', errMsg);
+    throw new Error(errMsg);
+  }
+};
+
+// Add other class schedule related services here if needed (create, update, delete)
+// For example:
+// const createClassSchedule = async (scheduleData) => { ... apiClient.post(API_BASE_URL, scheduleData) ... };
+// const updateClassSchedule = async (scheduleId, updateData) => { ... apiClient.patch(`${API_BASE_URL}/${scheduleId}`, updateData) ... };
+// const deleteClassSchedule = async (scheduleId) => { ... apiClient.delete(`${API_BASE_URL}/${scheduleId}`) ... };
+
+
 const classScheduleService = {
   getClassScheduleById,
+  getTeacherClassSchedules,
+  // createClassSchedule, // Uncomment if/when implemented
+  // updateClassSchedule, // Uncomment if/when implemented
+  // deleteClassSchedule, // Uncomment if/when implemented
 };
 
 export default classScheduleService;

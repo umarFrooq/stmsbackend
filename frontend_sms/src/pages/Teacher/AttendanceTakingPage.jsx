@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Paper, Box, Alert, Button,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Checkbox, FormControlLabel, TextField, Grid, CircularProgress, MenuItem, Select, FormControl, InputLabel
+  Checkbox, FormControlLabel, TextField, Grid, CircularProgress, MenuItem, Select, FormControl, InputLabel, Chip
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -65,10 +65,21 @@ const AttendanceTakingPage = () => {
 
       try {
         console.log(`Fetching class context for classId: ${classId}`);
-        const classData = await classScheduleService.getClassScheduleById(classId);
+        // Request population for fields needed for display (subjectName, gradeName)
+        // The backend service getClassScheduleById populates based on the 'populate' query param.
+        // The frontend service getClassScheduleById(scheduleId, populate) passes this along.
+        const populateFields = 'subjectId,gradeId,branchId,schoolId'; // teacherId is part of the schedule doc itself
+        const classData = await classScheduleService.getClassScheduleById(classId, populateFields);
+
+        // classData should now include populated fields if successful, e.g.,
+        // classData.subjectId = { id: 'xyz', title: 'Mathematics', ... }
+        // classData.gradeId = { id: 'abc', title: 'Grade 10', ... }
+        // The component expects classContext to have:
+        // subjectId (as object), gradeId (as object), section, branchId (as object), schoolId (as object)
+        // AND subjectName, gradeName for display.
 
         if (!classData || !classData.subjectId || !classData.gradeId || !classData.section || !classData.branchId || !classData.schoolId) {
-          throw new Error("Fetched class details are incomplete. Missing one or more required IDs (subject, grade, section, branch, school).");
+          throw new Error("Fetched class details are incomplete. Missing one or more required IDs or populated objects (subject, grade, section, branch, school).");
         }
         console.log("Fetched class context:", classData);
         setClassContext(classData);
@@ -90,61 +101,64 @@ const AttendanceTakingPage = () => {
   // 2. Fetch Students once Class Context is available
   useEffect(() => {
     const fetchStudentsForClass = async () => {
-      if (!classContext || !classContext.gradeId) { // Ensure classContext and necessary IDs are loaded
-        // If classContext is null and not loading, it might mean an error in fetching it.
+      // Ensure classContext and necessary IDs (now as objects) are loaded
+      if (!classContext || !classContext.gradeId?.id || !classContext.branchId?.id || !classContext.schoolId?.id) {
         if (!loading && !classContext) setError(prev => prev || "Class details not available to fetch students.");
         return;
       }
-      setLoading(true); // Still loading overall page data
+      setLoading(true);
       setError(null);
       try {
         const studentParams = {
-          gradeId: classContext.gradeId,
+          gradeId: classContext.gradeId.id, // Use .id from populated object
           section: classContext.section,
-          branchId: classContext.branchId, // Assuming students are scoped to branch via grade/section
-          // schoolId: classContext.schoolId, // If needed by API and not inferred
+          branchId: classContext.branchId.id, // Use .id
+          schoolId: classContext.schoolId.id, // Use .id, assuming userService.getAllUsers needs it
           role: 'student',
-          limit: 500, // Assuming a class won't exceed this
+          limit: 500,
           sortBy: 'fullname:asc',
         };
         const studentRes = await userService.getAllUsers(studentParams);
         setStudents(studentRes?.data?.results || []);
       } catch (err) {
-        setError(err.message || 'Failed to load students for the class.');
-        showToast(err.message || 'Failed to load students for the class.', 'error');
-        setStudents([]); // Clear students on error
+        const errMsg = err.message || 'Failed to load students for the class.';
+        setError(errMsg);
+        showToast(errMsg, 'error');
+        setStudents([]);
       } finally {
-        setLoading(false); // Finished loading class context AND students
+        setLoading(false);
       }
     };
 
     fetchStudentsForClass();
-  }, [classContext]); // Depends on classContext
+  }, [classContext, loading, showToast]); // Added showToast and loading to dependencies
 
 
   // 3. Fetch Existing Attendance Records when selectedDate or students list changes (after initial load)
   useEffect(() => {
     const fetchExistingAttendance = async () => {
-      if (!selectedDate || students.length === 0 || !classContext || !classContext.subjectId) {
-        // If students list is empty, reset attendance state
+      // Ensure classContext and necessary IDs from populated objects are available
+      if (!selectedDate || students.length === 0 || !classContext ||
+          !classContext.subjectId?.id || !classContext.gradeId?.id ||
+          !classContext.branchId?.id || !classContext.schoolId?.id) {
         if (students.length === 0) setAttendance({});
         return;
       }
       setLoadingAttendance(true);
-      setPageMessage(null); // Clear previous messages
+      setPageMessage(null);
       setError(null);
 
       try {
         const formattedDate = format(selectedDate, 'yyyy-MM-dd');
         const attendanceParams = {
-          gradeId: classContext.gradeId,
+          gradeId: classContext.gradeId.id,       // Use .id
           section: classContext.section,
-          subjectId: classContext.subjectId,
-          branchId: classContext.branchId,
-          // schoolId: classContext.schoolId, // If needed
+          subjectId: classContext.subjectId.id,   // Use .id
+          branchId: classContext.branchId.id,     // Use .id
+          schoolId: classContext.schoolId.id,     // Use .id
           date: formattedDate,
-          limit: students.length, // Fetch records for all students in class
-          populate: 'studentId', // We only need studentId to map
+          limit: students.length,
+          populate: 'studentId',
         };
         const existingRecordsResponse = await attendanceService.getAttendances(attendanceParams);
         const existingData = existingRecordsResponse.results || [];
@@ -243,18 +257,22 @@ const AttendanceTakingPage = () => {
       const studentAtt = attendance[student.id];
       // Only save if it's not marked (i.e., it's a new entry for this session)
       if (studentAtt && !studentAtt.isMarked) {
+        if (!classContext.schoolId?.id || !classContext.subjectId?.id || !classContext.gradeId?.id || !classContext.branchId?.id) {
+            showToast(`Cannot save attendance for ${student.fullname}: Critical class information (school, subject, grade, or branch ID) is missing.`, 'error');
+            // Potentially skip this record or halt the process
+            return; // Or use `continue;` if this was in a for loop to skip this student
+        }
         recordsToSave.push({
           studentId: student.id,
-          // Ensure all necessary IDs are present in classContext before attempting to save
-          schoolId: classContext.schoolId,
-          subjectId: classContext.subjectId,
-          gradeId: classContext.gradeId,
+          schoolId: classContext.schoolId.id,     // Use .id
+          subjectId: classContext.subjectId.id,   // Use .id
+          gradeId: classContext.gradeId.id,       // Use .id
           section: classContext.section,
-          branchId: classContext.branchId,
+          branchId: classContext.branchId.id,     // Use .id
           date: format(selectedDate, 'yyyy-MM-dd'),
           status: studentAtt.status,
           remarks: studentAtt.remarks || '',
-          markedBy: teacherUser.id,
+          markedBy: teacherUser.id, // teacherUser.id is already the ID
         });
       }
     });
@@ -320,7 +338,7 @@ const AttendanceTakingPage = () => {
       <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
         <Paper sx={{ p: { xs: 2, md: 3 } }}>
           <Typography variant="h5" component="h1" gutterBottom>
-            Take Attendance: {classContext?.subjectName || 'Loading class...'} ({classContext?.gradeName} - Sec {classContext?.section})
+            Take Attendance: {classContext?.subjectId?.title || 'Loading class...'} ({classContext?.gradeId?.title} - Sec {classContext?.section})
           </Typography>
 
           <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>

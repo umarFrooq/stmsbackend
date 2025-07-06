@@ -6,6 +6,7 @@ var attendanceRoutes = require("./attendance/attendance.routes");
 var branchRoutes = require("./branch/branch.routes");
 var paperRoutes = require("./paper/paper.routes");
 var schoolRoutes = require("./school/school.routes"); // Added school routes
+const classScheduleRoutes = require("./class-schedule/class-schedule.routes"); // Added class schedule routes
 let addressRoutes=require('./address/address.routes')
 // var bannerRoutes = require("./banner/banner.routes");
 // var shippmentRoutes = require("./shippment/shippment.routes");
@@ -138,7 +139,8 @@ router.use("/test-results", testResultRoutes);
 router.use("/papers", paperRoutes);
 router.use("/schools", schoolRoutes); // Added school routes usage
 // router.use("/student-records", studentRecordRoutes);
-// router.use("/timetables", timetableRoutes);
+router.use("/class-schedules", classScheduleRoutes); // Added class schedule routes usage
+// router.use("/timetables", timetableRoutes); // Keep this commented if not used
 // router.use("/fees", feeRoutes);
 // router.use("/fines", fineRoutes);
 

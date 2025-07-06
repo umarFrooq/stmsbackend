@@ -2,112 +2,45 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, Paper, Grid, Card, CardContent, CardActions, Button, Box, Chip, Alert } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-// import useAuthStore from '../../store/auth.store'; // If teacher ID is needed for API call
-
-// Mock service for teacher's classes
-const mockTeacherClassService = {
-  getMyClasses: async (teacherId = 't1') => { // Assume teacherId is passed or derived from auth state
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // In a real app, this would fetch classes assigned to the logged-in teacher.
-    // Mock data should ideally reflect this relationship.
-    // Using mock subjects and grades for context.
-    const mockSubjects = JSON.parse(localStorage.getItem('mock_subjects')) || [];
-    const mockGradeLevels = JSON.parse(localStorage.getItem('mock_grade_levels')) || [];
-
-    let assignedClasses = [
-      {
-        id: 'class1',
-        subjectId: 'subj1', // Mathematics
-        gradeLevelId: 'grade2', // Grade 2
-        section: 'A',
-        studentCount: 25,
-        schedule: 'Mon 9:00 AM, Wed 9:00 AM'
-      },
-      {
-        id: 'class2',
-        subjectId: 'subj2', // English Language
-        gradeLevelId: 'grade1', // Grade 1
-        section: 'B',
-        studentCount: 22,
-        schedule: 'Tue 10:00 AM, Thu 10:00 AM'
-      },
-      {
-        id: 'class3',
-        subjectId: 'subj1', // Mathematics
-        gradeLevelId: 'grade2', // Grade 2
-        section: 'C',
-        studentCount: 28,
-        schedule: 'Mon 11:00 AM, Fri 11:00 AM'
-      },
-       {
-        id: 'class4',
-        subjectId: 'subj3', // Physics
-        gradeLevelId: 'grade10sci', // Grade 10 Science
-        section: 'Sci-Alpha',
-        studentCount: 18,
-        schedule: 'Tue 1:00 PM, Thu 1:00 PM'
-      },
-    ];
-
-    // Filter subjects/classes assigned to this mock teacher (t1)
-    // This logic is a bit convoluted for mock data; real API would return filtered data.
-    const teacherSubjects = mockSubjects.filter(s => s.teacherIds && s.teacherIds.includes(teacherId));
-
-    let finalClasses = [];
-    teacherSubjects.forEach(ts => {
-        assignedClasses.forEach(ac => {
-            if (ac.subjectId === ts.id) {
-                const subject = mockSubjects.find(s => s.id === ac.subjectId);
-                const gradeLevel = mockGradeLevels.find(gl => gl.id === ac.gradeLevelId);
-                finalClasses.push({
-                    ...ac,
-                    subjectName: subject?.name || 'N/A',
-                    gradeLevelName: gradeLevel?.name || 'N/A',
-                });
-            }
-        })
-    });
-    // If no subjects are directly assigned via mock_subjects, show all assignedClasses for t1 for demo
-     if(finalClasses.length === 0 && teacherId === 't1'){
-        finalClasses = assignedClasses.map(ac => {
-            const subject = mockSubjects.find(s => s.id === ac.subjectId);
-            const gradeLevel = mockGradeLevels.find(gl => gl.id === ac.gradeLevelId);
-            return {
-                 ...ac,
-                subjectName: subject?.name || 'N/A',
-                gradeLevelName: gradeLevel?.name || 'N/A',
-            }
-        })
-     }
-
-
-    return finalClasses;
-  }
-};
-
+import useAuthStore from '../../store/auth.store'; // To get logged-in teacher's ID
+import classScheduleService from '../../services/classScheduleService'; // Real service
 
 const MyClassesPage = () => {
   const [myClasses, setMyClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // const { user } = useAuthStore(); // Get current user to pass teacherId if needed
+  const { user } = useAuthStore(); // Get current user
 
   useEffect(() => {
     const fetchClasses = async () => {
+      if (!user || user.role !== 'teacher') {
+        setError("User is not a teacher or not logged in.");
+        setLoading(false);
+        setMyClasses([]);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
-        // const teacherId = user?.id; // Or however teacher ID is stored
-        const data = await mockTeacherClassService.getMyClasses('t1'); // Pass actual teacher ID
-        setMyClasses(data);
+        // The backend route /my-classes uses the authenticated user's ID (teacherId)
+        // We need to populate related fields to display names
+        const params = {
+          populate: 'subjectId,gradeId,branchId,schoolId', // Request population of these fields
+          sortBy: 'dayOfWeek,startTime', // Optional: sort the classes
+          limit: 100, // Assuming a teacher won't have more than 100 scheduled class types
+        };
+        const response = await classScheduleService.getTeacherClassSchedules(params);
+        // The service now returns the paginated object directly if successful
+        setMyClasses(response.results || []);
       } catch (err) {
-        setError(err.message || 'Failed to fetch classes.');
+        setError(err.message || 'Failed to fetch your classes. Please try again later.');
+        setMyClasses([]);
       } finally {
         setLoading(false);
       }
     };
     fetchClasses();
-  }, []); // [user] if using user.id
+  }, [user]); // Re-fetch if user changes
 
   if (loading) {
     return <LoadingSpinner fullScreen message="Loading your classes..." />;
@@ -129,24 +62,34 @@ const MyClassesPage = () => {
 
       {myClasses.length === 0 && !loading && (
         <Paper sx={{p:3, textAlign: 'center'}}>
-            <Typography variant="subtitle1">You are not currently assigned to any classes.</Typography>
+            <Typography variant="subtitle1">You are not currently assigned to any scheduled classes, or classes could not be loaded.</Typography>
         </Paper>
       )}
 
       <Grid container spacing={3}>
         {myClasses.map((cls) => (
+          // cls.id should be the unique _id of the ClassSchedule document
           <Grid item xs={12} sm={6} md={4} key={cls.id}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1 }}>
                 <Typography variant="h6" component="div">
-                  {cls.subjectName}
+                  {cls.subjectId?.title || 'N/A Subject'}
                 </Typography>
                 <Typography color="text.secondary" gutterBottom>
-                  {cls.gradeLevelName} - Section {cls.section}
+                  {cls.gradeId?.title || 'N/A Grade'} - Section {cls.section || 'N/A'}
                 </Typography>
-                <Chip label={`Students: ${cls.studentCount}`} size="small" sx={{mr:1, mb:1}}/>
+                <Chip
+                  label={`${cls.dayOfWeek} ${cls.startTime} - ${cls.endTime}`}
+                  size="small"
+                  sx={{mr:1, mb:1}}
+                  color="primary"
+                  variant="outlined"
+                />
+                {cls.branchId && <Chip label={`Branch: ${cls.branchId.name}`} size="small" sx={{mr:1, mb:1}} variant="outlined"/>}
+                {/* Student count is not directly available on class schedule model, would require another query or aggregation */}
+                {/* <Chip label={`Students: ${cls.studentCount || 'N/A'}`} size="small" sx={{mr:1, mb:1}}/> */}
                 <Typography variant="body2" color="text.secondary" sx={{mt:1}}>
-                  Schedule: {cls.schedule}
+                  School: {cls.schoolId?.name || 'N/A School'}
                 </Typography>
               </CardContent>
               <CardActions sx={{ justifyContent: 'flex-start', p:2 }}>
@@ -154,7 +97,8 @@ const MyClassesPage = () => {
                   size="small"
                   variant="outlined"
                   component={RouterLink}
-                  to={`/teacher/class/${cls.id}/attendance`} // Define this route
+                  // cls.id is the ClassSchedule document's _id
+                  to={`/teacher/class/${cls.id}/attendance`}
                 >
                   Attendance
                 </Button>
@@ -162,18 +106,19 @@ const MyClassesPage = () => {
                   size="small"
                   variant="outlined"
                   component={RouterLink}
-                  to={`/teacher/class/${cls.id}/grades`} // Define this route
+                  to={`/teacher/class/${cls.id}/grades`}
                 >
                   Grades
                 </Button>
-                 <Button
+                 {/* Link to view students for this specific class setup (grade, section, branch) might need more context or a different page */}
+                 {/* <Button
                   size="small"
                   variant="text"
                   component={RouterLink}
-                  to={`/teacher/class/${cls.id}/students`} // Define this route for student list
+                  to={`/teacher/class/${cls.id}/students`}
                 >
                   View Students
-                </Button>
+                </Button> */}
               </CardActions>
             </Card>
           </Grid>
