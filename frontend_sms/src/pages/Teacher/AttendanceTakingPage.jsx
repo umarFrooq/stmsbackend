@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Paper, Box, Alert, Button,
@@ -44,9 +44,9 @@ const AttendanceTakingPage = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
 
-  const showToast = (message, severity = 'success') => {
+  const showToast = useCallback((message, severity = 'success') => {
     setToastMessage(message); setToastSeverity(severity); setToastOpen(true);
-  };
+  }, []); // setToastMessage, setToastSeverity, setToastOpen are stable
 
   // 1. Fetch Class Context (subject, grade, section etc.) based on classId
   useEffect(() => {
