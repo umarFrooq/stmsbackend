@@ -116,7 +116,7 @@ const AttendanceTakingPage = () => {
           schoolId: classContext.schoolId.id, // Use .id, assuming userService.getAllUsers needs it
           role: 'student',
           limit: 500,
-          sortBy: 'fullname:asc',
+          // sortBy: 'fullname:asc',
         };
         const studentRes = await userService.getAllUsers(studentParams);
         setStudents(studentRes?.data?.results || []);

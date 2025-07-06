@@ -88,13 +88,13 @@ const AttendanceLogPage = () => {
     setLoadingFilters(prev => ({ ...prev, students: true, teachers: true, grades: true }));
     try {
       // Fetch Students
-      const studentParams = { role: 'student', limit: 1000, sortBy: 'fullname:asc' };
+      const studentParams = { role: 'student', limit: 1000,  };
       // TODO: Add schoolId or branchId to params if current user is not root and API requires it for scoping
       const studentRes = await userService.getAllUsers(studentParams);
       setStudents(studentRes?.data?.results || []);
 
       // Fetch Teachers
-      const teacherParams = { role: 'teacher', limit: 1000, sortBy: 'fullname:asc' };
+      const teacherParams = { role: 'teacher', limit: 1000, };
       // TODO: Add schoolId or branchId to params
       const teacherRes = await userService.getAllUsers(teacherParams);
       setTeachers(teacherRes?.data?.results || []);
