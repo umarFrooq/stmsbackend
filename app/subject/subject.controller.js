@@ -10,9 +10,20 @@ const createSubjectHandler = catchAsync(async (req, res) => {
 });
 
 const getSubjectsHandler = catchAsync(async (req, res) => {
+  console.log('Backend subject.controller.js - getSubjectsHandler - req.user:', JSON.stringify(req.user, null, 2));
+  console.log('Backend subject.controller.js - getSubjectsHandler - req.user.schoolId:', req.user && req.user.schoolId);
+
   const filter = pick(req.query, ['title', 'subjectCode', 'branchId', 'defaultTeacher', 'gradeId', 'creditHours']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await subjectService.querySubjects(filter, options,req.user.schoolId);
+
+  // Ensure req.user and req.user.schoolId are available before proceeding
+  if (!req.user || !req.user.schoolId) {
+    console.error('Backend subject.controller.js - getSubjectsHandler - User or School ID is missing in req.user.');
+    // Consider sending an appropriate error response or handling as per application logic
+    // For now, it will likely proceed and fail in the service if schoolId is mandatory there
+  }
+
+  const result = await subjectService.querySubjects(filter, options, req.user.schoolId);
   res.send(result);
 });
 

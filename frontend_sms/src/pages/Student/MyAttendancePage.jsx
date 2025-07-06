@@ -24,15 +24,26 @@ const MyAttendancePage = () => {
   const [error, setError] = useState('');
   const { user } = useAuthStore();
 
+  console.log("MyAttendancePage - user object from store:", user); // Added for debugging
+
   const attendanceStatuses = ["present", "absent", "leave", "sick_leave", "half_day_leave"];
 
   const fetchStudentSubjects = useCallback(async () => {
-    if (!user || !user.id || !user.school) {
-        // setError('User school information is missing. Cannot load subjects.');
-        console.warn('User school information is missing for subject fetching.');
+    console.log("MyAttendancePage - fetchStudentSubjects - user object:", user); // Added for debugging
+    if (!user || !user.id) {
+        // This case should ideally not happen if user is on this page, means auth issue
+        setError('User information is missing. Cannot load subjects.');
+        console.warn('User object or user ID is missing for subject fetching. User:', user);
+        setSubjects([]);
+        return;
+    }
+    if (!user.school) {
+        setError('User school information is not available. Subjects cannot be loaded. Please ensure your profile is complete or try logging out and back in.');
+        console.warn('User school information (user.school) is missing for subject fetching. User:', user);
         setSubjects([]); // Set to empty if school info is missing
         return;
     }
+    setError(''); // Clear previous errors before new fetch
     try {
       // Assuming subjectService.getSubjects can be filtered by schoolId if applicable
       // or it fetches subjects relevant to the user's context (e.g., their enrolled school)
@@ -43,9 +54,13 @@ const MyAttendancePage = () => {
           // gradeId: user.gradeId
       });
       setSubjects(response.results || []);
+      if (!response.results || response.results.length === 0) {
+        console.warn("No subjects found for school:", user.school);
+        // setError("No subjects found for your school."); // Optional: inform user if no subjects are configured
+      }
     } catch (err) {
       console.error('Error fetching subjects:', err);
-      setError('Failed to load subjects.');
+      setError(`Failed to load subjects: ${err.message || 'Unknown error'}`);
       setSubjects([]);
     }
   }, [user]);
