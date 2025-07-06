@@ -237,8 +237,36 @@ const AttendanceLogPage = () => {
       flex: 1,
       minWidth: 150,
       valueGetter: (params) => {
-        if (!params || !params.row) {
-          return 'N/A';
+        if (typeof params === 'undefined') {
+          console.error('AttendanceLogPage subjectName valueGetter: params is undefined');
+          return 'N/A (p_undef)';
+        }
+        if (params === null) {
+          console.error('AttendanceLogPage subjectName valueGetter: params is null');
+          return 'N/A (p_null)';
+        }
+        // The error "Cannot read properties of undefined (reading 'row')" means 'params' itself was undefined.
+        // The above checks should catch this. If the error was on 'params.row.subjectId', then params.row was undefined.
+
+        if (typeof params.row === 'undefined') {
+          console.warn('AttendanceLogPage subjectName valueGetter: params.row is undefined. Params:', params);
+          return 'N/A (r_undef)';
+        }
+        if (params.row === null) {
+          console.warn('AttendanceLogPage subjectName valueGetter: params.row is null. Params:', params);
+          return 'N/A (r_null)';
+        }
+        if (typeof params.row !== 'object') {
+          console.warn(`AttendanceLogPage subjectName valueGetter: params.row is not an object. Type: ${typeof params.row}, Value:`, params.row, 'Params:', params);
+          return 'N/A (r_not_obj)';
+        }
+
+        // Log params.row.subjectId to see its state if the error occurs on the next line.
+        // console.log('AttendanceLogPage subjectName valueGetter: params.row.subjectId is:', params.row.subjectId);
+
+        if (!params.row.subjectId) {
+          console.warn('AttendanceLogPage subjectName valueGetter: params.row.subjectId is falsy. Value:', params.row.subjectId, 'Row:', params.row);
+          return 'N/A (s_id_falsy)';
         }
         return params.row.subjectId?.title || params.row.subjectId?.name || 'N/A';
       }
