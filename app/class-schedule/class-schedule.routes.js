@@ -33,7 +33,7 @@ router
 // This needs to be defined *before* the /:scheduleId route to avoid 'my-classes' being treated as an ID
 router.get(
   '/my-classes',
-  auth(VIEW_OWN_SCHEDULE, 'teacher'), // Ensures only teachers with this permission can access
+  auth(VIEW_OWN_SCHEDULE), // Ensures only teachers with this permission can access
   validate(classScheduleValidation.getClassSchedules), // Uses the same validation as general GET
   classScheduleController.getClassSchedulesHandler // Controller logic will filter by req.user.id
 );
@@ -41,7 +41,7 @@ router.get(
 router
   .route('/:scheduleId')
   .get(
-    auth(VIEW_SCHEDULES, VIEW_OWN_SCHEDULE), // Users can view any if they have VIEW_SCHEDULES, or their own if they are a teacher and it's theirs (service layer should verify ownership for VIEW_OWN_SCHEDULE if no general VIEW_SCHEDULES)
+    auth( VIEW_OWN_SCHEDULE), // Users can view any if they have VIEW_SCHEDULES, or their own if they are a teacher and it's theirs (service layer should verify ownership for VIEW_OWN_SCHEDULE if no general VIEW_SCHEDULES)
     validate(classScheduleValidation.getClassSchedule),
     classScheduleController.getClassScheduleHandler
   )
