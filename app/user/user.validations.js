@@ -186,6 +186,7 @@ const getAllUsers = {
     email:Joi.string(),
     gradeId:Joi.string().custom(objectId),
     schoolId:Joi.string().custom(objectId),
+    section:Joi.string()
   }),
 };
 

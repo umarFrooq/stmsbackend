@@ -38,7 +38,8 @@ const getAttendances = {
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
-    populate: Joi.string(), // e.g., "studentId:fullname,subjectId:title"
+    populate: Joi.string(), // e.g., "studentId:fullname,subjectId:title",
+    schoolId:Joi.string().custom(objectId),
   }),
 };
 
