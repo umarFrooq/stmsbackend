@@ -34,17 +34,22 @@ const MyAttendancePage = () => {
   const attendanceStatuses = ["present", "absent", "leave", "sick_leave", "half_day_leave"];
 
   const fetchStudentSubjects = useCallback(async () => {
-    console.log("MyAttendancePage - fetchStudentSubjects - user object (checking school and gradeId):", user);
+    console.log("MyAttendancePage - fetchStudentSubjects - user object (checking schoolId.id and gradeId):", user);
     if (!user || !user.id) {
         setError('User information is missing. Cannot load subjects.');
         console.warn('User object or user ID is missing for subject fetching. User:', user);
         setSubjects([]);
         return;
     }
-    if (!user.school || !user.gradeId) {
+
+    // Correctly access schoolId.id and gradeId
+    const schoolIdValue = user.schoolId ? user.schoolId.id : null;
+    const gradeIdValue = user.gradeId; // Assuming user.gradeId is already the string ID
+
+    if (!schoolIdValue || !gradeIdValue) {
         let missingInfo = [];
-        if (!user.school) missingInfo.push("school information");
-        if (!user.gradeId) missingInfo.push("grade information");
+        if (!schoolIdValue) missingInfo.push("school information (ID)");
+        if (!gradeIdValue) missingInfo.push("grade information");
         const errorMessage = `User ${missingInfo.join(' and ')} is not available. Subjects cannot be loaded. Please ensure your profile is complete or try logging out and back in.`;
         setError(errorMessage);
         console.warn(`User information missing for subject fetching: ${missingInfo.join(', ')}. User:`, user);
@@ -56,14 +61,14 @@ const MyAttendancePage = () => {
     setLoading(true); // Show loading indicator for subject fetching as well
 
     try {
-      console.log(`Fetching subjects for school: ${user.school}, grade: ${user.gradeId}`);
+      console.log(`Fetching subjects for school: ${schoolIdValue}, grade: ${gradeIdValue}`);
       const response = await subjectService.getSubjects({
-          schoolId: user.school,
-          gradeId: user.gradeId
+          schoolId: schoolIdValue,
+          gradeId: gradeIdValue
       });
       setSubjects(response.results || []);
       if (!response.results || response.results.length === 0) {
-        console.warn(`No subjects found for school: ${user.school}, grade: ${user.gradeId}`);
+        console.warn(`No subjects found for school: ${schoolIdValue}, grade: ${gradeIdValue}`);
         // Optionally, set a soft error or message indicating no subjects found for this criteria
         // setError(`No subjects found for your school and grade.`);
       }
