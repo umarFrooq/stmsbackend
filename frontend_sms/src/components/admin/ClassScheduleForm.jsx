@@ -98,7 +98,7 @@ const ClassScheduleForm = ({ scheduleId, schoolIdFromAdmin, onSave, onCancel }) 
       setSubjects(subjectRes.results || []);
 
       // Fetch Teachers for the admin's school
-      const teacherParams = { schoolId: schoolIdFromAdmin, role: 'teacher', limit: 500,  };
+      const teacherParams = { schoolId: schoolIdFromAdmin, role: 'teacher', limit: 500, sortBy: 'fullname:asc' };
       const teacherRes = await userService.getAllUsers(teacherParams); // Assuming getAllUsers returns { data: { results: [] } }
       setTeachers(teacherRes.data?.results || []);
 
@@ -117,9 +117,27 @@ const ClassScheduleForm = ({ scheduleId, schoolIdFromAdmin, onSave, onCancel }) 
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    setFormData(prevFormData => {
+      const newFormData = { ...prevFormData, [name]: value };
+
+      // If branchId changes, reset gradeId because the list of available grades will change.
+      if (name === 'branchId') {
+        newFormData.gradeId = '';
+      }
+
+      // Add similar logic if other fields depend on changes here, e.g., if subjects depended on grade.
+      // For now, only grade depends on branch. Section might conceptually depend on grade, but it's free text.
+
+      return newFormData;
+    });
+
     if (fieldErrors[name]) {
-      setFieldErrors(prev => ({ ...prev, [name]: '' })); // Clear error on change
+      setFieldErrors(prevFieldErrors => ({ ...prevFieldErrors, [name]: '' }));
+    }
+    // If branchId changed, also clear any existing gradeId error since it's reset.
+    if (name === 'branchId' && fieldErrors.gradeId) {
+        setFieldErrors(prevFieldErrors => ({ ...prevFieldErrors, gradeId: '' }));
     }
   };
 
@@ -215,7 +233,7 @@ const ClassScheduleForm = ({ scheduleId, schoolIdFromAdmin, onSave, onCancel }) 
               error={!!fieldErrors.gradeId}
               helperText={fieldErrors.gradeId}
               required
-              disabled={loading}
+              disabled={loading || !formData.branchId} // Disable if no branch selected
             >
               <MenuItem value=""><em>Select Grade</em></MenuItem>
               {grades

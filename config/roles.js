@@ -38,7 +38,7 @@ roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple s
   // Profile & Basic School Details
   "manageProfile",
   "manageOwnSchoolDetails", // General config for their own school (if superadmin is tied to one school) or manages all schools
-  // User Management withisucn their school(s)
+  // User Management within their school(s)
   "manageSchoolUsers", // Covers creating/updating/deleting teachers, students, staff within their school(s)
   "viewSchoolUsers",   // Covers listing users within their school(s)
   // Branch Management (within their school(s))

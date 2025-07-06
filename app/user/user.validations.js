@@ -184,8 +184,7 @@ const getAllUsers = {
     // city: Joi.string().allow('', null),
     // lang:Joi.string().allow('', null)
     email:Joi.string(),
-    gradeId:Joi.string().custom(objectId),
-    schoolId:Joi.string().custom(objectId),
+    gradeId:Joi.string().custom(objectId)
   }),
 };
 
