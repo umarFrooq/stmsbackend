@@ -36,7 +36,7 @@ const AdminDashboardPage = () => {
             title="Class Scheduling"
             description="Manage Timetables & Assignments"
             icon={<EventNoteIcon fontSize="large" color="success" />}
-            linkTo="/admin/scheduling" // Define this route
+            linkTo="/admin/schedules" // Define this route
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
