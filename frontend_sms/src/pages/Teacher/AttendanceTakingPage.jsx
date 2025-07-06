@@ -131,7 +131,7 @@ const AttendanceTakingPage = () => {
     };
 
     fetchStudentsForClass();
-  }, [classContext, loading, showToast]); // Added showToast and loading to dependencies
+  }, [classContext, showToast]); // REMOVED 'loading' from dependencies
 
 
   // 3. Fetch Existing Attendance Records when selectedDate or students list changes (after initial load)
@@ -202,10 +202,10 @@ const AttendanceTakingPage = () => {
       }
     };
 
-    if (!loading) { // Only run this if initial student/class load is complete
-        fetchExistingAttendance();
-    }
-  }, [selectedDate, students, classContext, loading]); // `loading` ensures this runs after initial student load
+    // Removed `if (!loading)` wrapper as `loading` is no longer a dependency.
+    // This effect now runs based on changes to selectedDate, students, or classContext.
+    fetchExistingAttendance();
+  }, [selectedDate, students, classContext, showToast]); // REMOVED 'loading', added showToast
 
 
   const handleAttendanceChange = (studentId, newStatus) => {

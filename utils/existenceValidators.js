@@ -27,7 +27,7 @@ async function checkSchoolBranchGradeSubjectTeacherExist(schoolId, branchId, gra
   if (!branch) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found');
   }
-  if (branch.schoolId.toString() != schoolId.toString()) {
+  if (branch.schoolId.toString() !== schoolId.toString()) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Branch ${branch.name} does not belong to school ${school.name}`);
   }
 
@@ -36,10 +36,10 @@ async function checkSchoolBranchGradeSubjectTeacherExist(schoolId, branchId, gra
   if (!grade) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Grade not found');
   }
-  if (grade.schoolId.toString() != schoolId.toString()) {
+  if (grade.schoolId.toString() !== schoolId.toString()) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Grade ${grade.title} does not belong to school ${school.name}`);
   }
-  if (grade.branchId._id.toString() != branchId.toString()) {
+  if (grade.branchId.toString() !== branchId.toString()) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Grade ${grade.title} does not belong to branch ${branch.name}`);
   }
 
@@ -48,11 +48,11 @@ async function checkSchoolBranchGradeSubjectTeacherExist(schoolId, branchId, gra
   if (!subject) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Subject not found');
   }
-  if (subject.schoolId.toString() != schoolId.toString()) {
+  if (subject.schoolId.toString() !== schoolId.toString()) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Subject ${subject.title} does not belong to school ${school.name}`);
   }
   // Assuming subjects might be branch-specific or school-wide. If branch-specific:
-  if (subject.branchId && subject.branchId.toString() != branchId.toString()) {
+  if (subject.branchId && subject.branchId.toString() !== branchId.toString()) {
      throw new ApiError(httpStatus.BAD_REQUEST, `Subject ${subject.title} does not belong to branch ${branch.name}`);
   }
 
@@ -62,11 +62,11 @@ async function checkSchoolBranchGradeSubjectTeacherExist(schoolId, branchId, gra
   if (!teacher) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Teacher (User) not found');
   }
-  if (teacher.role != 'teacher') { // Assuming 'teacher' is the role identifier
+  if (teacher.role !== 'teacher') { // Assuming 'teacher' is the role identifier
     throw new ApiError(httpStatus.BAD_REQUEST, `User ${teacher.fullname} is not a teacher.`);
   }
   // Check if teacher belongs to the school. Assuming User model has a schoolId field.
-  if (teacher.schoolId && teacher.schoolId._id.toString() != schoolId.toString()) {
+  if (teacher.schoolId && teacher.schoolId.toString() !== schoolId.toString()) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Teacher ${teacher.fullname} does not belong to school ${school.name}`);
   }
   // Optional: Check if teacher is assigned to the branch if your system has that granularity for teachers.

@@ -22,7 +22,7 @@ roleRights.set(roles[1], [ // teacher
   "pushNotification","manageDeals",  "pushNotification", "getOrderTransaction", "updateSlug", "manageCollections","manageBulkOp","manageSeller","manageDashboard","manageGA","manageTranslation",
   "manageStore","manageReport","productImport","manageSetting","socialToken","managePromotion","manageVector","manageCurrency","manageToken","manageFeedSync","manageVideoUpload", "videoCount","manageRevenue","manageStatus",  "apiKey",
   "manageTransaction","attendanceManagement", "viewAttendances", "testManagement","testResultManagement","subject", "viewGrades",
-  "viewOwnClassSchedule","manageAttendances" // Teacher can view their own schedule
+  "viewOwnClassSchedule" // Teacher can view their own schedule
 ]);
 
 roleRights.set(roles[2], [ // admin (School Admin)
