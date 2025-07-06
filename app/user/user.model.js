@@ -140,8 +140,18 @@ const userSchema = new Schema({
     schoolId: {
       type: Schema.Types.ObjectId,
       ref: 'School',
-      autopopulate: true
-    }, // Not required for all users
+      autopopulate: true,
+      validate: {
+        validator: function(v) {
+          // Conditionally required: if role is 'student', schoolId must be present
+          if (this.role === 'student') {
+            return !!v;
+          }
+          return true; // Not required for other roles
+        },
+        message: 'School ID is required for students.'
+      }
+    },
 
 }, {
     timestamps: true,
