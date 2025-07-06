@@ -12,7 +12,8 @@ const singleAttendanceRecordSchema = Joi.object({
   date: Joi.date().iso().required(), // Expecting ISO 8601 date string
   status: Joi.string().valid(...attendanceStatusEnum).required(),
   remarks: Joi.string().trim().allow(null, ''),
-  // markedBy will usually be set by the system from the logged-in user, not part of request body
+  schoolId:Joi.string().custom(objectId),  // markedBy will usually be set by the system from the logged-in user, not part of request body
+  markedBy:Joi.string().custom(objectId)
 });
 
 const markAttendance = {
