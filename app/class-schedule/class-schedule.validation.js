@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { objectId } = require('../auth/custom.validation'); // Assuming custom validation for objectId
+const { objectId } = require('../../utils/custom.validation'); // Assuming custom validation for objectId
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
