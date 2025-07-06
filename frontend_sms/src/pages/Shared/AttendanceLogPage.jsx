@@ -77,41 +77,50 @@ const AttendanceLogPage = () => {
 
   const { user } = useAuthStore(); // To get current user, potentially for schoolId or branchId scoping if needed
 
-  const showToast = (message, severity = 'success') => {
+  // Extract stable primitives from user for useCallback dependency
+  const userRole = user?.role;
+  let actualSchoolId = null;
+  if (user?.schoolId) {
+    if (typeof user.schoolId === 'object' && user.schoolId.id) {
+      actualSchoolId = user.schoolId.id;
+    } else if (typeof user.schoolId === 'string') {
+      actualSchoolId = user.schoolId;
+    }
+  }
+
+  const showToast = useCallback((message, severity = 'success') => {
     setToastMessage(message);
     setToastSeverity(severity);
     setToastOpen(true);
-  };
+  }, []); // Assuming setToastMessage etc are stable from useState
 
   // Fetch data for filter dropdowns
   const fetchFilterData = useCallback(async () => {
     setLoadingFilters(prev => ({ ...prev, students: true, teachers: true, grades: true }));
 
-    let schoolIdForFilter = null;
-    if (user && user.role !== 'rootUser' && user.role !== 'superadmin' && user.schoolId) {
-      if (typeof user.schoolId === 'object' && user.schoolId.id) {
-        schoolIdForFilter = user.schoolId.id;
-      } else if (typeof user.schoolId === 'string') {
-        schoolIdForFilter = user.schoolId;
-      }
+    // Use actualSchoolId and userRole derived from props/state for logic
+    // schoolIdForFilter is effectively actualSchoolId if role requires scoping
+    let schoolIdForFilterLogic = null;
+    if (userRole && userRole !== 'rootUser' && userRole !== 'superadmin' && actualSchoolId) {
+      schoolIdForFilterLogic = actualSchoolId;
     }
 
     try {
       // Fetch Students
       const studentParams = { role: 'student', limit: 1000 };
-      if (schoolIdForFilter) studentParams.schoolId = schoolIdForFilter;
+      if (schoolIdForFilterLogic) studentParams.schoolId = schoolIdForFilterLogic;
       const studentRes = await userService.getAllUsers(studentParams);
       setStudents(studentRes?.data?.results || []);
 
       // Fetch Teachers
       const teacherParams = { role: 'teacher', limit: 1000 };
-      if (schoolIdForFilter) teacherParams.schoolId = schoolIdForFilter;
+      if (schoolIdForFilterLogic) teacherParams.schoolId = schoolIdForFilterLogic;
       const teacherRes = await userService.getAllUsers(teacherParams);
       setTeachers(teacherRes?.data?.results || []);
 
       // Fetch Grades
       const gradeParams = { limit: 1000, sortBy: 'title:asc' };
-      if (schoolIdForFilter) gradeParams.schoolId = schoolIdForFilter;
+      if (schoolIdForFilterLogic) gradeParams.schoolId = schoolIdForFilterLogic;
       const gradeRes = await gradeService.getGrades(gradeParams);
       setGrades(gradeRes?.results || []);
 
@@ -125,7 +134,7 @@ const AttendanceLogPage = () => {
     } finally {
       setLoadingFilters(prev => ({ ...prev, students: false, teachers: false, grades: false }));
     }
-  }, [user, showToast]); // Added user and showToast (memoized) to dependencies
+  }, [userRole, actualSchoolId, showToast]); // Depends on stable primitives
 
   useEffect(() => {
     fetchFilterData();
