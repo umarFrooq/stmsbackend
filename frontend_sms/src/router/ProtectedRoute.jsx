@@ -22,21 +22,28 @@ const ProtectedRoute = ({
   permissions, // array of allowed permissions
   requireAllPermissions = false, // if true, all permissions in the array are required
 }) => {
-  const { isAuthenticated, hasRole, hasPermission, hasAllPermissions: userHasAllPermissions, isLoading } = useAuthStore();
+  const { isAuthenticated, user, roles: userRoles, permissions: userPermissions, hasRole, hasPermission, hasAllPermissions: userHasAllPermissions, isLoading } = useAuthStore();
   const location = useLocation();
 
+  console.log('[ProtectedRoute] Checking route:', location.pathname);
+  console.log('[ProtectedRoute] isLoading:', isLoading);
+  console.log('[ProtectedRoute] isAuthenticated:', isAuthenticated);
+  console.log('[ProtectedRoute] User:', user);
+  console.log('[ProtectedRoute] User Roles:', userRoles);
+  console.log('[ProtectedRoute] User Permissions:', userPermissions);
+  console.log('[ProtectedRoute] Required Role (single):', role);
+  console.log('[ProtectedRoute] Required Roles (array):', roles);
+  console.log('[ProtectedRoute] Required Permission (single):', permission);
+  console.log('[ProtectedRoute] Required Permissions (array):', permissions);
+
+
   if (isLoading) {
-    // Optional: Show a loading spinner or a blank page while auth state is loading
-    // For now, returning null or a simple loading text.
-    // Consider a global loading indicator handled by App or main layout.
+    console.log('[ProtectedRoute] Decision: Loading...');
     return <div>Loading authentication status...</div>;
   }
 
   if (!isAuthenticated) {
-    // Redirect them to the /login page, but save the current location they were
-    // trying to go to when they were redirected. This allows us to send them
-    // along to that page after they login, which is a nicer user experience
-    // than dropping them off on the home page.
+    console.log('[ProtectedRoute] Decision: Not authenticated, redirecting to login.');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
