@@ -46,8 +46,40 @@ const getAttendances = async (params = {}) => {
 // const markAttendance = async (data) => { ... };
 // const updateAttendance = async (id, data) => { ... };
 
+/**
+ * Marks attendance for multiple students in bulk.
+ * @param {Array<object>} attendanceData - Array of attendance records.
+ * Each record: { studentId, schoolId, subjectId, gradeId, section, branchId, date, status, remarks?, markedBy }
+ * Note: schoolId might be injected by backend middleware for non-root users,
+ * but good practice for frontend to prepare it if known, esp. if a root user is using a school-specific context.
+ * The backend controller for bulk expects `schoolIdForAttendance` in body if user is root.
+ * For simplicity here, we assume `schoolId` is part of each record if needed, or handled by backend context.
+ * @returns {Promise<object>} Response from the server, typically includes arrays for `success` and `errors`.
+ * Example: { message: string, success: Array<object>, errors: Array<{entry: object, error: string}> }
+ */
+const markBulkAttendance = async (attendanceRecords) => {
+  try {
+    // The request body should be the array of attendance records directly.
+    // The backend controller's `req.body` will be this array.
+    // If schoolId needs to be passed for a root user context for the whole batch,
+    // the API design might need `req.body = { schoolIdForAttendance: '...', records: [] }`
+    // However, current backend controller for bulk uses `req.schoolId` (from middleware) or `req.body.schoolIdForAttendance`
+    // and then `req.body` for the array of records.
+    // The `recordsToSave` in `AttendanceTakingPage` includes schoolId in each record,
+    // which is fine for backend service to validate each record.
+    const response = await apiClient.post(`${API_ROUTE}/bulk`, attendanceRecords);
+    return response.data; // Contains message, success[], errors[]
+  } catch (error) {
+    console.error('Error marking bulk attendance:', error.response?.data || error.message);
+    // Throw the structured error from backend if available, or a generic one
+    throw error.response?.data || new Error('Failed to mark bulk attendance');
+  }
+};
+
+
 const attendanceService = {
   getAttendances,
+  markBulkAttendance, // Add the new function here
 };
 
 export default attendanceService;
