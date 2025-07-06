@@ -237,7 +237,7 @@ const ClassScheduleForm = ({ scheduleId, schoolIdFromAdmin, onSave, onCancel }) 
             >
               <MenuItem value=""><em>Select Grade</em></MenuItem>
               {grades
-                .filter(g => !formData.branchId || g.branchId === formData.branchId) // Optional: Filter grades by selected branch
+                .filter(g => !formData.branchId || g.branchId?.id === formData.branchId) // Optional: Filter grades by selected branch
                 .map(grade => (
                   <MenuItem key={grade.id} value={grade.id}>{grade.title}</MenuItem>
               ))}
