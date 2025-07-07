@@ -58,7 +58,17 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
   const [loadingGrades, setLoadingGrades] = useState(false);
   const [loadingBranches, setLoadingBranches] = useState(false);
 
-  const schoolId = user?.role === 'rootUser' ? schoolIdFromProps : user?.schoolId;
+  // Determine the source of schoolId
+  const schoolIdSource = user?.role === 'rootUser' ? schoolIdFromProps : user?.schoolId;
+
+  // Ensure actualSchoolId is the string ID
+  let actualSchoolId = null;
+  if (isObject(schoolIdSource)) {
+    actualSchoolId = schoolIdSource._id || schoolIdSource.id; // Prefer _id, fallback to id
+  } else if (typeof schoolIdSource === 'string') {
+    actualSchoolId = schoolIdSource;
+  }
+
   // branchId can be from props (e.g. branch admin creating for their branch)
   // or derived from selected grade, or selected by admin/teacher if multiple under school.
   const currentBranchId = branchIdFromProps || formData.branchId || (user?.role === 'branchAdmin' ? user.branchId : '');
@@ -78,73 +88,88 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
   }, [initialData]);
 
   const fetchSelectData = useCallback(async () => {
-    if (!schoolId && user?.role !== 'rootUser') { // For root user, schoolId might be selected first
-      console.warn("School ID is not available for fetching data.");
+    // For root user, schoolIdFromProps is used, which is already 'actualSchoolId' if provided
+    // For other users, actualSchoolId is derived from user.schoolId
+    if (!actualSchoolId && user?.role !== 'rootUser') {
+      console.warn("Actual School ID is not available for fetching dropdown data.");
+      // Clear dependent data if schoolId becomes unavailable
+      setSubjects([]);
+      setGrades([]);
+      setFilteredGrades([]);
+      setBranches([]);
+      return;
+    }
+
+    // Reset fields if actualSchoolId is not present (e.g. root user deselects a school)
+    if (!actualSchoolId && user?.role === 'rootUser') {
+      setSubjects([]);
+      setGrades([]);
+      setFilteredGrades([]);
+      setBranches([]);
+      // No need to setLoading true if we are not fetching
       return;
     }
 
     setLoadingSubjects(true);
     setLoadingGrades(true);
-    // For non-root users, branch is usually fixed or determined by grade.
-    // For root/admin, they might select a school, then branch, then grade.
-    // This form assumes schoolId is known (from user or prop for root).
+    // setLoadingBranches is handled conditionally below
 
     try {
       // Fetch subjects for the school
-      if (schoolId) {
-        const subjectParams = { schoolId, limit: 500, sortBy: 'name:asc' }; // Adjust limit as needed
+      if (actualSchoolId) {
+        const subjectParams = { schoolId: actualSchoolId, limit: 500, sortBy: 'name:asc' };
         const subjectRes = await subjectService.getSubjects(subjectParams);
         setSubjects(subjectRes.results || []);
-      } else if (user?.role === 'rootUser' && !schoolIdFromProps) {
-         setSubjects([]); // Clear subjects if school changes for root user
+      } else {
+         setSubjects([]);
       }
 
-
       // Fetch grades for the school.
-      // If branchId is also known (e.g. branchAdmin, or teacher in single-branch school), filter grades by branch.
-      if (schoolId) {
-        const gradeParams = { schoolId, limit: 500, sortBy: 'title:asc' };
-        // If currentBranchId is available and user is not root (who might want all grades of a school first)
-        // This logic might need adjustment based on UX flow for selecting branch then grade.
-        // For now, let's fetch all grades for the school, and filter client-side or by selecting branch first.
+      if (actualSchoolId) {
+        const gradeParams = { schoolId: actualSchoolId, limit: 500, sortBy: 'title:asc' };
         const gradeRes = await gradeService.getGrades(gradeParams);
-        setGrades(gradeRes.results || []);
+        const fetchedGrades = gradeRes.results || [];
+        setGrades(fetchedGrades);
 
-        // If a branch is already selected (e.g. editing, or user is branchAdmin)
-        // pre-filter grades for that branch
         if (currentBranchId) {
-            setFilteredGrades((gradeRes.results || []).filter(g => g.branchId._id === currentBranchId || g.branchId === currentBranchId));
-            // Set form branchId if not already set and currentBranchId is from context
+            setFilteredGrades(fetchedGrades.filter(g => (g.branchId?._id || g.branchId) === currentBranchId));
             if (!formData.branchId && (branchIdFromProps || (user?.role === 'branchAdmin' && user.branchId))) {
                 setFormData(prev => ({ ...prev, branchId: currentBranchId }));
             }
         } else {
-             setFilteredGrades(gradeRes.results || []); // show all school grades initially
+             setFilteredGrades(fetchedGrades);
         }
-      } else if (user?.role === 'rootUser' && !schoolIdFromProps) {
+      } else {
           setGrades([]);
           setFilteredGrades([]);
       }
 
-
-      // Fetch branches if user is admin/root and school is selected (to allow picking branch)
-      // Teachers might not need to select a branch if their assignments are always for grades within their assigned branch.
-      if (schoolId && (user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser')) {
+      // Fetch branches if user is admin/root and school is selected
+      if (actualSchoolId && (user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser')) {
         setLoadingBranches(true);
-        const branchRes = await branchService.getBranches({ schoolId, limit: 200, sortBy: 'name:asc' });
+        const branchRes = await branchService.getBranches({ schoolId: actualSchoolId, limit: 200, sortBy: 'name:asc' });
         setBranches(branchRes.results || []);
-        setLoadingBranches(false);
+        setLoadingBranches(false); // Set false here specifically for branches
+      } else {
+        setBranches([]); // Clear branches if not applicable
       }
-
 
     } catch (error) {
       console.error("Error fetching data for form: ", error);
-      // Handle error (e.g., show a notification)
+      // Clear data on error to prevent stale selections
+      setSubjects([]);
+      setGrades([]);
+      setFilteredGrades([]);
+      setBranches([]);
     } finally {
       setLoadingSubjects(false);
       setLoadingGrades(false);
+      // setLoadingBranches is handled inside its conditional block or should be set here if it was unconditionally true
+      if (!(actualSchoolId && (user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser'))) {
+        setLoadingBranches(false);
+      }
     }
-  }, [schoolId, user?.role, schoolIdFromProps, branchIdFromProps, currentBranchId]); // Added currentBranchId
+  }, [actualSchoolId, user?.role, branchIdFromProps, currentBranchId, formData.branchId]); // Use actualSchoolId in dependencies
 
   useEffect(() => {
     fetchSelectData();
