@@ -22,7 +22,7 @@ router.use(auth(), schoolScopeMiddleware); // schoolScopeMiddleware will extract
 router
   .route('/')
   .post(
-    auth(MANAGE_OWN_ASSIGNMENTS, MANAGE_ALL_ASSIGNMENTS_SCHOOL, MANAGE_ALL_ASSIGNMENTS_ROOT), // Teacher, Admin, Root
+    auth(MANAGE_OWN_ASSIGNMENTS), // Teacher, Admin, Root
     validate(assignmentValidation.createAssignment),
     assignmentController.createAssignmentHandler
   )
