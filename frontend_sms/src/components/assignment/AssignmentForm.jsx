@@ -225,30 +225,61 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    // Client-side validation for required fields that might be empty strings
+    if (!formData.title || !formData.title.trim()) {
+        alert('Title is required.'); // Replace with a more integrated error display
+        return;
+    }
+    if (!formData.subjectId) {
+        alert('Subject is required. Please select a subject.'); // Replace with a more integrated error display
+        return;
+    }
+    if (!formData.gradeId) {
+        alert('Grade is required. Please select a grade.'); // Replace with a more integrated error display
+        return;
+    }
+    if (!formData.dueDate) {
+        alert('Due date is required.'); // Replace with a more integrated error display
+        return;
+    }
+    // totalMarks is a number, 0 is acceptable generally, so specific validation might depend on rules
+
     const submissionData = { ...formData };
 
-    // Ensure IDs are sent, not objects, if they were populated
-    if (isObject(submissionData.subjectId)) submissionData.subjectId = submissionData.subjectId._id;
-    if (isObject(submissionData.gradeId)) submissionData.gradeId = submissionData.gradeId._id;
+    // IDs from dropdowns (subjectId, gradeId, branchId if selected) are already strings.
+    // The isObject checks here were more relevant if initialData could populate these with objects directly
+    // and those objects were not processed into IDs by the useEffect for initialData.
+    // Given the current useEffect for initialData, these might be redundant or only for very specific edge cases.
+    // if (isObject(submissionData.subjectId)) submissionData.subjectId = submissionData.subjectId._id;
+    // if (isObject(submissionData.gradeId)) submissionData.gradeId = submissionData.gradeId._id;
 
     // Branch ID handling:
-    // For teachers, grade implies branch. Backend might validate this.
-    // If form allows selecting branch (for admin/root), ensure it's set.
-    // If grade is selected, its branchId should ideally be used or validated against.
     const selectedGrade = grades.find(g => g._id === submissionData.gradeId);
     if (selectedGrade && (isObject(selectedGrade.branchId))) {
         submissionData.branchId = selectedGrade.branchId._id;
     } else if (selectedGrade && typeof selectedGrade.branchId === 'string') {
         submissionData.branchId = selectedGrade.branchId;
-    } else if (!submissionData.branchId && currentBranchId) { // Fallback to contextual branch if any
+    } else if (!submissionData.branchId && currentBranchId) {
         submissionData.branchId = currentBranchId;
     }
-
-
-    if (user?.role === 'rootUser' && schoolIdFromProps) {
-      submissionData.schoolId = schoolIdFromProps;
+    // Ensure branchId is set if a grade is selected that has one,
+    // or if it's contextually available (currentBranchId) and not otherwise set.
+    // This is important as assignment might require branchId.
+    if (!submissionData.branchId && selectedGrade?.branchId) {
+        submissionData.branchId = isObject(selectedGrade.branchId) ? selectedGrade.branchId._id : selectedGrade.branchId;
     }
-    // Non-root users' schoolId is handled by backend from user token.
+
+
+    // School ID for rootUser when creating assignment
+    // actualSchoolId is already derived correctly from schoolIdFromProps or user.schoolId (as a string)
+    if (user?.role === 'rootUser' && actualSchoolId) {
+      submissionData.schoolId = actualSchoolId;
+    }
+    // For other roles, schoolId is typically inferred by the backend from the authenticated user.
+    // If schoolIdFromProps was an object, actualSchoolId would be its ID.
+    // If schoolIdFromProps was a string, actualSchoolId would be that string.
+    // This ensures we send the string ID if the role is rootUser and schoolId is determined via props.
 
     onSubmit(submissionData);
   };
