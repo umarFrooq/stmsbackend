@@ -70,39 +70,45 @@ const TeacherAssignmentsPage = () => {
   }, [user?._id, user?.schoolId, filters, page, limit]);
 
   const fetchFilterDropdownData = useCallback(async () => {
-    if (!user?.schoolId) return;
+    const actualSchoolId = user?.schoolId?.id || user?.schoolId?._id;
+    if (!actualSchoolId) {
+      console.warn("TeacherAssignmentsPage: School ID not available for fetching filter data.");
+      setSubjects([]);
+      setGrades([]);
+      return;
+    }
     setLoadingFilterData(true);
     try {
-      const subjectParams = { schoolId: user.schoolId, limit: 500, sortBy: 'name:asc' };
+      const subjectParams = { schoolId: actualSchoolId, limit: 500, sortBy: 'name:asc' };
       const subjectRes = await subjectService.getSubjects(subjectParams);
       setSubjects(subjectRes.results || []);
 
-      // Fetch grades relevant to the teacher (e.g., grades they are assigned to or all in school)
-      // For simplicity, fetching all grades in the school. Teacher might only create for specific grades.
-      const gradeParams = { schoolId: user.schoolId, limit: 500, sortBy: 'title:asc' };
+      const gradeParams = { schoolId: actualSchoolId, limit: 500, sortBy: 'title:asc' };
       const gradeRes = await gradeService.getGrades(gradeParams);
       setGrades(gradeRes.results || []);
 
     } catch (error) {
       console.error("Error fetching filter data: ", error);
       setError("Could not load filter options.");
+      setSubjects([]); // Clear on error
+      setGrades([]);   // Clear on error
     } finally {
       setLoadingFilterData(false);
     }
-  }, [user?.schoolId]);
+  }, [user?.schoolId?.id, user?.schoolId?._id]); // Depend on the actual ID strings
 
 
   useEffect(() => {
-    if (user?._id && user?.schoolId) {
+    if (user?._id && (user?.schoolId?.id || user?.schoolId?._id)) {
       fetchTeacherAssignments();
     }
-  }, [fetchTeacherAssignments, user?._id, user?.schoolId]);
+  }, [fetchTeacherAssignments, user?._id, user?.schoolId?.id, user?.schoolId?._id]);
 
   useEffect(() => {
-    if (user?.schoolId) {
+    if (user?.schoolId?.id || user?.schoolId?._id) {
       fetchFilterDropdownData();
     }
-  }, [fetchFilterDropdownData, user?.schoolId]);
+  }, [fetchFilterDropdownData]); // fetchFilterDropdownData's dependencies cover user.schoolId.id/._id
 
 
   const handleEdit = (assignmentId) => {
@@ -197,7 +203,9 @@ const TeacherAssignmentsPage = () => {
             >
               <MenuItem value=""><em>All Subjects</em></MenuItem>
               {subjects.map(subject => (
-                <MenuItem key={subject._id} value={subject._id}>{subject.name} ({subject.code})</MenuItem>
+                <MenuItem key={subject.id || subject._id} value={subject.id || subject._id}>
+                  {subject.title || subject.name} ({subject.subjectCode || subject.code})
+                </MenuItem>
               ))}
             </TextField>
           </Grid>
@@ -214,7 +222,9 @@ const TeacherAssignmentsPage = () => {
             >
               <MenuItem value=""><em>All Grades</em></MenuItem>
               {grades.map(grade => (
-                <MenuItem key={grade._id} value={grade._id}>{grade.title}</MenuItem>
+                <MenuItem key={grade.id || grade._id} value={grade.id || grade._id}>
+                  {grade.title}
+                </MenuItem>
               ))}
             </TextField>
           </Grid>
