@@ -73,18 +73,22 @@ const StudentAssignmentsPage = () => {
     // Option 1: Student object has enrolledSubjectIds.
     // Option 2: Fetch all subjects for the student's gradeId.
     // For now, assume fetching subjects for the student's grade.
-    if (!user?.gradeId || !user?.schoolId) return;
+    if (!user?.gradeId || !user?.schoolId?._id) {
+      // console.warn("User schoolId or schoolId._id is not available for fetching subjects.");
+      // Optionally set an error or return if this data is critical for proceeding
+      return;
+    }
 
     setLoadingFilterData(true);
     try {
       // This might need a specific endpoint or adjustment if subjects are directly linked to students
       // or if we just show all subjects available for their grade in that school.
-      const subjectParams = { schoolId: user.schoolId, gradeId: user.gradeId, limit: 200, sortBy: 'name:asc' };
+      // const subjectParams = { schoolId: user.schoolId._id, gradeId: user.gradeId, limit: 200, sortBy: 'name:asc' };
       // The backend getSubjects might need to support gradeId filter or we filter from all school subjects.
       // Let's assume for now subjectService.getSubjects can take gradeId or we fetch all school subjects and let user filter.
       // For simplicity, we can use the same subjectService.getSubjects as teachers, assuming student has access to these subjects.
       // A more robust solution would be to have a list of subjects the student is specifically enrolled in.
-      const schoolSubjects = await subjectService.getSubjects({ schoolId: user.schoolId, limit: 500 });
+      const schoolSubjects = await subjectService.getSubjects({ schoolId: user.schoolId._id, limit: 500 });
       // TODO: Filter these subjects based on student's actual enrollment if that data is available.
       // For now, showing all subjects in the school as an example.
       setSubjects(schoolSubjects.results || []);
@@ -95,7 +99,7 @@ const StudentAssignmentsPage = () => {
     } finally {
       setLoadingFilterData(false);
     }
-  }, [user?.gradeId, user?.schoolId]);
+  }, [user?.gradeId, user?.schoolId?._id]);
 
 
   useEffect(() => {
