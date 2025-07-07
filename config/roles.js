@@ -8,8 +8,10 @@ roleRights.set(roles[0], [ // student
   "manageProfile", 'manageReview', 'manageCart', "viewPhone", "getGroupBuy",
   'manageWishList', 'manageAddress', "managePayment", "manageVideo", "follow", "shippmentStatus",
   "changePassword", "firebaseToken",  "manageWallet", "refund", "voucher", "pushNotification","cardPayment",
-"manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial",
-"subject", "viewAttendances"
+  "manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial",
+  "subject", "viewAttendances",
+  // Assignment related for student
+  "viewAssignmentsGrade", "submitAssignment", "viewOwnSubmissions"
 ]);
 
 roleRights.set(roles[1], [ // teacher
@@ -22,7 +24,9 @@ roleRights.set(roles[1], [ // teacher
   "pushNotification","manageDeals",  "pushNotification", "getOrderTransaction", "updateSlug", "manageCollections","manageBulkOp","manageSeller","manageDashboard","manageGA","manageTranslation",
   "manageStore","manageReport","productImport","manageSetting","socialToken","managePromotion","manageVector","manageCurrency","manageToken","manageFeedSync","manageVideoUpload", "videoCount","manageRevenue","manageStatus",  "apiKey",
   "manageTransaction","attendanceManagement", "viewAttendances", "testManagement","testResultManagement","subject", "viewGrades","manageAttendances",
-  "viewOwnClassSchedule" // Teacher can view their own schedule
+  "viewOwnClassSchedule", // Teacher can view their own schedule
+  // Assignment related for teacher
+  "manageOwnAssignments", "viewAssignmentSubmissions", "gradeSubmission"
 ]);
 
 roleRights.set(roles[2], [ // admin (School Admin)
@@ -31,7 +35,9 @@ roleRights.set(roles[2], [ // admin (School Admin)
   "firebaseToken", "changePassword", "csvUpload", "manageRefund", "refund", "userManageAddress",  "pushNotification","manageAnswer", "manageSeller", "manageDashboard", "manageTranslation", "manageStatus",
   "manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting","getUsers",
   "gradeManagement", "viewGrades", "attendanceManagement", "viewAttendances", "testManagement","testResultManagement","manageUser","manageUsers","subject", "viewBranches",
-  "manageClassSchedules", "viewClassSchedules" // School admin can manage and view all schedules in their school
+  "manageClassSchedules", "viewClassSchedules", // School admin can manage and view all schedules in their school
+  // Assignment related for admin
+  "manageAllAssignmentsSchool", "viewAllSubmissionsSchool", "gradeSubmission"
 ]);
 
 roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple schools if system designed for it, or top-level school admin)
@@ -68,15 +74,19 @@ roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple s
   "attendanceManagement", // Covered by manageAttendances
   "testManagement", // Covered by manageTests
   "testResultManagement" ,// Covered by manageTestResults
-  "getUsers","subject","manageUser"
+  "getUsers","subject","manageUser",
   // "manageUser", "getUsers", "manageUsers", // Replaced by manageSchoolUsers, viewSchoolUsers for clarity
+  // Assignment related for superadmin (assuming school-level management)
+  "manageAllAssignmentsSchool", "viewAllSubmissionsSchool", "gradeSubmission"
 ]);
 
 roleRights.set(roles[4], [ // rootUser
   "manageSchools", // Full CRUD on school entities
   "manageAllUsers", // Typically a root user can manage any user
   "viewSystemAnalytics", // Example permission
-  "manageSystemSettings","subject" // Example permission
+  "manageSystemSettings","subject", // Example permission
+  // Assignment related for rootUser
+  "manageAllAssignmentsRoot", "viewAllSubmissionsRoot"
 ]);
 module.exports = {
   roles,

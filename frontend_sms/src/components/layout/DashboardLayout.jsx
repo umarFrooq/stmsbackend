@@ -31,6 +31,7 @@ import SettingsIcon from '@mui/icons-material/Settings'; // Generic settings
 import DomainIcon from '@mui/icons-material/Domain'; // For School Management (Root Admin)
 import ClassIcon from '@mui/icons-material/Class'; // For Grade Management
 import EventNoteIcon from '@mui/icons-material/EventNote'; // For Attendance Log
+import AssignmentIcon from '@mui/icons-material/Assignment'; // For Assignments
 
 import useAuthStore from '../../store/auth.store';
 
@@ -121,6 +122,36 @@ const DashboardLayout = (props) => {
 
     // Parent specific - Assuming 'parent' role exists
     // { text: 'Parent Dashboard', icon: <FaceIcon />, path: '/parent', requiredRoles: ['parent', 'superadmin'] },
+
+    // Assignment Links - general "Assignments" label, specific path and permission per role group
+    {
+      text: 'Assignments',
+      icon: <AssignmentIcon />,
+      path: '/student/assignments',
+      requiredRoles: ['student'],
+      permission: 'viewAssignmentsGrade' // Students view assignments
+    },
+    {
+      text: 'Assignments',
+      icon: <AssignmentIcon />,
+      path: '/teacher/assignments',
+      requiredRoles: ['teacher'],
+      permission: 'manageOwnAssignments' // Teachers manage their assignments
+    },
+    {
+      text: 'Assignments',
+      icon: <AssignmentIcon />,
+      path: '/admin/assignments', // Admins and SuperAdmins use this path as per AppRouter.jsx
+      requiredRoles: ['admin', 'superadmin'],
+      // Users with EITHER of these permissions should see the link.
+      // The ProtectedRoute on /admin/assignments uses 'viewAllAssignmentsSchool'.
+      // For a "Create & Manage" link, 'manageAllAssignmentsSchool' is more appropriate.
+      // If a superadmin has 'manageAllAssignmentsRoot', they'd also fit this.
+      // We'll use a function for the permission check to handle multiple possibilities or rely on AppRouter's protection.
+      // For simplicity in nav, 'manageAllAssignmentsSchool' covers the primary admin/superadmin case for managing school assignments.
+      permission: 'manageAllAssignmentsSchool'
+      // If rootUser needs a link to a global assignment view, it would be a separate entry or handled by their 'Root Dashboard'
+    },
   ];
 
   const drawer = (
