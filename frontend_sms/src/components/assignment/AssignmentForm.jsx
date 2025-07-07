@@ -178,9 +178,11 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
   // When branch selection changes (for admin/root), filter grades
   useEffect(() => {
     if (formData.branchId) {
-        setFilteredGrades(grades.filter(g => g.branchId._id === formData.branchId || g.branchId === formData.branchId));
+        // Assuming grade objects have branchId which could be an object with _id or a string ID
+        setFilteredGrades(grades.filter(g => (g.branchId?._id || g.branchId) === formData.branchId));
         // Reset grade if selected grade doesn't belong to new branch
-        if (formData.gradeId && !filteredGrades.find(g => g._id === formData.gradeId)) {
+        // Use g.id (or g._id as fallback if API is inconsistent, but prefer g.id)
+        if (formData.gradeId && !filteredGrades.find(g => (g.id || g._id) === formData.gradeId)) {
             setFormData(prev => ({...prev, gradeId: ''}));
         }
     } else if (user?.role !== 'branchAdmin') { // if branch is de-selected, show all school grades
@@ -361,7 +363,9 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
               >
                 <MenuItem value=""><em>Select Grade</em></MenuItem>
                 {filteredGrades.map((grade) => (
-                  <MenuItem key={grade._id} value={grade._id}>
+                  // Prefer grade.id, fallback to grade._id if absolutely necessary for transitional period,
+                  // but ideally API should be consistent and use 'id'.
+                  <MenuItem key={grade.id || grade._id} value={grade.id || grade._id}>
                     {grade.title} {grade.branchId?.name ? `(${grade.branchId.name})` : ''}
                   </MenuItem>
                 ))}
