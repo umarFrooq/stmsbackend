@@ -257,21 +257,35 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
     // if (isObject(submissionData.gradeId)) submissionData.gradeId = submissionData.gradeId._id;
 
     // Branch ID handling:
-    const selectedGrade = grades.find(g => g._id === submissionData.gradeId);
-    if (selectedGrade && (isObject(selectedGrade.branchId))) {
-        submissionData.branchId = selectedGrade.branchId._id;
-    } else if (selectedGrade && typeof selectedGrade.branchId === 'string') {
-        submissionData.branchId = selectedGrade.branchId;
-    } else if (!submissionData.branchId && currentBranchId) {
-        submissionData.branchId = currentBranchId;
-    }
-    // Ensure branchId is set if a grade is selected that has one,
-    // or if it's contextually available (currentBranchId) and not otherwise set.
-    // This is important as assignment might require branchId.
-    if (!submissionData.branchId && selectedGrade?.branchId) {
-        submissionData.branchId = isObject(selectedGrade.branchId) ? selectedGrade.branchId._id : selectedGrade.branchId;
+    // First, ensure we find the selectedGrade using the correct ID property (id or _id)
+    const selectedGradeObject = grades.find(g => (g.id || g._id) === submissionData.gradeId);
+    let derivedBranchId = '';
+
+    if (selectedGradeObject && selectedGradeObject.branchId) {
+        if (isObject(selectedGradeObject.branchId)) {
+            // Prefer 'id', then 'Id', then '_id' for the branch object's ID
+            derivedBranchId = selectedGradeObject.branchId.id || selectedGradeObject.branchId.Id || selectedGradeObject.branchId._id || '';
+        } else if (typeof selectedGradeObject.branchId === 'string') {
+            // If branchId on grade is already a string, use it directly
+            derivedBranchId = selectedGradeObject.branchId;
+        }
     }
 
+    // Priority for setting submissionData.branchId:
+    // 1. If admin/root explicitly selected a branch from its own dropdown (formData.branchId)
+    // 2. If branchId is derived from the selected grade
+    // 3. Fallback to contextual currentBranchId (e.g., branchAdmin's own branch or from props)
+    if (formData.branchId) {
+        submissionData.branchId = formData.branchId;
+    } else if (derivedBranchId) {
+        submissionData.branchId = derivedBranchId;
+    } else if (currentBranchId) {
+        submissionData.branchId = currentBranchId;
+    } else {
+        // If no branchId could be determined, ensure it's an empty string.
+        // The backend will ultimately validate if it's required and not empty.
+        submissionData.branchId = '';
+    }
 
     // School ID for rootUser when creating assignment
     // actualSchoolId is already derived correctly from schoolIdFromProps or user.schoolId (as a string)
