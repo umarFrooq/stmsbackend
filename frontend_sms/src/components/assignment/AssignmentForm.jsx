@@ -382,8 +382,8 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
               >
                 <MenuItem value=""><em>Select Subject</em></MenuItem>
                 {subjects.map((subject) => (
-                  <MenuItem key={subject._id} value={subject._id}>
-                    {subject.name} ({subject.code})
+                  <MenuItem key={subject.id} value={subject.id}>
+                    {subject.title} ({subject.subjectCode})
                   </MenuItem>
                 ))}
               </TextField>
