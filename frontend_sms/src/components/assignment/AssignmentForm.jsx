@@ -1,0 +1,449 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Box,
+  TextField,
+  Button,
+  Grid,
+  Typography,
+  Paper,
+  CircularProgress,
+  MenuItem,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Link as MuiLink,
+} from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'; // Ensure @mui/x-date-pickers is installed
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; // Ensure date-fns is installed
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FileUploadIcon from '@mui/icons-material/FileUpload'; // Placeholder for actual upload
+
+// Services (assuming they exist and are structured similarly to gradeService)
+import subjectService from '../../services/subjectService'; // Placeholder
+import gradeService from '../../services/gradeService';     // Placeholder
+import branchService from '../../services/branchService';   // Placeholder
+import useAuthStore from '../../store/auth.store';
+
+// Helper to check if a value is an object and not null
+const isObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
+
+
+const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, branchIdFromProps }) => {
+  const { user } = useAuthStore();
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    subjectId: '',
+    gradeId: '',
+    branchId: '', // Will be set based on grade or props
+    dueDate: null,
+    totalMarks: 100,
+    allowLateSubmission: false,
+    lateSubmissionPenaltyPercentage: 0,
+    fileAttachments: [], // { fileName, filePath, fileType }
+    status: 'published',
+    // schoolId will be derived from user or props for rootUser
+  });
+
+  const [subjects, setSubjects] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [branches, setBranches] = useState([]); // All branches for root/superadmin if they choose school first
+  const [filteredGrades, setFilteredGrades] = useState([]); // Grades filtered by selected branch
+
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingGrades, setLoadingGrades] = useState(false);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+
+  const schoolId = user?.role === 'rootUser' ? schoolIdFromProps : user?.schoolId;
+  // branchId can be from props (e.g. branch admin creating for their branch)
+  // or derived from selected grade, or selected by admin/teacher if multiple under school.
+  const currentBranchId = branchIdFromProps || formData.branchId || (user?.role === 'branchAdmin' ? user.branchId : '');
+
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        dueDate: initialData.dueDate ? new Date(initialData.dueDate) : null,
+        // Ensure IDs are strings for comparison / MUI Select value
+        subjectId: isObject(initialData.subjectId) ? initialData.subjectId._id : initialData.subjectId || '',
+        gradeId: isObject(initialData.gradeId) ? initialData.gradeId._id : initialData.gradeId || '',
+        branchId: isObject(initialData.branchId) ? initialData.branchId._id : initialData.branchId || '',
+      });
+    }
+  }, [initialData]);
+
+  const fetchSelectData = useCallback(async () => {
+    if (!schoolId && user?.role !== 'rootUser') { // For root user, schoolId might be selected first
+      console.warn("School ID is not available for fetching data.");
+      return;
+    }
+
+    setLoadingSubjects(true);
+    setLoadingGrades(true);
+    // For non-root users, branch is usually fixed or determined by grade.
+    // For root/admin, they might select a school, then branch, then grade.
+    // This form assumes schoolId is known (from user or prop for root).
+
+    try {
+      // Fetch subjects for the school
+      if (schoolId) {
+        const subjectParams = { schoolId, limit: 500, sortBy: 'name:asc' }; // Adjust limit as needed
+        const subjectRes = await subjectService.getSubjects(subjectParams);
+        setSubjects(subjectRes.results || []);
+      } else if (user?.role === 'rootUser' && !schoolIdFromProps) {
+         setSubjects([]); // Clear subjects if school changes for root user
+      }
+
+
+      // Fetch grades for the school.
+      // If branchId is also known (e.g. branchAdmin, or teacher in single-branch school), filter grades by branch.
+      if (schoolId) {
+        const gradeParams = { schoolId, limit: 500, sortBy: 'title:asc' };
+        // If currentBranchId is available and user is not root (who might want all grades of a school first)
+        // This logic might need adjustment based on UX flow for selecting branch then grade.
+        // For now, let's fetch all grades for the school, and filter client-side or by selecting branch first.
+        const gradeRes = await gradeService.getGrades(gradeParams);
+        setGrades(gradeRes.results || []);
+
+        // If a branch is already selected (e.g. editing, or user is branchAdmin)
+        // pre-filter grades for that branch
+        if (currentBranchId) {
+            setFilteredGrades((gradeRes.results || []).filter(g => g.branchId._id === currentBranchId || g.branchId === currentBranchId));
+            // Set form branchId if not already set and currentBranchId is from context
+            if (!formData.branchId && (branchIdFromProps || (user?.role === 'branchAdmin' && user.branchId))) {
+                setFormData(prev => ({ ...prev, branchId: currentBranchId }));
+            }
+        } else {
+             setFilteredGrades(gradeRes.results || []); // show all school grades initially
+        }
+      } else if (user?.role === 'rootUser' && !schoolIdFromProps) {
+          setGrades([]);
+          setFilteredGrades([]);
+      }
+
+
+      // Fetch branches if user is admin/root and school is selected (to allow picking branch)
+      // Teachers might not need to select a branch if their assignments are always for grades within their assigned branch.
+      if (schoolId && (user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser')) {
+        setLoadingBranches(true);
+        const branchRes = await branchService.getBranches({ schoolId, limit: 200, sortBy: 'name:asc' });
+        setBranches(branchRes.results || []);
+        setLoadingBranches(false);
+      }
+
+
+    } catch (error) {
+      console.error("Error fetching data for form: ", error);
+      // Handle error (e.g., show a notification)
+    } finally {
+      setLoadingSubjects(false);
+      setLoadingGrades(false);
+    }
+  }, [schoolId, user?.role, schoolIdFromProps, branchIdFromProps, currentBranchId]); // Added currentBranchId
+
+  useEffect(() => {
+    fetchSelectData();
+  }, [fetchSelectData]);
+
+  // When branch selection changes (for admin/root), filter grades
+  useEffect(() => {
+    if (formData.branchId) {
+        setFilteredGrades(grades.filter(g => g.branchId._id === formData.branchId || g.branchId === formData.branchId));
+        // Reset grade if selected grade doesn't belong to new branch
+        if (formData.gradeId && !filteredGrades.find(g => g._id === formData.gradeId)) {
+            setFormData(prev => ({...prev, gradeId: ''}));
+        }
+    } else if (user?.role !== 'branchAdmin') { // if branch is de-selected, show all school grades
+        setFilteredGrades(grades);
+    }
+  }, [formData.branchId, grades]);
+
+
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleDateChange = (newValue) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      dueDate: newValue,
+    }));
+  };
+
+  const handleFileAttachmentChange = (index, field, value) => {
+    const newAttachments = [...formData.fileAttachments];
+    newAttachments[index][field] = value;
+    setFormData((prev) => ({ ...prev, fileAttachments: newAttachments }));
+  };
+
+  const addFileAttachment = () => {
+    setFormData((prev) => ({
+      ...prev,
+      fileAttachments: [...prev.fileAttachments, { fileName: '', filePath: '', fileType: '' }],
+    }));
+  };
+
+  const removeFileAttachment = (index) => {
+    const newAttachments = formData.fileAttachments.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, fileAttachments: newAttachments }));
+  };
+
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const submissionData = { ...formData };
+
+    // Ensure IDs are sent, not objects, if they were populated
+    if (isObject(submissionData.subjectId)) submissionData.subjectId = submissionData.subjectId._id;
+    if (isObject(submissionData.gradeId)) submissionData.gradeId = submissionData.gradeId._id;
+
+    // Branch ID handling:
+    // For teachers, grade implies branch. Backend might validate this.
+    // If form allows selecting branch (for admin/root), ensure it's set.
+    // If grade is selected, its branchId should ideally be used or validated against.
+    const selectedGrade = grades.find(g => g._id === submissionData.gradeId);
+    if (selectedGrade && (isObject(selectedGrade.branchId))) {
+        submissionData.branchId = selectedGrade.branchId._id;
+    } else if (selectedGrade && typeof selectedGrade.branchId === 'string') {
+        submissionData.branchId = selectedGrade.branchId;
+    } else if (!submissionData.branchId && currentBranchId) { // Fallback to contextual branch if any
+        submissionData.branchId = currentBranchId;
+    }
+
+
+    if (user?.role === 'rootUser' && schoolIdFromProps) {
+      submissionData.schoolId = schoolIdFromProps;
+    }
+    // Non-root users' schoolId is handled by backend from user token.
+
+    onSubmit(submissionData);
+  };
+
+  const commonSelectProps = {
+    fullWidth: true,
+    size: 'small',
+    variant: 'outlined',
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Paper elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
+        <Typography variant="h5" component="h2" gutterBottom>
+          {initialData ? 'Edit Assignment' : 'Create New Assignment'}
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                name="title"
+                label="Title"
+                value={formData.title}
+                onChange={handleChange}
+                error={!formData.title && false} // Basic validation example
+                helperText={!formData.title && false ? "Title is required" : ""}
+                required
+                fullWidth
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="description"
+                label="Description"
+                value={formData.description}
+                onChange={handleChange}
+                multiline
+                rows={4}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+
+            {/* Branch Selector for Admin/Root */}
+            {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser') && !branchIdFromProps && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  name="branchId"
+                  label="Branch"
+                  value={formData.branchId}
+                  onChange={handleChange}
+                  disabled={loadingBranches || branches.length === 0}
+                  {...commonSelectProps}
+                >
+                  <MenuItem value=""><em>Select Branch</em></MenuItem>
+                  {branches.map((branch) => (
+                    <MenuItem key={branch._id} value={branch._id}>
+                      {branch.name} ({branch.branchCode})
+                    </MenuItem>
+                  ))}
+                </TextField>
+                 {loadingBranches && <CircularProgress size={20} />}
+              </Grid>
+            )}
+
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                name="gradeId"
+                label="Grade"
+                value={formData.gradeId}
+                onChange={handleChange}
+                required
+                disabled={loadingGrades || filteredGrades.length === 0}
+                {...commonSelectProps}
+              >
+                <MenuItem value=""><em>Select Grade</em></MenuItem>
+                {filteredGrades.map((grade) => (
+                  <MenuItem key={grade._id} value={grade._id}>
+                    {grade.title} {grade.branchId?.name ? `(${grade.branchId.name})` : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
+              {loadingGrades && <CircularProgress size={20} />}
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                name="subjectId"
+                label="Subject"
+                value={formData.subjectId}
+                onChange={handleChange}
+                required
+                disabled={loadingSubjects || subjects.length === 0}
+                {...commonSelectProps}
+              >
+                <MenuItem value=""><em>Select Subject</em></MenuItem>
+                {subjects.map((subject) => (
+                  <MenuItem key={subject._id} value={subject._id}>
+                    {subject.name} ({subject.code})
+                  </MenuItem>
+                ))}
+              </TextField>
+              {loadingSubjects && <CircularProgress size={20} />}
+            </Grid>
+
+
+            <Grid item xs={12} sm={6}>
+              <DateTimePicker
+                label="Due Date & Time"
+                value={formData.dueDate}
+                onChange={handleDateChange}
+                minDate={new Date()}
+                renderInput={(params) => (
+                  <TextField {...params} fullWidth required size="small" />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="totalMarks"
+                label="Total Marks"
+                type="number"
+                value={formData.totalMarks}
+                onChange={handleChange}
+                required
+                fullWidth
+                size="small"
+                InputProps={{ inputProps: { min: 0, max: 1000 } }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <TextField
+                    select
+                    name="status"
+                    label="Status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    fullWidth
+                    size="small"
+                >
+                    <MenuItem value="published">Published</MenuItem>
+                    <MenuItem value="draft">Draft</MenuItem>
+                </TextField>
+            </Grid>
+            {/* File Attachments Section */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>File Attachments (Teacher)</Typography>
+              <List dense>
+                {formData.fileAttachments.map((file, index) => (
+                  <ListItem key={index} divider>
+                    <Grid container spacing={1} alignItems="center">
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          label="File Name"
+                          value={file.fileName}
+                          size="small"
+                          onChange={(e) => handleFileAttachmentChange(index, 'fileName', e.target.value)}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={5}>
+                        <TextField
+                          label="File Path (URL)"
+                          value={file.filePath}
+                           size="small"
+                          onChange={(e) => handleFileAttachmentChange(index, 'filePath', e.target.value)}
+                          fullWidth
+                        />
+                      </Grid>
+                       <Grid item xs={12} sm={2}>
+                        <TextField
+                          label="File Type"
+                          value={file.fileType}
+                           size="small"
+                          onChange={(e) => handleFileAttachmentChange(index, 'fileType', e.target.value)}
+                          fullWidth
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={1}>
+                        <IconButton onClick={() => removeFileAttachment(index)} color="error" size="small">
+                          <DeleteIcon />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  </ListItem>
+                ))}
+              </List>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AddCircleOutlineIcon />}
+                onClick={addFileAttachment}
+                sx={{ mt: 1 }}
+              >
+                Add Attachment
+              </Button>
+            </Grid>
+
+
+            <Grid item xs={12} sx={{ mt: 2 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isLoading}
+                fullWidth
+              >
+                {isLoading ? <CircularProgress size={24} /> : (initialData ? 'Update Assignment' : 'Create Assignment')}
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+      </Paper>
+    </LocalizationProvider>
+  );
+};
+
+export default AssignmentForm;

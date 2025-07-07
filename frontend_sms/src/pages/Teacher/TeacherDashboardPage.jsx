@@ -7,6 +7,7 @@ import ClassIcon from '@mui/icons-material/Class';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AssignmentIcon from '@mui/icons-material/Assignment'; // Import AssignmentIcon
 
 const TeacherDashboardPage = () => {
   return (
@@ -20,7 +21,7 @@ const TeacherDashboardPage = () => {
             title="My Classes"
             value="Manage Rosters"
             icon={<ClassIcon fontSize="large" color="primary" />}
-            linkTo="/teacher/classes" // Define this route
+            linkTo="/teacher/my-classes" // Corrected link based on AppRouter
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
@@ -28,7 +29,15 @@ const TeacherDashboardPage = () => {
             title="Attendance"
             value="Take & View"
             icon={<HowToRegIcon fontSize="large" color="secondary" />}
-            linkTo="/teacher/my-classes" // Changed to navigate to My Classes page first
+            linkTo="/teacher/my-classes" // Links to My Classes, then navigate to attendance
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <InfoCard
+            title="Assignments"
+            value="Create & Manage"
+            icon={<AssignmentIcon fontSize="large" color="warning" />} // Added Assignment Card
+            linkTo="/teacher/assignments"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
@@ -36,7 +45,7 @@ const TeacherDashboardPage = () => {
             title="Grades"
             value="Enter & Manage"
             icon={<AssessmentIcon fontSize="large" color="success" />}
-            linkTo="/teacher/grades" // Define this route
+            linkTo="/teacher/my-classes" // Links to My Classes, then navigate to grades for a class
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>

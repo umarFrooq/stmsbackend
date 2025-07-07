@@ -15,6 +15,23 @@ import MyClassesPageTeacher from '../pages/Teacher/MyClassesPage';
 import AttendanceTakingPageTeacher from '../pages/Teacher/AttendanceTakingPage';
 import GradeEntryPageTeacher from '../pages/Teacher/GradeEntryPage'; // Added
 
+// Teacher Pages
+import TeacherDashboardPage from '../pages/Teacher/TeacherDashboardPage';
+import MyClassesPageTeacher from '../pages/Teacher/MyClassesPage';
+import AttendanceTakingPageTeacher from '../pages/Teacher/AttendanceTakingPage';
+import GradeEntryPageTeacher from '../pages/Teacher/GradeEntryPage'; // Added
+// Teacher Assignment Pages
+import TeacherAssignmentsPage from '../pages/Teacher/TeacherAssignmentsPage.jsx';
+import TeacherCreateAssignmentPage from '../pages/Teacher/TeacherCreateAssignmentPage.jsx';
+import TeacherEditAssignmentPage from '../pages/Teacher/TeacherEditAssignmentPage.jsx';
+import TeacherViewSubmissionsPage from '../pages/Teacher/TeacherViewSubmissionsPage.jsx';
+import TeacherGradeSubmissionPage from '../pages/Teacher/TeacherGradeSubmissionPage.jsx';
+
+// Student Assignment Pages
+import StudentAssignmentsPage from '../pages/Student/StudentAssignmentsPage.jsx';
+import StudentViewAssignmentPage from '../pages/Student/StudentViewAssignmentPage.jsx';
+
+
 // Admin Pages
 import AdminDashboardPage from '../pages/Admin/AdminDashboardPage';
 import AdminUserManagementPage from '../pages/Admin/UserManagementPage';
@@ -25,10 +42,17 @@ import AttendanceOversightPageAdmin from '../pages/Admin/AttendanceOversightPage
 import GradeOversightPageAdmin from '../pages/Admin/GradeOversightPage';
 import GradeManagementPage from '../pages/Admin/GradeManagementPage.jsx';
 
+import GradeManagementPage from '../pages/Admin/GradeManagementPage.jsx';
+
 // New Class Schedule Management Pages for Admin
 import ClassScheduleManagementPage from '../pages/Admin/ClassScheduleManagementPage.jsx';
 import AddClassSchedulePage from '../pages/Admin/AddClassSchedulePage.jsx';
 import EditClassSchedulePage from '../pages/Admin/EditClassSchedulePage.jsx';
+
+// Admin Assignment Pages
+import AdminAssignmentsListPage from '../pages/Admin/AdminAssignmentsListPage.jsx';
+import AdminViewAssignmentDetailsPage from '../pages/Admin/AdminViewAssignmentDetailsPage.jsx';
+import AdminViewSubmissionsPage from '../pages/Admin/AdminViewSubmissionsPage.jsx';
 
 
 // Super Admin Pages
@@ -174,6 +198,14 @@ const AppRouter = () => {
             <Route path="attendance-oversight" element={<AttendanceOversightPageAdmin />} />
             <Route path="grade-oversight" element={<GradeOversightPageAdmin />} />
             <Route path="grades" element={<GradeManagementPage />} /> {/* Added Grade Management for Admin */}
+
+            {/* Admin Assignment Routes */}
+            <Route path="assignments" element={<ProtectedRoute permission="viewAllAssignmentsSchool"><AdminAssignmentsListPage /></ProtectedRoute>} />
+            <Route path="assignments/:assignmentId/details" element={<ProtectedRoute permission="viewAllAssignmentsSchool"><AdminViewAssignmentDetailsPage /></ProtectedRoute>} />
+            <Route path="submissions" element={<ProtectedRoute permission="viewAllSubmissionsSchool"><AdminViewSubmissionsPage /></ProtectedRoute>} />
+            {/* Admin view/grade submission might reuse teacher's page or have its own */}
+            <Route path="submissions/:submissionId/details" element={<ProtectedRoute permission="viewAllSubmissionsSchool"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
+            <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
           </Route>
 
           {/* Teacher Routes */}
@@ -185,6 +217,15 @@ const AppRouter = () => {
             <Route path="my-classes" element={<MyClassesPageTeacher />} />
             <Route path="class/:classId/attendance" element={<AttendanceTakingPageTeacher />} />
             <Route path="class/:classId/grades" element={<GradeEntryPageTeacher />} /> {/* Added */}
+
+            {/* Teacher Assignment Routes */}
+            <Route path="assignments" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherAssignmentsPage /></ProtectedRoute>} />
+            <Route path="assignments/new" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherCreateAssignmentPage /></ProtectedRoute>} />
+            <Route path="assignments/edit/:assignmentId" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherEditAssignmentPage /></ProtectedRoute>} />
+            <Route path="assignments/:assignmentId/submissions" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherViewSubmissionsPage /></ProtectedRoute>} />
+            {/* Teacher grading their own assignment's submissions */}
+            <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
+
           </Route>
 
           {/* Student Routes */}
@@ -194,6 +235,9 @@ const AppRouter = () => {
           >
             <Route index element={<StudentDashboardPage />} />
             {/* <Route path="grades" element={<StudentGradesPage />} /> */}
+            <Route path="assignments" element={<ProtectedRoute permission="viewAssignmentsGrade"><StudentAssignmentsPage /></ProtectedRoute>} />
+            <Route path="assignments/:assignmentId" element={<ProtectedRoute permission="viewAssignmentsGrade"><StudentViewAssignmentPage /></ProtectedRoute>} />
+            {/* Submission form is part of StudentViewAssignmentPage */}
             <Route
               path="my-attendance"
               element={

@@ -34,6 +34,8 @@ const { version } = require('../package.json');
 const gradeRoutes = require("./grade/grade.routes");
 const testRoutes = require("./test/test.routes");
 const testResultRoutes = require("./testresult/testresult.routes");
+const assignmentRoutes = require("./assignment/assignment.routes"); // Added Assignment routes
+const { mainSubmissionRouter, assignmentSpecificSubmissionRouter } = require("./assignment/submission.routes"); // Added Submission routes
 // const logsRouter = require("./logs/logs.routes");
 const config = require("../config/config");
 const RequestIp = require('request-ip');
@@ -143,5 +145,11 @@ router.use("/class-schedules", classScheduleRoutes); // Added class schedule rou
 // router.use("/timetables", timetableRoutes); // Keep this commented if not used
 // router.use("/fees", feeRoutes);
 // router.use("/fines", fineRoutes);
+
+// Assignment and Submission Routes
+router.use("/assignments", assignmentRoutes);
+router.use("/assignments/:assignmentId/submissions", assignmentSpecificSubmissionRouter); // Mount for nested routes
+router.use("/submissions", mainSubmissionRouter);
+
 
 module.exports = router;

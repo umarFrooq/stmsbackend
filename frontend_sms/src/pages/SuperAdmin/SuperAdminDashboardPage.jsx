@@ -7,6 +7,7 @@ import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'; // Ma
 import BusinessIcon from '@mui/icons-material/Business'; // Branch Management
 import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications'; // System Settings
 import VpnKeyIcon from '@mui/icons-material/VpnKey'; // Roles/Permissions
+import AssignmentIcon from '@mui/icons-material/Assignment'; // For Assignments
 
 const SuperAdminDashboardPage = () => {
   return (
@@ -15,23 +16,31 @@ const SuperAdminDashboardPage = () => {
         Super Administrator Dashboard
       </Typography>
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}> {/* Adjusted grid size */}
           <InfoCard
             title="Global User Management"
             description="Manage Admins, Teachers, etc."
             icon={<SupervisorAccountIcon fontSize="large" color="primary" />}
-            linkTo="/superadmin/users" // Define this route
+            linkTo="/superadmin/users"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}> {/* Adjusted grid size */}
           <InfoCard
             title="Branch Management"
             description="Manage School Branches/Campuses"
             icon={<BusinessIcon fontSize="large" color="secondary" />}
-            linkTo="/superadmin/branches" // Define this route
+            linkTo="/superadmin/branches"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}> {/* Adjusted grid size */}
+          <InfoCard
+            title="Assignments Overview"
+            description="View All System Assignments"
+            icon={<AssignmentIcon fontSize="large" color="warning" />}
+            linkTo="/admin/assignments" // Link to the same admin assignments list, filters will allow full view
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}> {/* Adjusted grid size */}
           <InfoCard
             title="System Settings"
             description="Configure Global Parameters"

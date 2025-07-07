@@ -579,6 +579,70 @@ const permissions = {
             description: 'Allows the user to manage wish lists'
         }
     ],
+    assignment: [
+        {
+            name: 'manageOwnAssignments',
+            label: 'Manage Own Assignments',
+            description: 'Allows teachers to create, update, delete, and view their own assignments.'
+        },
+        {
+            name: 'viewAllAssignmentsSchool',
+            label: 'View All School Assignments',
+            description: 'Allows admins to view all assignments within their school.'
+        },
+        {
+            name: 'viewAssignmentsBranch',
+            label: 'View Branch Assignments',
+            description: 'Allows branch admins to view assignments within their branch.'
+        },
+        {
+            name: 'viewAssignmentsGrade',
+            label: 'View Grade Assignments',
+            description: 'Allows students to view assignments relevant to their grade.'
+        },
+        {
+            name: 'manageAllAssignmentsSchool',
+            label: 'Manage All School Assignments',
+            description: 'Allows admins to manage (CRUD) any assignment within their school.'
+        },
+        {
+            name: 'manageAllAssignmentsRoot',
+            label: 'Manage All System Assignments (Root)',
+            description: 'Allows root users to manage (CRUD) any assignment in the system.'
+        }
+    ],
+    submission: [
+        {
+            name: 'submitAssignment',
+            label: 'Submit Assignment Work',
+            description: 'Allows students to submit their work for an assignment.'
+        },
+        {
+            name: 'viewOwnSubmissions',
+            label: 'View Own Submissions',
+            description: 'Allows students to view their own submitted assignments.'
+        },
+        {
+            name: 'viewAssignmentSubmissions',
+            label: 'View Submissions for an Assignment',
+            description: 'Allows teachers and admins to view all submissions for a specific assignment.'
+        },
+        {
+            name: 'gradeSubmission',
+            label: 'Grade Submission',
+            description: 'Allows teachers and admins to grade student submissions.'
+        },
+        {
+            name: 'viewAllSubmissionsSchool',
+            label: 'View All School Submissions',
+            description: 'Allows admins to view all submissions within their school.'
+        },
+        {
+            name: 'viewAllSubmissionsRoot',
+            label: 'View All System Submissions (Root)',
+            description: 'Allows root users to view all submissions in the system.'
+        }
+    ],
 };
 
 module.exports = permissions;
