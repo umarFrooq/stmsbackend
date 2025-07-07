@@ -14,12 +14,6 @@ import TeacherDashboardPage from '../pages/Teacher/TeacherDashboardPage';
 import MyClassesPageTeacher from '../pages/Teacher/MyClassesPage';
 import AttendanceTakingPageTeacher from '../pages/Teacher/AttendanceTakingPage';
 import GradeEntryPageTeacher from '../pages/Teacher/GradeEntryPage'; // Added
-
-// Teacher Pages
-import TeacherDashboardPage from '../pages/Teacher/TeacherDashboardPage';
-import MyClassesPageTeacher from '../pages/Teacher/MyClassesPage';
-import AttendanceTakingPageTeacher from '../pages/Teacher/AttendanceTakingPage';
-import GradeEntryPageTeacher from '../pages/Teacher/GradeEntryPage'; // Added
 // Teacher Assignment Pages
 import TeacherAssignmentsPage from '../pages/Teacher/TeacherAssignmentsPage.jsx';
 import TeacherCreateAssignmentPage from '../pages/Teacher/TeacherCreateAssignmentPage.jsx';
@@ -40,8 +34,6 @@ import SubjectManagementPageAdmin from '../pages/Admin/SubjectManagementPage';
 // import ClassSchedulingPageAdmin from '../pages/Admin/ClassSchedulingPage'; // Original, to be replaced or complemented
 import AttendanceOversightPageAdmin from '../pages/Admin/AttendanceOversightPage';
 import GradeOversightPageAdmin from '../pages/Admin/GradeOversightPage';
-import GradeManagementPage from '../pages/Admin/GradeManagementPage.jsx';
-
 import GradeManagementPage from '../pages/Admin/GradeManagementPage.jsx';
 
 // New Class Schedule Management Pages for Admin
