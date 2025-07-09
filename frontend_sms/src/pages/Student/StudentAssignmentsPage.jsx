@@ -174,12 +174,12 @@ const StudentAssignmentsPage = () => {
          <Box>
           {assignments.map((assignment) => (
             <AssignmentListItem
-              key={assignment._id}
+              key={assignment.id}
               assignment={assignment}
               // For student, onViewDetails is the primary action
-              onViewDetails={() => handleViewDetails(assignment._id)}
+              onViewDetails={() => handleViewDetails(assignment.id)}
               // onSubmitAssignment can also be handled by onViewDetails if form is on that page
-              onSubmitAssignment={() => handleSubmitAssignmentRedirect(assignment._id)}
+              onSubmitAssignment={() => handleSubmitAssignmentRedirect(assignment.id)}
             />
           ))}
            {totalPages > 1 && (

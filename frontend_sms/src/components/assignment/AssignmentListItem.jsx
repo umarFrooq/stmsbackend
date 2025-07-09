@@ -57,19 +57,27 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
   return (
     <Paper elevation={2} sx={{ mb: 2, p: 2, '&:hover': { boxShadow: 4 } }}>
       <Grid container spacing={2} alignItems="center">
-        <Grid item key={`${assignment._id}-content`} xs={12} md={isStudent ? 9 : 7}>
+        {/* Content Grid Item */}
+        <Grid 
+          key={`${assignment._id}-content`} 
+          size={{ xs: 12, md: isStudent ? 9 : 7 }}
+        >
           <Typography variant="h6" component="div" gutterBottom>
             {onViewDetails || isStudent ? (
                  <MuiLink component={RouterLink} to={onViewDetails || `/student/assignments/${assignment._id}`} underline="hover">
-                    {assignment.title}
+                    {typeof assignment.title === 'string' ? assignment.title : "Default Title"}
                  </MuiLink>
-            ) : assignment.title}
+            ) : (typeof assignment.title === 'string' ? assignment.title : "Default Title")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-            <SubjectIcon fontSize="small" sx={{ mr: 0.5 }} /> {assignment.subjectId?.name || assignment.subjectId}
+            {/* <SubjectIcon fontSize="small" sx={{ mr: 0.5 }} /> */}
+            Test Subject Only
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-            <ClassIcon fontSize="small" sx={{ mr: 0.5 }} /> {assignment.gradeId?.title || assignment.gradeId} {assignment.branchId?.name ? `(${assignment.branchId.name})` : ''}
+            {/* <ClassIcon fontSize="small" sx={{ mr: 0.5 }} />  */}
+            Test Grade Only
+            {/* Temporarily commenting out branch to isolate subject/grade issues first */}
+            {/* {assignment.branchId?.name ? ` (${assignment.branchId.name})` : ''} */}
           </Typography>
           {dueDate && (
             <Typography variant="body2" color={isPastDue ? 'error.main' : 'text.secondary'} sx={{ display: 'flex', alignItems: 'center' }}>
@@ -77,15 +85,25 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
             </Typography>
           )}
            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-            Total Marks: {assignment.totalMarks}
+            {typeof assignment.totalMarks === 'number' || typeof assignment.totalMarks === 'string' ? assignment.totalMarks : "N/A"}
           </Typography>
         </Grid>
 
-        <Grid item key={`${assignment._id}-status`} xs={12} md={isStudent ? 3 : 2} sx={{ textAlign: { xs: 'left', md: 'center' }, mt: {xs: 1, md: 0} }}>
+        {/* Status Grid Item */}
+        <Grid 
+          key={`${assignment._id}-status`} 
+          size={{ xs: 12, md: isStudent ? 3 : 2 }}
+          sx={{ textAlign: { xs: 'left', md: 'center' }, mt: {xs: 1, md: 0} }}
+        >
             {statusChip}
         </Grid>
 
-        <Grid item key={`${assignment._id}-actions`} xs={12} md={isStudent ? false : 3} sx={{ textAlign: 'right' }}>
+        {/* Actions Grid Item */}
+        <Grid 
+          key={`${assignment._id}-actions`} 
+          size={{ xs: 12, md: isStudent ? undefined : 3 }} // If isStudent, md size is not applied
+          sx={{ textAlign: 'right' }}
+        >
             <Box sx={{ display: 'flex', justifyContent: {xs: 'flex-start', md:'flex-end'}, flexWrap: 'wrap', gap: 0.5 }}>
           {isStudent && assignment.status === 'published' && !isPastDue && onSubmitAssignment && (
             <Tooltip title="Submit Assignment">
