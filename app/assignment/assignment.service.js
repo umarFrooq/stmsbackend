@@ -36,8 +36,10 @@ const createAssignment = async (assignmentBody, user, schoolIdForRoot) => {
   if (!branch) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found or does not belong to this school.');
   }
+  console.log(grade.branchId)
+    console.log(branch._id)
   // Ensure the grade belongs to the branch
-  if (grade.branchId.toString() !== branch._id.toString()) {
+  if (grade.branchId._id.toString() != branch._id.toString()) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Grade does not belong to the specified branch.');
   }
 

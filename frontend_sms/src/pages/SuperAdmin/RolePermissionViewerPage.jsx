@@ -25,8 +25,8 @@ const mockRbacService = {
     // It's simplified here. A real backend would provide a more structured list.
     return {
       superAdmin: ['manageSystemSettings', 'manageUserAccounts', 'manageBranches', 'viewAuditLogs', 'manageRolesAndPermissions', 'ALL_ACCESS'],
-      admin: ['manageStudentEnrollment', 'manageTeacherAccounts', 'manageStudentAccounts', 'manageParentAccounts', 'manageCourseCatalog', 'manageClassScheduling', 'viewBranchReports'],
-      teacher: ['manageClassAttendanceRecords', 'enterStudentGrades', 'viewAssignedStudents', 'uploadLearningMaterials', 'viewOwnProfile'],
+      admin: ['manageStudentEnrollment',"manageOwnAssignments", 'manageTeacherAccounts', 'manageStudentAccounts', 'manageParentAccounts', 'manageCourseCatalog', 'manageClassScheduling', 'viewBranchReports'],
+      teacher: ['manageClassAttendanceRecords', 'enterStudentGrades', 'viewAssignedStudents', 'uploadLearningMaterials', 'viewOwnProfile',"manageOwnAssignments"],
       student: ['viewOwnGrades', 'viewOwnAttendance', 'viewOwnTimetable', 'accessLearningMaterials', 'viewOwnProfile'],
       parent: ['viewChildGrades', 'viewChildAttendance', 'viewChildTimetable', 'viewOwnProfile'],
     };

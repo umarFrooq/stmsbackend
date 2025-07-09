@@ -11,7 +11,7 @@ roleRights.set(roles[0], [ // student
   "manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial",
   "subject", "viewAttendances",
   // Assignment related for student
-  "viewAssignmentsGrade", "submitAssignment", "viewOwnSubmissions"
+  "viewAssignmentsGrade", "submitAssignment", "viewOwnSubmissions","viewAssignmentsGrade"
 ]);
 
 roleRights.set(roles[1], [ // teacher
