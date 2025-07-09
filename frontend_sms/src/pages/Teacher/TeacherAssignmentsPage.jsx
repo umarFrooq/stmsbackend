@@ -44,30 +44,51 @@ const TeacherAssignmentsPage = () => {
 
   const fetchTeacherAssignments = useCallback(async () => {
     setIsLoading(true);
-    setError('');
-    try {
-      let actualSchoolId = null;
-      if (user?.schoolId) {
+    setError(''); // Clear previous errors
+
+    if (!user) {
+      setError("User data is not available. Cannot fetch assignments.");
+      setIsLoading(false);
+      setAssignments([]); setTotalPages(0); setTotalResults(0);
+      return;
+    }
+    if (!user._id) {
+      setError("User ID is missing. Cannot fetch assignments.");
+      setIsLoading(false);
+      setAssignments([]); setTotalPages(0); setTotalResults(0);
+      return;
+    }
+
+    let actualSchoolId = null;
+    if (user.schoolId) {
       if (typeof user.schoolId === 'object') {
         if (user.schoolId._id) {
           actualSchoolId = user.schoolId._id;
-        } else if (user.schoolId.id) { // Check for 'id' if '_id' is not present
+        } else if (user.schoolId.id) {
           actualSchoolId = user.schoolId.id;
+        } else {
+          setError("School ID object is missing '_id' or 'id' property. Cannot fetch assignments.");
         }
         } else if (typeof user.schoolId === 'string') {
           actualSchoolId = user.schoolId;
+      } else {
+        setError("User School ID is not in a recognized format (object or string). Cannot fetch assignments.");
         }
+    } else {
+      setError("School information (user.schoolId) is missing. Cannot fetch assignments.");
       }
 
-      if (!user?._id || !actualSchoolId) {
-        setError("User ID or School information is missing. Cannot fetch assignments.");
+    if (!actualSchoolId) {
+      if (!error) { // Only set this if no more specific error was set by the checks above
+          setError("School ID could not be determined. Cannot fetch assignments.");
+      }
         setIsLoading(false);
-        setAssignments([]); // Clear assignments
-        setTotalPages(0);
-        setTotalResults(0);
-        return;
-      }
+      setAssignments([]); setTotalPages(0); setTotalResults(0);
+      return;
+    }
 
+    // If we reach here, user._id and actualSchoolId should be valid.
+    try {
       const params = {
         teacherId: user._id,
         schoolId: actualSchoolId, // Use the extracted string ID
@@ -87,33 +108,54 @@ const TeacherAssignmentsPage = () => {
       console.error('Error fetching assignments:', err);
       setError(err.message || 'Failed to fetch assignments.');
       setAssignments([]); // Clear assignments on error
-      setTotalPages(0);
-      setTotalResults(0);
+        setTotalPages(0);
+        setTotalResults(0);
     } finally {
       setIsLoading(false);
-    }
+      }
   }, [user, filters, page, limit]); // user itself is a dependency
 
   const fetchFilterDropdownData = useCallback(async () => {
+    // setError(''); // Don't clear main error, or use a separate error state for filters
+
+    if (!user) {
+      // console.warn("User data not available for filter data."); // Less critical, might not set page error
+      setSubjects([]); setGrades([]);
+      return;
+    }
+     if (!user._id) { // Though not directly used in params, good to have user fully loaded
+      // console.warn("User ID not available for filter data context.");
+      setSubjects([]); setGrades([]);
+      return;
+    }
+
     let actualSchoolIdForFilter = null;
-    if (user?.schoolId) {
+    if (user.schoolId) {
       if (typeof user.schoolId === 'object') {
         if (user.schoolId._id) {
           actualSchoolIdForFilter = user.schoolId._id;
-        } else if (user.schoolId.id) { // Check for 'id' if '_id' is not present
+        } else if (user.schoolId.id) {
           actualSchoolIdForFilter = user.schoolId.id;
+        } else {
+           console.warn("TeacherAssignmentsPage: School ID object is missing '_id' or 'id' property for filter data.");
         }
       } else if (typeof user.schoolId === 'string') {
         actualSchoolIdForFilter = user.schoolId;
+      } else {
+         console.warn("TeacherAssignmentsPage: User School ID is not in a recognized format for filter data.");
       }
+    } else {
+      console.warn("TeacherAssignmentsPage: School information (user.schoolId) is missing for filter data.");
     }
 
+
     if (!actualSchoolIdForFilter) {
-      console.warn("TeacherAssignmentsPage: School ID not available for fetching filter data.");
+      // console.warn("TeacherAssignmentsPage: School ID could not be determined for fetching filter data."); // Already logged by specific checks
       setSubjects([]);
       setGrades([]);
       return;
     }
+
     setLoadingFilterData(true);
     try {
       const subjectParams = { schoolId: actualSchoolIdForFilter, limit: 500, sortBy: 'name:asc' };

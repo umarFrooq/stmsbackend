@@ -143,13 +143,13 @@ const userSchema = new Schema({
       autopopulate: true,
       validate: {
         validator: function(v) {
-          // Conditionally required: if role is 'student', schoolId must be present
-          if (this.role === 'student') {
-            return !!v;
+          const schoolScopedRoles = ['student', 'teacher', 'admin', 'superadmin']; // Roles that need schoolId
+          if (schoolScopedRoles.includes(this.role)) {
+            return !!v; // Ensure 'v' (the schoolId value) is truthy (not null/undefined)
           }
-          return true; // Not required for other roles
+          return true; // Not required for other roles (e.g., rootUser, supplier)
         },
-        message: 'School ID is required for students.'
+        message: 'School ID is required for this role.'
       }
     },
 
