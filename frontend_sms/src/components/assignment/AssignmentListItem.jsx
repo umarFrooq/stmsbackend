@@ -57,7 +57,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
   return (
     <Paper elevation={2} sx={{ mb: 2, p: 2, '&:hover': { boxShadow: 4 } }}>
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} md={isStudent ? 9 : 7}>
+        <Grid item key={`${assignment._id}-content`} xs={12} md={isStudent ? 9 : 7}>
           <Typography variant="h6" component="div" gutterBottom>
             {onViewDetails || isStudent ? (
                  <MuiLink component={RouterLink} to={onViewDetails || `/student/assignments/${assignment._id}`} underline="hover">
@@ -81,11 +81,11 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={isStudent ? 3 : 2} sx={{ textAlign: { xs: 'left', md: 'center' }, mt: {xs: 1, md: 0} }}>
+        <Grid item key={`${assignment._id}-status`} xs={12} md={isStudent ? 3 : 2} sx={{ textAlign: { xs: 'left', md: 'center' }, mt: {xs: 1, md: 0} }}>
             {statusChip}
         </Grid>
 
-        <Grid item xs={12} md={isStudent ? false : 3} sx={{ textAlign: 'right' }}>
+        <Grid item key={`${assignment._id}-actions`} xs={12} md={isStudent ? false : 3} sx={{ textAlign: 'right' }}>
             <Box sx={{ display: 'flex', justifyContent: {xs: 'flex-start', md:'flex-end'}, flexWrap: 'wrap', gap: 0.5 }}>
           {isStudent && assignment.status === 'published' && !isPastDue && onSubmitAssignment && (
             <Tooltip title="Submit Assignment">
