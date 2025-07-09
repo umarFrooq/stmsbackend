@@ -46,9 +46,27 @@ const TeacherAssignmentsPage = () => {
     setIsLoading(true);
     setError('');
     try {
+      let actualSchoolId = null;
+      if (user?.schoolId) {
+        if (typeof user.schoolId === 'object' && user.schoolId._id) {
+          actualSchoolId = user.schoolId._id;
+        } else if (typeof user.schoolId === 'string') {
+          actualSchoolId = user.schoolId;
+        }
+      }
+
+      if (!user?._id || !actualSchoolId) {
+        setError("User ID or School information is missing. Cannot fetch assignments.");
+        setIsLoading(false);
+        setAssignments([]); // Clear assignments
+        setTotalPages(0);
+        setTotalResults(0);
+        return;
+      }
+
       const params = {
-        teacherId: user?._id, // Backend service will use this if user is teacher
-        schoolId: user?.schoolId, // Scope to teacher's school
+        teacherId: user._id,
+        schoolId: actualSchoolId, // Use the extracted string ID
         sortBy: 'dueDate:desc',
         limit,
         page,
@@ -64,14 +82,25 @@ const TeacherAssignmentsPage = () => {
     } catch (err) {
       console.error('Error fetching assignments:', err);
       setError(err.message || 'Failed to fetch assignments.');
+      setAssignments([]); // Clear assignments on error
+      setTotalPages(0);
+      setTotalResults(0);
     } finally {
       setIsLoading(false);
     }
-  }, [user?._id, user?.schoolId, filters, page, limit]);
+  }, [user, filters, page, limit]); // user itself is a dependency
 
   const fetchFilterDropdownData = useCallback(async () => {
-    const actualSchoolId = user?.schoolId?.id || user?.schoolId?._id;
-    if (!actualSchoolId) {
+    let actualSchoolIdForFilter = null;
+    if (user?.schoolId) {
+      if (typeof user.schoolId === 'object' && user.schoolId._id) {
+        actualSchoolIdForFilter = user.schoolId._id;
+      } else if (typeof user.schoolId === 'string') {
+        actualSchoolIdForFilter = user.schoolId;
+      }
+    }
+
+    if (!actualSchoolIdForFilter) {
       console.warn("TeacherAssignmentsPage: School ID not available for fetching filter data.");
       setSubjects([]);
       setGrades([]);
@@ -79,36 +108,38 @@ const TeacherAssignmentsPage = () => {
     }
     setLoadingFilterData(true);
     try {
-      const subjectParams = { schoolId: actualSchoolId, limit: 500, sortBy: 'name:asc' };
+      const subjectParams = { schoolId: actualSchoolIdForFilter, limit: 500, sortBy: 'name:asc' };
       const subjectRes = await subjectService.getSubjects(subjectParams);
       setSubjects(subjectRes.results || []);
 
-      const gradeParams = { schoolId: actualSchoolId, limit: 500, sortBy: 'title:asc' };
+      const gradeParams = { schoolId: actualSchoolIdForFilter, limit: 500, sortBy: 'title:asc' };
       const gradeRes = await gradeService.getGrades(gradeParams);
       setGrades(gradeRes.results || []);
 
     } catch (error) {
       console.error("Error fetching filter data: ", error);
-      setError("Could not load filter options.");
-      setSubjects([]); // Clear on error
-      setGrades([]);   // Clear on error
+      // setError("Could not load filter options."); // Avoid overwriting main error
+      setSubjects([]);
+      setGrades([]);
     } finally {
       setLoadingFilterData(false);
     }
-  }, [user?.schoolId?.id, user?.schoolId?._id]); // Depend on the actual ID strings
+  }, [user]); // user itself is a dependency
 
 
   useEffect(() => {
-    if (user?._id && (user?.schoolId?.id || user?.schoolId?._id)) {
+    // Fetch assignments if user object is available
+    if (user) {
       fetchTeacherAssignments();
     }
-  }, [fetchTeacherAssignments, user?._id, user?.schoolId?.id, user?.schoolId?._id]);
+  }, [fetchTeacherAssignments, user]); // user dependency handles changes in user object
 
   useEffect(() => {
-    if (user?.schoolId?.id || user?.schoolId?._id) {
+    // Fetch filter data if user object is available
+    if (user) {
       fetchFilterDropdownData();
     }
-  }, [fetchFilterDropdownData]); // fetchFilterDropdownData's dependencies cover user.schoolId.id/._id
+  }, [fetchFilterDropdownData, user]); // user dependency
 
 
   const handleEdit = (assignmentId) => {
