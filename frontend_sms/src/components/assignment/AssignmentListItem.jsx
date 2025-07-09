@@ -71,22 +71,22 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
             ) : (typeof assignment.title === 'string' ? assignment.title : "Default Title")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-            {/* <SubjectIcon fontSize="small" sx={{ mr: 0.5 }} /> */}
-            Test Subject Only
+            <SubjectIcon fontSize="small" sx={{ mr: 0.5 }} />
+            Subject: {assignment.subjectId?.name || 'N/A'} ({assignment.subjectId?.code || 'N/A'})
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-            {/* <ClassIcon fontSize="small" sx={{ mr: 0.5 }} />  */}
-            Test Grade Only
-            {/* Temporarily commenting out branch to isolate subject/grade issues first */}
-            {/* {assignment.branchId?.name ? ` (${assignment.branchId.name})` : ''} */}
+            <ClassIcon fontSize="small" sx={{ mr: 0.5 }} />
+            Grade: {assignment.gradeId?.title || 'N/A'}
+            {/* Display branch if available and relevant, e.g., for admins or if grades are not unique across branches */}
+            {/* {assignment.branchId?.name && ` (${assignment.branchId.name})`} */}
           </Typography>
           {dueDate && (
             <Typography variant="body2" color={isPastDue ? 'error.main' : 'text.secondary'} sx={{ display: 'flex', alignItems: 'center' }}>
               <EventIcon fontSize="small" sx={{ mr: 0.5 }} /> Due: {format(dueDate, 'PPpp')}
             </Typography>
           )}
-           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-            {typeof assignment.totalMarks === 'number' || typeof assignment.totalMarks === 'string' ? assignment.totalMarks : "N/A"}
+           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+            Total Marks: {typeof assignment.totalMarks === 'number' || typeof assignment.totalMarks === 'string' ? assignment.totalMarks : "N/A"}
           </Typography>
         </Grid>
 
