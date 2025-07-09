@@ -48,8 +48,12 @@ const TeacherAssignmentsPage = () => {
     try {
       let actualSchoolId = null;
       if (user?.schoolId) {
-        if (typeof user.schoolId === 'object' && user.schoolId._id) {
+      if (typeof user.schoolId === 'object') {
+        if (user.schoolId._id) {
           actualSchoolId = user.schoolId._id;
+        } else if (user.schoolId.id) { // Check for 'id' if '_id' is not present
+          actualSchoolId = user.schoolId.id;
+        }
         } else if (typeof user.schoolId === 'string') {
           actualSchoolId = user.schoolId;
         }
@@ -93,8 +97,12 @@ const TeacherAssignmentsPage = () => {
   const fetchFilterDropdownData = useCallback(async () => {
     let actualSchoolIdForFilter = null;
     if (user?.schoolId) {
-      if (typeof user.schoolId === 'object' && user.schoolId._id) {
-        actualSchoolIdForFilter = user.schoolId._id;
+      if (typeof user.schoolId === 'object') {
+        if (user.schoolId._id) {
+          actualSchoolIdForFilter = user.schoolId._id;
+        } else if (user.schoolId.id) { // Check for 'id' if '_id' is not present
+          actualSchoolIdForFilter = user.schoolId.id;
+        }
       } else if (typeof user.schoolId === 'string') {
         actualSchoolIdForFilter = user.schoolId;
       }
