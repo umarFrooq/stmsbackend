@@ -38,7 +38,7 @@ const TeacherSubmissionsListPage = () => {
     try {
       const [assignmentData, submissionsData] = await Promise.all([
         getAssignmentById(assignmentId),
-        getSubmissionsForAssignment(assignmentId),
+        getSubmissionsForAssignment(assignmentId, {}, user.id),
       ]);
       setAssignment(assignmentData);
       setSubmissions(submissionsData.results || []);
