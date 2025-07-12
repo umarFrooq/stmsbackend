@@ -36,8 +36,8 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser';
   const isStudent = user?.role === 'student';
 
-  const canEdit = (isTeacher && assignment.teacherId === user._id) || (isAdmin && user.permissions?.includes('manageAllAssignmentsSchool')); // Simplified permission check
-  const canDelete = (isTeacher && assignment.teacherId === user._id) || (isAdmin && user.permissions?.includes('manageAllAssignmentsSchool'));
+  const canEdit = (isTeacher && assignment.teacherId === user.id) || (isAdmin && user.permissions?.includes('manageAllAssignmentsSchool')); // Simplified permission check
+  const canDelete = (isTeacher && assignment.teacherId === user.id) || (isAdmin && user.permissions?.includes('manageAllAssignmentsSchool'));
   const canViewSubmissions = isTeacher || isAdmin;
 
   const dueDate = assignment.dueDate ? new Date(assignment.dueDate) : null;

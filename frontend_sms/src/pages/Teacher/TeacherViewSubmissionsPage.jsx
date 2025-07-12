@@ -50,7 +50,7 @@ const TeacherViewSubmissionsPage = () => {
       // Fetch assignment details
       const assignmentData = await getAssignmentById(assignmentId);
       // Basic check: ensure teacher is the one who created this assignment or has rights
-      if (assignmentData.teacherId?._id !== user._id && assignmentData.teacherId !== user._id) {
+      if (assignmentData.teacherId?._id !== user.id && assignmentData.teacherId !== user.id) {
           if(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'rootUser'){ // Admins can view
             setError("You are not authorized to view submissions for this assignment.");
             setIsLoading(false);

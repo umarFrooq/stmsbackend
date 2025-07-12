@@ -67,7 +67,7 @@ const StudentViewAssignmentPage = () => {
       // Check if student has already submitted this assignment
       const submissionParams = {
         assignmentId: assignmentId,
-        studentId: user._id,
+        studentId: user.id,
         limit: 1
       };
       const existingSubmissions = await getSubmissions(submissionParams);

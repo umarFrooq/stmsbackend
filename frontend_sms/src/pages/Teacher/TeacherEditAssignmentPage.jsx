@@ -23,7 +23,7 @@ const TeacherEditAssignmentPage = () => {
       // For teachers, the service getAssignmentById should scope to their school
       // and ensure they have permission (e.g. created it)
       const data = await getAssignmentById(assignmentId);
-      if (data.teacherId?._id !== user._id && data.teacherId !== user._id) { // Check both populated and non-populated ID
+      if (data.teacherId?._id !== user.id && data.teacherId !== user.id) { // Check both populated and non-populated ID
           setError("You are not authorized to edit this assignment.");
           setInitialData(null);
           return;

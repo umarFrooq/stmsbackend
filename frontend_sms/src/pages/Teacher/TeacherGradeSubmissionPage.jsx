@@ -48,7 +48,7 @@ const TeacherGradeSubmissionPage = () => {
       const subData = await getSubmissionById(submissionId);
       // Authorization: Ensure the teacher is allowed to grade this.
       // The backend service for grading will do the final check, but a client-side check is good UX.
-      if (subData.assignmentId?.teacherId?._id !== user._id && subData.assignmentId?.teacherId !== user._id) {
+      if (subData.assignmentId?.teacherId?._id !== user.id && subData.assignmentId?.teacherId !== user.id) {
            if(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'rootUser'){
              setError("You are not authorized to grade this submission.");
              setIsLoading(false);
