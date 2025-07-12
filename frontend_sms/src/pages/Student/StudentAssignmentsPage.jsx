@@ -48,8 +48,6 @@ const StudentAssignmentsPage = () => {
     setError('');
     try {
       const params = {
-        gradeId: user.gradeId, // Filter by student's grade
-        status: 'published',   // Only show published assignments
         sortBy: 'dueDate:asc', // Show upcoming due dates first
         limit,
         page,

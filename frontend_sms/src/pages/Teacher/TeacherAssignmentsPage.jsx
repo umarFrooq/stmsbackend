@@ -64,13 +64,15 @@ const TeacherAssignmentsPage = () => {
 
     try {
       const params = {
-        teacherId: user._id,
-        schoolId: actualSchoolId,
         sortBy: 'dueDate:desc',
         limit,
         page,
-        ...filters,
       };
+
+      // Add filters to params only if they have a value
+      if (filters.status) params.status = filters.status;
+      if (filters.subjectId) params.subjectId = filters.subjectId;
+      if (filters.gradeId) params.gradeId = filters.gradeId;
       const data = await getAssignments(params);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);

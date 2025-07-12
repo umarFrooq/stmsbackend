@@ -62,69 +62,46 @@ const createAssignment = async (assignmentBody, user, schoolIdForRoot) => {
  * @returns {Promise<QueryResult>}
  */
 const queryAssignments = async (filterParams, options, user) => {
-  const queryFilter = { ...filterParams };
+  const queryFilter = {};
 
-  // Role-based filtering
+  // Apply base filters from the request
+  if (filterParams.title) queryFilter.title = { $regex: filterParams.title, $options: 'i' };
+  if (filterParams.subjectId) queryFilter.subjectId = filterParams.subjectId;
+  if (filterParams.gradeId) queryFilter.gradeId = filterParams.gradeId;
+  if (filterParams.branchId) queryFilter.branchId = filterParams.branchId;
+  if (filterParams.teacherId) queryFilter.teacherId = filterParams.teacherId;
+  if (filterParams.status) queryFilter.status = filterParams.status;
+  if (filterParams.schoolId) queryFilter.schoolId = filterParams.schoolId;
+
+
+  // Role-based access control adjustments
   if (user.role === 'student') {
-    if (!user.gradeId) { // Assuming student model has gradeId
-        throw new ApiError(httpStatus.FORBIDDEN, 'You are not assigned to any grade to view assignments.');
+    if (!user.gradeId) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'You are not assigned to any grade to view assignments.');
     }
-    queryFilter.gradeId = user.gradeId;
-    // Students should only see published assignments
-    queryFilter.status = 'published';
-    // Potentially filter by subjects student is enrolled in - complex, needs subject enrollment system
-    // For now, shows all assignments for their grade.
-    // queryFilter.subjectId = { $in: user.enrolledSubjectIds };
-    if (filterParams.subjectId) { // Student can filter by a specific subject they are in
-        queryFilter.subjectId = filterParams.subjectId;
-    }
+    queryFilter.gradeId = user.gradeId; // Enforce student's grade
+    queryFilter.status = 'published';   // Students only see published assignments
   } else if (user.role === 'teacher') {
+    queryFilter.teacherId = user._id; // Teachers only see their own assignments
     queryFilter.schoolId = user.schoolId;
-    queryFilter.teacherId = user._id; // Teachers see their own assignments by default
-    // Allow teachers to see drafts they created
-    if (filterParams.status) {
-        queryFilter.status = filterParams.status;
-    } else {
-        queryFilter.status = { $in: ['published', 'draft']};
-    }
   } else if (user.role === 'admin' || user.role === 'branchAdmin') {
     queryFilter.schoolId = user.schoolId;
     if (user.role === 'branchAdmin' && user.branchId) {
-        queryFilter.branchId = user.branchId; // Branch admin sees assignments for their branch
+      queryFilter.branchId = user.branchId; // Branch admin sees assignments for their branch
     }
-    // Admins can see all statuses unless specified
-    if (filterParams.status) {
-        queryFilter.status = filterParams.status;
-    }
-  } else if (user.role === 'rootUser') {
-    // rootUser can filter by schoolId if provided, otherwise all schools
-    if (filterParams.schoolId) {
-      queryFilter.schoolId = filterParams.schoolId;
-    } else {
-        delete queryFilter.schoolId; // Important: remove if not provided to see all
-    }
-  } else {
-    throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to view assignments with these criteria.');
   }
+  // rootUser can see all assignments without restriction, so no specific filter is needed unless one is provided.
 
   // Date filtering
-  if (filterParams.dueDateFrom) {
-    queryFilter.dueDate = { ...queryFilter.dueDate, $gte: new Date(filterParams.dueDateFrom) };
+  if (filterParams.dueDateFrom || filterParams.dueDateTo) {
+    queryFilter.dueDate = {};
+    if (filterParams.dueDateFrom) {
+      queryFilter.dueDate.$gte = new Date(filterParams.dueDateFrom);
+    }
+    if (filterParams.dueDateTo) {
+      queryFilter.dueDate.$lte = new Date(filterParams.dueDateTo);
+    }
   }
-  if (filterParams.dueDateTo) {
-    queryFilter.dueDate = { ...queryFilter.dueDate, $lte: new Date(filterParams.dueDateTo) };
-  }
-
-  // Remove studentId from queryFilter if it was passed for students, as it's not a field on Assignment model
-  delete queryFilter.studentId;
-
-
-  // Default sort order if not provided
-  if (!options.sortBy) {
-    options.sortBy = 'dueDate:desc';
-  }
-
-
   const assignments = await Assignment.paginate(queryFilter, options);
   return assignments;
 };
