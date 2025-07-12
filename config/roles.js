@@ -9,9 +9,9 @@ roleRights.set(roles[0], [ // student
   'manageWishList', 'manageAddress', "managePayment", "manageVideo", "follow", "shippmentStatus",
   "changePassword", "firebaseToken",  "manageWallet", "refund", "voucher", "pushNotification","cardPayment",
   "manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial",
-  "subject", "viewAttendances","viewAssignmentsGrade",
+  "subject", "viewAttendances",
   // Assignment related for student
-  "getAssignments", "submitAssignment", "viewOwnSubmissions"
+  "getAssignments", "viewAssignmentsGrade", "submitAssignment", "viewOwnSubmissions"
 ]);
 
 roleRights.set(roles[1], [ // teacher
