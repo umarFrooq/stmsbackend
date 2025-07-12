@@ -9,9 +9,9 @@ roleRights.set(roles[0], [ // student
   'manageWishList', 'manageAddress', "managePayment", "manageVideo", "follow", "shippmentStatus",
   "changePassword", "firebaseToken",  "manageWallet", "refund", "voucher", "pushNotification","cardPayment",
   "manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial",
-  "subject", "viewAttendances","viewAssignmentsGrade",
+  "subject", "viewAttendances",
   // Assignment related for student
-  "getAssignments", "submitAssignment", "viewOwnSubmissions"
+  "getAssignments", "viewAssignmentsGrade", "submitAssignment", "viewOwnSubmissions"
 ]);
 
 roleRights.set(roles[1], [ // teacher
@@ -26,7 +26,7 @@ roleRights.set(roles[1], [ // teacher
   "manageTransaction","attendanceManagement", "viewAttendances", "testManagement","testResultManagement","subject", "viewGrades","manageAttendances",
   "viewOwnClassSchedule", // Teacher can view their own schedule
   // Assignment related for teacher
-  "manageAssignments", "getAssignments", "viewAssignmentSubmissions", "gradeSubmission"
+  "manageAssignments", "getAssignments", "manageOwnAssignments", "viewAssignmentSubmissions", "gradeSubmission"
 ]);
 
 roleRights.set(roles[2], [ // admin (School Admin)
@@ -37,7 +37,7 @@ roleRights.set(roles[2], [ // admin (School Admin)
   "gradeManagement", "viewGrades", "attendanceManagement", "viewAttendances", "testManagement","testResultManagement","manageUser","manageUsers","subject", "viewBranches",
   "manageClassSchedules", "viewClassSchedules", // School admin can manage and view all schedules in their school
   // Assignment related for admin
-  "manageAssignments", "getAssignments", "viewAllSubmissionsSchool", "gradeSubmission"
+  "manageAssignments", "getAssignments", "viewAllAssignmentsSchool", "viewAllSubmissionsSchool", "gradeSubmission"
 ]);
 
 roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple schools if system designed for it, or top-level school admin)
@@ -77,7 +77,7 @@ roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple s
   "getUsers","subject","manageUser",
   // "manageUser", "getUsers", "manageUsers", // Replaced by manageSchoolUsers, viewSchoolUsers for clarity
   // Assignment related for superadmin (assuming school-level management)
-  "manageAllAssignmentsSchool", "viewAllSubmissionsSchool", "gradeSubmission"
+  "manageAssignments", "getAssignments", "manageAllAssignmentsSchool", "viewAllSubmissionsSchool", "gradeSubmission"
 ]);
 
 roleRights.set(roles[4], [ // rootUser
