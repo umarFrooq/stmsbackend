@@ -268,9 +268,32 @@ const gradeSubmissionById = async (submissionId, gradeBody, teacher) => {
 };
 
 
+const updateSubmissionById = async (submissionId, updateBody, user) => {
+    const submission = await getSubmissionById(submissionId, user); // re-uses auth checks
+
+    // Only allow updating certain fields, e.g., marks and remarks by a teacher/admin
+    if (updateBody.obtainedMarks !== undefined) {
+        if (updateBody.obtainedMarks > submission.assignmentId.totalMarks) {
+            throw new ApiError(httpStatus.BAD_REQUEST, `Obtained marks cannot exceed total marks (${submission.assignmentId.totalMarks}).`);
+        }
+        submission.obtainedMarks = updateBody.obtainedMarks;
+        submission.status = 'graded';
+        submission.gradedDate = new Date();
+        submission.gradedBy = user._id;
+    }
+
+    if (updateBody.teacherRemarks !== undefined) {
+        submission.teacherRemarks = updateBody.teacherRemarks;
+    }
+
+    await submission.save();
+    return submission;
+};
+
 module.exports = {
   createSubmission,
   querySubmissions,
   getSubmissionById,
   gradeSubmissionById,
+  updateSubmissionById,
 };

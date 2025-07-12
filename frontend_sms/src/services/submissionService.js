@@ -100,10 +100,22 @@ export const gradeSubmission = async (submissionId, gradeData) => {
   }
 };
 
+export const updateSubmissionMarks = async (submissionId, marksData) => {
+  try {
+    if (!submissionId) throw new Error('Submission ID is required for updating marks.');
+    const response = await apiClient.patch(`${SUBMISSIONS_BASE_URL}/${submissionId}`, marksData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating marks for submission ${submissionId}:`, error.response ? error.response.data : error.message);
+    throw error.response?.data || { message: `Error updating marks for submission ${submissionId}`, error };
+  }
+};
+
 export default {
   createSubmission,
   getSubmissions,
   getSubmissionsForAssignment,
   getSubmissionById,
   gradeSubmission,
+  updateSubmissionMarks,
 };

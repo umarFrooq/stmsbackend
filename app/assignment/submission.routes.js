@@ -58,12 +58,18 @@ router.get(
 // Route: GET /submissions/:submissionId
 // Student views their own specific submission.
 // Teacher/Admin views a specific submission.
-router.get(
-    '/:submissionId',
-    auth(VIEW_OWN_SUBMISSIONS, VIEW_ASSIGNMENT_SUBMISSIONS, VIEW_ALL_SUBMISSIONS_SCHOOL, VIEW_ALL_SUBMISSIONS_ROOT),
-    validate(submissionValidation.getSubmission),
-    submissionController.getSubmissionHandler
-);
+router
+    .route('/:submissionId')
+    .get(
+        auth(VIEW_OWN_SUBMISSIONS, VIEW_ASSIGNMENT_SUBMISSIONS, VIEW_ALL_SUBMISSIONS_SCHOOL, VIEW_ALL_SUBMISSIONS_ROOT),
+        validate(submissionValidation.getSubmission),
+        submissionController.getSubmissionHandler
+    )
+    .patch(
+        auth(GRADE_SUBMISSION, VIEW_ALL_SUBMISSIONS_ROOT),
+        validate(submissionValidation.updateSubmission),
+        submissionController.updateSubmissionHandler
+    );
 
 // Route: PATCH /submissions/:submissionId/grade
 // Teacher/Admin grades a specific submission.

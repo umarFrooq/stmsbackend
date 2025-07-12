@@ -39,14 +39,15 @@ const AdminAssignmentsListPage = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    schoolId: user?.role === 'admin' ? user.schoolId : '', // Admin scoped to their school, SuperAdmin can select
-    branchId: user?.role === 'branchAdmin' ? user.branchId : '',
+    schoolId: '',
+    branchId: '',
     gradeId: '',
     subjectId: '',
     teacherId: '',
     status: '',
-    // dueDateFrom: '',
-    // dueDateTo: '',
+    studentId: '',
+    dueDateFrom: '',
+    dueDateTo: '',
   });
 
   // Data for filter dropdowns
@@ -55,6 +56,7 @@ const AdminAssignmentsListPage = () => {
   const [grades, setGrades] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [students, setStudents] = useState([]);
   const [loadingFilterData, setLoadingFilterData] = useState(false);
 
   const [page, setPage] = useState(1);
@@ -125,11 +127,18 @@ const AdminAssignmentsListPage = () => {
         const teacherRes = await userService.getUsers(teacherParams); // Assuming userService.getUsers exists
         setTeachers(teacherRes.results || []);
 
+        // Fetch students for the current school
+        const studentParams = { school: currentSchoolId, role: 'student', limit: 1000, sortBy: 'firstName:asc' };
+        const studentRes = await userService.getUsers(studentParams);
+        setStudents(studentRes.results || []);
+
+
       } else { // If no school selected (SuperAdmin/Root viewing all), clear dependent filters
         setBranches([]);
         setGrades([]);
         setSubjects([]);
         setTeachers([]);
+        setStudents([]);
       }
     } catch (err) {
       console.error("Error fetching filter data:", err);
@@ -228,6 +237,45 @@ const AdminAssignmentsListPage = () => {
               <MenuItem value="draft">Draft</MenuItem>
               <MenuItem value="archived">Archived</MenuItem>
             </TextField>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              select
+              label="Student"
+              name="studentId"
+              value={filters.studentId}
+              onChange={handleFilterChange}
+              fullWidth
+              size="small"
+              disabled={loadingFilterData || (!filters.schoolId && !user?.schoolId) || students.length === 0}
+            >
+              <MenuItem value=""><em>All Students</em></MenuItem>
+              {students.map(s => <MenuItem key={s._id} value={s._id}>{s.firstName} {s.lastName}</MenuItem>)}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              type="date"
+              label="Due Date From"
+              name="dueDateFrom"
+              value={filters.dueDateFrom}
+              onChange={handleFilterChange}
+              fullWidth
+              size="small"
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              type="date"
+              label="Due Date To"
+              name="dueDateTo"
+              value={filters.dueDateTo}
+              onChange={handleFilterChange}
+              fullWidth
+              size="small"
+              InputLabelProps={{ shrink: true }}
+            />
           </Grid>
         </Grid>
         {loadingFilterData && <CircularProgress size={20} sx={{mt:1}}/>}
