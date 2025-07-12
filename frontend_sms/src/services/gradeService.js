@@ -94,10 +94,3 @@ export const deleteGrade = async (gradeId, params = {}) => {
 // addSectionToGrade, removeSectionFromGrade, updateSectionsInGrade.
 // For now, assuming sections are managed as part of the grade create/update.
 
-export default {
-  createGrade,
-  getGrades,
-  getGradeById,
-  updateGrade,
-  deleteGrade,
-};

@@ -77,9 +77,4 @@ const markBulkAttendance = async (attendanceRecords) => {
 };
 
 
-const attendanceService = {
-  getAttendances,
-  markBulkAttendance, // Add the new function here
-};
-
-export default attendanceService;
+export { getAttendances, markBulkAttendance };

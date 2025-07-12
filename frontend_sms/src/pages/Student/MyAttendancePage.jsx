@@ -7,8 +7,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format } from 'date-fns'; // For formatting dates
 
-import attendanceService from '../../services/attendanceService';
-import subjectService from '../../services/subjectService';
+import { getAttendances } from '../../services/attendanceService';
+import { getSubjects } from '../../services/subjectService';
 import useAuthStore from '../../store/auth.store';
 
 const MyAttendancePage = () => {
@@ -62,7 +62,7 @@ const MyAttendancePage = () => {
 
     try {
       console.log(`Fetching subjects for school: ${schoolIdValue}, grade: ${gradeIdValue}`);
-      const response = await subjectService.getSubjects({
+      const response = await getSubjects({
           schoolId: schoolIdValue,
           gradeId: gradeIdValue
       });
@@ -107,7 +107,7 @@ const MyAttendancePage = () => {
         params.status = filters.status;
       }
 
-      const data = await attendanceService.getAttendances(params);
+      const data = await getAttendances(params);
       setAttendanceRecords(data.results || []);
     } catch (err) {
       console.error('Error fetching attendance:', err);
