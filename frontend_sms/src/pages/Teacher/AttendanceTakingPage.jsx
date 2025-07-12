@@ -16,7 +16,7 @@ import NotificationToast from '../../components/common/NotificationToast';
 // Real services
 import { getAttendances, markBulkAttendance } from '../../services/attendanceService';
 import { getAllUsers } from '../../services/userService'; // To get students
-import { getClassScheduleById } from '../../services/classScheduleService'; // Service to get class details by classId
+import  getClassScheduleById  from '../../services/classScheduleService'; // Service to get class details by classId
 
 import useAuthStore from '../../store/auth.store';
 

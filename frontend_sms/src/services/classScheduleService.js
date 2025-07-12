@@ -157,7 +157,7 @@ const deleteClassSchedule = async (scheduleId) => {
 };
 
 
-export {
+export default {
   getClassScheduleById,
   queryClassSchedules,
   getTeacherClassSchedules,

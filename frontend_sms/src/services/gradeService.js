@@ -6,7 +6,7 @@ import apiClient from './api';
  * Expected format: { title, levelCode?, description?, branchId, sections?, nextGradeId?, schoolIdForGrade? (if rootUser) }
  * @returns {Promise<object>} The created grade object.
  */
-export const createGrade = async (gradeData) => {
+ const createGrade = async (gradeData) => {
   try {
     // The schoolId for the grade might be implicitly handled by the backend via user context (for non-root users)
     // or explicitly passed in gradeData.schoolIdForGrade (for root users, as per backend grade.controller.js)
@@ -24,7 +24,7 @@ export const createGrade = async (gradeData) => {
  * Example: { limit: 10, page: 1, sortBy: 'title:asc', title: 'Grade 1', branchId: 'someBranchId', schoolId: 'someSchoolId' (if rootUser or specific filter) }
  * @returns {Promise<object>} Paginated list of grades. { results: [], totalResults, totalPages, page, limit }
  */
-export const getGrades = async (params = {}) => {
+ export const getGrades = async (params = {}) => {
   try {
     // For non-root users, schoolId is added by schoolScopeMiddleware or derived from user token on backend.
     // Root users might need to pass schoolId in params if they want to scope the request.
@@ -42,7 +42,7 @@ export const getGrades = async (params = {}) => {
  * @param {object} params - Optional query parameters, e.g., { populate: 'branchId,nextGradeId', schoolId: 'someSchoolId' (if rootUser) }
  * @returns {Promise<object>} The grade object.
  */
-export const getGradeById = async (gradeId, params = {}) => {
+ const getGradeById = async (gradeId, params = {}) => {
   try {
     if (!gradeId) throw new Error('Grade ID is required.');
     // schoolId for scoping by rootUser can be passed in params.
@@ -61,7 +61,7 @@ export const getGradeById = async (gradeId, params = {}) => {
  * Example: { title: "New Title", schoolIdToScopeTo? (if rootUser) }
  * @returns {Promise<object>} The updated grade object.
  */
-export const updateGrade = async (gradeId, updateData) => {
+ const updateGrade = async (gradeId, updateData) => {
   try {
     if (!gradeId) throw new Error('Grade ID is required for updating.');
     // schoolIdToScopeTo for rootUser should be in updateData if they need to specify the school scope for update.
@@ -79,7 +79,7 @@ export const updateGrade = async (gradeId, updateData) => {
  * @param {object} params - Optional query parameters, e.g., { schoolIdToScopeTo: 'someSchoolId' (if rootUser) }
  * @returns {Promise<void>}
  */
-export const deleteGrade = async (gradeId, params = {}) => {
+ const deleteGrade = async (gradeId, params = {}) => {
   try {
     if (!gradeId) throw new Error('Grade ID is required for deletion.');
     // schoolIdToScopeTo for rootUser can be passed in params.
@@ -94,3 +94,10 @@ export const deleteGrade = async (gradeId, params = {}) => {
 // addSectionToGrade, removeSectionFromGrade, updateSectionsInGrade.
 // For now, assuming sections are managed as part of the grade create/update.
 
+export default {
+  createGrade,
+  // getGrades,
+  getGradeById,
+  updateGrade,
+  deleteGrade,
+};

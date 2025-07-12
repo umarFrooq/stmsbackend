@@ -72,4 +72,4 @@ const fetchUserProfile = async () => {
 };
 
 
-export { login, logout, fetchUserProfile };
+export default { login, logout, fetchUserProfile };

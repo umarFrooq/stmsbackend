@@ -10,7 +10,7 @@ const GET_ALL_USERS_V2_URL = `${import.meta.env.VITE_API_HOST || 'http://localho
  *                          Example: { limit: 10, page: 1, role: 'admin', name: 'fullname', value: 'John' }
  * @returns {Promise<object>} The response data from the API.
  */
-export const getAllUsers = async (params) => {
+ const getAllUsers = async (params) => {
   try {
     // For this specific v2 endpoint, we use the full URL directly with apiClient
     // as its baseURL might be configured for v1.
@@ -30,7 +30,7 @@ export const getAllUsers = async (params) => {
  *                           Example: { fullname: 'Test User', email: 'test@example.com', password: 'password123', role: 'admin' }
  * @returns {Promise<object>} The response data from the API (typically the created user).
  */
-export const addUser = async (userData) => {
+ const addUser = async (userData) => {
   try {
     // This will be prefixed with apiClient's baseURL (e.g., http://localhost:3000/api/v1)
     // The backend route is POST /users
@@ -50,7 +50,7 @@ export const addUser = async (userData) => {
  *                            Example: { fullname: 'Updated Name' }
  * @returns {Promise<object>} The response data from the API (typically the updated user).
  */
-export const updateUser = async (userId, userData) => {
+ const updateUser = async (userId, userData) => {
   if (!userId) {
     throw new Error('User ID is required for updating.');
   }
@@ -71,7 +71,7 @@ export const updateUser = async (userId, userData) => {
  * @param {string} userId - The ID of the user to delete.
  * @returns {Promise<object>} The response data from the API.
  */
-export const deleteUser = async (userId) => {
+ const deleteUser = async (userId) => {
   if (!userId) {
     throw new Error('User ID is required for deletion.');
   }

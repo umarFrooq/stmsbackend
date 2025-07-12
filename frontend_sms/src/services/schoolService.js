@@ -8,7 +8,7 @@ const API_ENDPOINT = '/schools'; // Base endpoint for schools
  *                               Expected format: { nameOfSchool: string, adminEmail: string }
  * @returns {Promise<object>} A promise that resolves to the created school and admin user data.
  */
-export const createSchool = async (schoolData) => {
+ const createSchool = async (schoolData) => {
   try {
     const response = await apiClient.post(API_ENDPOINT, schoolData);
     return response.data;
@@ -24,7 +24,7 @@ export const createSchool = async (schoolData) => {
  * @returns {Promise<object>} A promise that resolves to the paginated list of schools.
  *                            Expected format: { results: [], page: number, limit: number, totalPages: number, totalResults: number }
  */
-export const getSchools = async (params = {}) => {
+ const getSchools = async (params = {}) => {
   try {
     const response = await apiClient.get(API_ENDPOINT, { params });
     return response.data; // Backend's paginate function should return this structure
@@ -39,7 +39,7 @@ export const getSchools = async (params = {}) => {
  * @param {string} schoolId - The ID of the school to fetch.
  * @returns {Promise<object>} A promise that resolves to the school data.
  */
-export const getSchoolById = async (schoolId) => {
+ const getSchoolById = async (schoolId) => {
   try {
     const response = await apiClient.get(`${API_ENDPOINT}/${schoolId}`);
     return response.data;
@@ -56,7 +56,7 @@ export const getSchoolById = async (schoolId) => {
  *                              Expected format: { nameOfSchool?: string } (or other updatable fields)
  * @returns {Promise<object>} A promise that resolves to the updated school data.
  */
-export const updateSchool = async (schoolId, schoolData) => {
+ const updateSchool = async (schoolId, schoolData) => {
   try {
     // Ensure payload matches backend expectation if 'nameOfSchool' is used in form
     // and backend expects 'name' for the school model.
@@ -74,7 +74,7 @@ export const updateSchool = async (schoolId, schoolData) => {
  * @param {string} schoolId - The ID of the school to delete.
  * @returns {Promise<void>} A promise that resolves when the school is deleted.
  */
-export const deleteSchool = async (schoolId) => {
+ const deleteSchool = async (schoolId) => {
   try {
     await apiClient.delete(`${API_ENDPOINT}/${schoolId}`);
     // DELETE requests usually return 204 No Content, so no response.data to return
