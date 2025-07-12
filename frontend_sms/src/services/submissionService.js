@@ -89,7 +89,7 @@ export const getSubmissionById = async (submissionId, params = {}) => {
  * Expected format: { obtainedMarks, teacherRemarks? }
  * @returns {Promise<object>} The updated (graded) submission object.
  */
-export const gradeSubmission = async (submissionId, gradeData) => {
+export const giveMarks = async (submissionId, gradeData) => {
   try {
     if (!submissionId) throw new Error('Submission ID is required for grading.');
     const response = await apiClient.patch(`${SUBMISSIONS_BASE_URL}/${submissionId}/grade`, gradeData);

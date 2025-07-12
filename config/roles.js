@@ -41,7 +41,7 @@ roleRights.set(roles[2], [ // admin (School Admin)
 ]);
 
 roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple schools if system designed for it, or top-level school admin)
-  // Profile & Basic SMANAGE_ASSIGNENToMMENTSchool Details
+  // Profile & Basic School Details
   "manageProfile",
   "manageOwnSchoolDetails", // General config for their own school (if superadmin is tied to one school) or manages all schools
   // User Management within their school(s)

@@ -11,12 +11,13 @@ const router = express.Router();
 // Permissions
 const MANAGE_ASSIGNMENTS = 'manageAssignments';
 const GET_ASSIGNMENTS = 'getAssignments';
+
 router.use(auth(), schoolScopeMiddleware);
 
 router
   .route('/')
   .post(
-    auth(MANAGE_ASSIGNMENTS),
+    auth(MANAGE_ASSIGNENToMMENTS),
     validate(assignmentValidation.createAssignment),
     assignmentController.createAssignmentHandler
   )
