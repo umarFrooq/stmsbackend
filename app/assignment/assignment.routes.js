@@ -17,7 +17,7 @@ router.use(auth(), schoolScopeMiddleware);
 router
   .route('/')
   .post(
-    auth(MANAGE_ASSIGNENToMMENTS),
+    auth(MANAGE_ASSIGNMENTS),
     validate(assignmentValidation.createAssignment),
     assignmentController.createAssignmentHandler
   )
