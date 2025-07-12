@@ -35,7 +35,7 @@ const TeacherEditAssignmentPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [assignmentId, user?._id]);
+  }, [assignmentId, user?.id]);
 
   useEffect(() => {
     fetchAssignmentDetails();

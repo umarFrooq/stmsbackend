@@ -66,7 +66,7 @@ const TeacherGradeSubmissionPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [submissionId, user?._id, user?.role]);
+  }, [submissionId, user?.id, user?.role]);
 
   useEffect(() => {
     fetchSubmissionDetails();

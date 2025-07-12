@@ -80,7 +80,7 @@ const TeacherViewSubmissionsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [assignmentId, user?._id, user?.role, filters, page, limit]);
+  }, [assignmentId, user?.id, user?.role, filters, page, limit]);
 
   useEffect(() => {
     fetchAssignmentAndSubmissions();

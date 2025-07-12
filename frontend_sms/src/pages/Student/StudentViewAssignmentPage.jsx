@@ -44,7 +44,7 @@ const StudentViewAssignmentPage = () => {
   const [submitSuccess, setSubmitSuccess] = useState('');
 
   const fetchAssignmentAndSubmissionStatus = useCallback(async () => {
-    if (!user?._id || !assignmentId) return;
+    if (!user?.id || !assignmentId) return;
     setIsLoading(true);
     setError('');
     setMySubmission(null);
@@ -80,7 +80,7 @@ const StudentViewAssignmentPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [assignmentId, user?._id, user?.gradeId]);
+  }, [assignmentId, user?.id, user?.gradeId]);
 
   useEffect(() => {
     fetchAssignmentAndSubmissionStatus();
