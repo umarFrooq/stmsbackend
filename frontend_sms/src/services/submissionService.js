@@ -52,7 +52,7 @@ export const getSubmissions = async (params = {}) => {
  * @param {object} params - Optional query parameters (e.g., limit, page, sortBy, status).
  * @returns {Promise<object>} Paginated list of submissions for the assignment.
  */
-export const getSubmissionsForAssignment = async (assignmentId, params = {}) => {
+export const getSubmissionsByAssignment = async (assignmentId, params = {}) => {
   try {
     if (!assignmentId) throw new Error('Assignment ID is required.');
     const response = await apiClient.get(`${ASSIGNMENTS_BASE_URL}/${assignmentId}${SUBMISSIONS_BASE_URL}`, { params });
@@ -98,12 +98,4 @@ export const gradeSubmission = async (submissionId, gradeData) => {
     console.error(`Error grading submission ${submissionId}:`, error.response ? error.response.data : error.message);
     throw error.response?.data || { message: `Error grading submission ${submissionId}`, error };
   }
-};
-
-export default {
-  createSubmission,
-  getSubmissions,
-  getSubmissionsForAssignment,
-  getSubmissionById,
-  gradeSubmission,
 };
