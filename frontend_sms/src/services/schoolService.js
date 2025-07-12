@@ -84,10 +84,3 @@ export const deleteSchool = async (schoolId) => {
   }
 };
 
-export {
-  createSchool,
-  getSchools,
-  getSchoolById,
-  updateSchool,
-  deleteSchool,
-};

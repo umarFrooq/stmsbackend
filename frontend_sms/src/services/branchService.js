@@ -29,5 +29,3 @@ export const getAllBranches = async (queryParams = {}) => {
 
 // TODO: Add other branch service functions if needed (create, update, delete, getById)
 // For now, focusing on the query function for the list page.
-
-export { getAllBranches };
