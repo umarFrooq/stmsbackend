@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { assignmentService } from '../../services/assignmentService';
+import { getAssignments } from '../../services/assignmentService';
 
 const AssignmentPage = () => {
   const [assignments, setAssignments] = useState([]);
@@ -9,7 +9,7 @@ const AssignmentPage = () => {
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
-        const data = await assignmentService.getAssignments();
+        const data = await getAssignments();
         setAssignments(data.results);
         setLoading(false);
       } catch (error) {

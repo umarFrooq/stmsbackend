@@ -83,10 +83,3 @@ export const deleteAssignment = async (assignmentId) => {
   }
 };
 
-export default {
-  createAssignment,
-  getAssignments,
-  getAssignmentById,
-  updateAssignment,
-  deleteAssignment,
-};

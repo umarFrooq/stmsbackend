@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { assignmentService } from '../../services/assignmentService';
-import { subjectService } from '../../services/subjectService';
-import { gradeService } from '../../services/gradeService';
+import { getAssignmentById, createAssignment, updateAssignment } from '../../services/assignmentService';
+import { getSubjects } from '../../services/subjectService';
+import { getGrades } from '../../services/gradeService';
 
 const AssignmentForm = () => {
   const { assignmentId } = useParams();
@@ -24,8 +24,8 @@ const AssignmentForm = () => {
     const fetchDependencies = async () => {
       try {
         const [subjectsData, gradesData] = await Promise.all([
-          subjectService.getSubjects(),
-          gradeService.getGrades(),
+          getSubjects(),
+          getGrades(),
         ]);
         setSubjects(subjectsData.results);
         setGrades(gradesData.results);
@@ -38,7 +38,7 @@ const AssignmentForm = () => {
 
     if (!isNewAssignment) {
       setLoading(true);
-      assignmentService.getAssignmentById(assignmentId)
+      getAssignmentById(assignmentId)
         .then((data) => {
           setAssignment({
             ...data,
@@ -62,9 +62,9 @@ const AssignmentForm = () => {
     setLoading(true);
     try {
       if (isNewAssignment) {
-        await assignmentService.createAssignment(assignment);
+        await createAssignment(assignment);
       } else {
-        await assignmentService.updateAssignment(assignmentId, assignment);
+        await updateAssignment(assignmentId, assignment);
       }
       navigate('/teacher/assignments');
     } catch (error) {

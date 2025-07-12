@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { assignmentService } from '../../services/assignmentService';
-import { submissionService } from '../../services/submissionService';
+import { getAssignmentById } from '../../services/assignmentService';
+import { getSubmissionsByAssignment, giveMarks } from '../../services/submissionService';
 
 const AssignmentDetailsPage = () => {
   const { assignmentId } = useParams();
@@ -13,9 +13,9 @@ const AssignmentDetailsPage = () => {
   useEffect(() => {
     const fetchAssignmentDetails = async () => {
       try {
-        const assignmentData = await assignmentService.getAssignmentById(assignmentId);
+        const assignmentData = await getAssignmentById(assignmentId);
         setAssignment(assignmentData);
-        const submissionsData = await submissionService.getSubmissionsByAssignment(assignmentId);
+        const submissionsData = await getSubmissionsByAssignment(assignmentId);
         setSubmissions(submissionsData.results);
         setLoading(false);
       } catch (error) {
@@ -33,9 +33,9 @@ const AssignmentDetailsPage = () => {
 
   const handleGiveMarks = async (submissionId) => {
     try {
-      await submissionService.giveMarks(submissionId, { obtainedMarks: marks[submissionId] });
+      await giveMarks(submissionId, { obtainedMarks: marks[submissionId] });
       // Refresh submissions
-      const submissionsData = await submissionService.getSubmissionsByAssignment(assignmentId);
+      const submissionsData = await getSubmissionsByAssignment(assignmentId);
       setSubmissions(submissionsData.results);
     } catch (error) {
       console.error('Error giving marks:', error);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { submissionService } from '../../services/submissionService';
+import { getSubmissionById } from '../../services/submissionService';
 
 const SubmissionDetails = () => {
   const { submissionId } = useParams();
@@ -10,7 +10,7 @@ const SubmissionDetails = () => {
   useEffect(() => {
     const fetchSubmission = async () => {
       try {
-        const data = await submissionService.getSubmissionById(submissionId);
+        const data = await getSubmissionById(submissionId);
         setSubmission(data);
         setLoading(false);
       } catch (error) {
