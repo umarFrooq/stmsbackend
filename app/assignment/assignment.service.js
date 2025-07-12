@@ -121,9 +121,6 @@ const getAssignmentById = async (assignmentId, user, populateOptionsStr) => {
     mongoQuery.status = 'published'; // Students can only access published assignments
   } else if (user.role === 'teacher') {
     mongoQuery.schoolId = user.schoolId;
-    // A teacher should be able to get any assignment in their school if needed for reference,
-    // but typically they'd interact most with their own.
-    // mongoQuery.teacherId = user._id; // Uncomment if teachers can ONLY see their own
   } else if (user.role === 'admin' || user.role === 'branchAdmin') {
     mongoQuery.schoolId = user.schoolId;
     if (user.role === 'branchAdmin' && user.branchId) {
@@ -132,7 +129,6 @@ const getAssignmentById = async (assignmentId, user, populateOptionsStr) => {
   } else if (user.role !== 'rootUser') {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to view this assignment.');
   }
-  // rootUser has no school/grade restrictions here
 
   let findQuery = Assignment.findOne(mongoQuery);
   if (populateOptionsStr) {
@@ -142,12 +138,32 @@ const getAssignmentById = async (assignmentId, user, populateOptionsStr) => {
         else { findQuery = findQuery.populate(path); }
     });
   }
-  const assignment = await findQuery.exec();
 
+  const assignment = await findQuery.exec();
 
   if (!assignment) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Assignment not found or not accessible.');
   }
+
+  // If the user is a teacher, populate the submissions for the assignment.
+  if (user.role === 'teacher') {
+    await assignment.populate({
+      path: 'submissions',
+      populate: {
+        path: 'studentId',
+        select: 'firstName lastName email',
+      },
+    }).execPopulate();
+  }
+
+  // If the user is a student, populate their own submission for the assignment.
+  if (user.role === 'student') {
+    await assignment.populate({
+      path: 'submissions',
+      match: { studentId: user._id },
+    }).execPopulate();
+  }
+
   return assignment;
 };
 

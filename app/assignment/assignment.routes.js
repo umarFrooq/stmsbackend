@@ -4,30 +4,25 @@ const validate = require('../../middlewares/validate');
 const schoolScopeMiddleware = require('../middlewares/schoolScope.middleware');
 const assignmentValidation = require('./assignment.validations');
 const assignmentController = require('./assignment.controller');
+const { assignmentSpecificSubmissionRouter } = require('./submission.routes');
 
 const router = express.Router();
 
-// Permissions (these should be defined in your RBAC system)
-const MANAGE_OWN_ASSIGNMENTS = 'manageOwnAssignments'; // For teachers: CRUD on their own assignments
-const VIEW_ALL_ASSIGNMENTS_SCHOOL = 'viewAllAssignmentsSchool'; // For admins: Read all assignments in their school
-const VIEW_ASSIGNMENTS_BRANCH = 'viewAssignmentsBranch'; // For branchAdmins: Read assignments in their branch
-const VIEW_ASSIGNMENTS_GRADE = 'viewAssignmentsGrade'; // For students: Read assignments for their grade
-const MANAGE_ALL_ASSIGNMENTS_SCHOOL = 'manageAllAssignmentsSchool'; // For admins to manage any assignment in their school
-const MANAGE_ALL_ASSIGNMENTS_ROOT = 'manageAllAssignmentsRoot'; // For rootUser to manage any assignment
+// Permissions
+const MANAGE_ASSIGNMENTS = 'manageAssignments';
+const GET_ASSIGNMENTS = 'getAssignments';
 
-// Apply auth and schoolScope middleware to all /assignments routes
-// Specific permissions will be checked per route.
-router.use(auth(), schoolScopeMiddleware); // schoolScopeMiddleware will extract schoolId for non-root users
+router.use(auth(), schoolScopeMiddleware);
 
 router
   .route('/')
   .post(
-    auth('manageAssignments'),
+    auth(MANAGE_ASSIGNENToMMENTS),
     validate(assignmentValidation.createAssignment),
     assignmentController.createAssignmentHandler
   )
   .get(
-    auth('getAssignments'),
+    auth(GET_ASSIGNMENTS),
     validate(assignmentValidation.getAssignments),
     assignmentController.getAssignmentsHandler
   );
@@ -35,19 +30,22 @@ router
 router
   .route('/:assignmentId')
   .get(
-    auth('getAssignments'),
+    auth(GET_ASSIGNMENTS),
     validate(assignmentValidation.getAssignment),
     assignmentController.getAssignmentHandler
   )
   .patch(
-    auth('manageAssignments'),
+    auth(MANAGE_ASSIGNMENTS),
     validate(assignmentValidation.updateAssignment),
     assignmentController.updateAssignmentHandler
   )
   .delete(
-    auth('manageAssignments'),
+    auth(MANAGE_ASSIGNMENTS),
     validate(assignmentValidation.deleteAssignment),
     assignmentController.deleteAssignmentHandler
   );
+
+// Nest submission routes under /:assignmentId/submissions
+router.use('/:assignmentId/submissions', assignmentSpecificSubmissionRouter);
 
 module.exports = router;

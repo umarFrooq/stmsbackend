@@ -15,15 +15,13 @@ import MyClassesPageTeacher from '../pages/Teacher/MyClassesPage';
 import AttendanceTakingPageTeacher from '../pages/Teacher/AttendanceTakingPage';
 import GradeEntryPageTeacher from '../pages/Teacher/GradeEntryPage'; // Added
 // Teacher Assignment Pages
-import TeacherAssignmentsPage from '../pages/Teacher/TeacherAssignmentsPage.jsx';
-import TeacherCreateAssignmentPage from '../pages/Teacher/TeacherCreateAssignmentPage.jsx';
-import TeacherEditAssignmentPage from '../pages/Teacher/TeacherEditAssignmentPage.jsx';
-import TeacherViewSubmissionsPage from '../pages/Teacher/TeacherViewSubmissionsPage.jsx';
-import TeacherGradeSubmissionPage from '../pages/Teacher/TeacherGradeSubmissionPage.jsx';
+import AssignmentPage from '../pages/Teacher/AssignmentPage.jsx';
+import AssignmentDetailsPage from '../pages/Teacher/AssignmentDetailsPage.jsx';
+import AssignmentForm from '../pages/Teacher/AssignmentForm.jsx';
 
 // Student Assignment Pages
-import StudentAssignmentsPage from '../pages/Student/StudentAssignmentsPage.jsx';
-import StudentViewAssignmentPage from '../pages/Student/StudentViewAssignmentPage.jsx';
+import SubmissionForm from '../pages/Student/SubmissionForm.jsx';
+import SubmissionDetails from '../components/assignment/SubmissionDetails.jsx';
 
 
 // Admin Pages
@@ -211,12 +209,11 @@ const AppRouter = () => {
             <Route path="class/:classId/grades" element={<GradeEntryPageTeacher />} /> {/* Added */}
 
             {/* Teacher Assignment Routes */}
-            <Route path="assignments" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherAssignmentsPage /></ProtectedRoute>} />
-            <Route path="assignments/new" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherCreateAssignmentPage /></ProtectedRoute>} />
-            <Route path="assignments/edit/:assignmentId" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherEditAssignmentPage /></ProtectedRoute>} />
-            <Route path="assignments/:assignmentId/submissions" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherViewSubmissionsPage /></ProtectedRoute>} />
-            {/* Teacher grading their own assignment's submissions */}
-            <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
+            <Route path="assignments" element={<ProtectedRoute permission="manageOwnAssignments"><AssignmentPage /></ProtectedRoute>} />
+            <Route path="assignments/new" element={<ProtectedRoute permission="manageOwnAssignments"><AssignmentForm /></ProtectedRoute>} />
+            <Route path="assignments/:assignmentId/edit" element={<ProtectedRoute permission="manageOwnAssignments"><AssignmentForm /></ProtectedRoute>} />
+            <Route path="assignments/:assignmentId" element={<ProtectedRoute permission="manageOwnAssignments"><AssignmentDetailsPage /></ProtectedRoute>} />
+            <Route path="submissions/:submissionId" element={<ProtectedRoute permission="gradeSubmission"><SubmissionDetails /></ProtectedRoute>} />
 
           </Route>
 
@@ -226,10 +223,8 @@ const AppRouter = () => {
             element={<ProtectedRoute roles={['student', 'superadmin']}><Outlet /></ProtectedRoute>}
           >
             <Route index element={<StudentDashboardPage />} />
-            {/* <Route path="grades" element={<StudentGradesPage />} /> */}
-            <Route path="assignments" element={<ProtectedRoute permission="viewAssignmentsGrade"><StudentAssignmentsPage /></ProtectedRoute>} />
-            <Route path="assignments/:assignmentId" element={<ProtectedRoute permission="viewAssignmentsGrade"><StudentViewAssignmentPage /></ProtectedRoute>} />
-            {/* Submission form is part of StudentViewAssignmentPage */}
+            <Route path="assignments/:assignmentId/submit" element={<ProtectedRoute permission="submitAssignment"><SubmissionForm /></ProtectedRoute>} />
+            <Route path="submissions/:submissionId" element={<ProtectedRoute permission="viewOwnSubmissions"><SubmissionDetails /></ProtectedRoute>} />
             <Route
               path="my-attendance"
               element={

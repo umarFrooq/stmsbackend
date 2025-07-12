@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { toJSON, paginate } = require("../../utils/mongoose"); // Assuming these utils exist
+const { toJSON, paginate } = require("../../utils/mongoose");
 const autopopulate = require("mongoose-autopopulate");
 
 const assignmentSchema = new mongoose.Schema(
@@ -17,25 +17,25 @@ const assignmentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subject",
       required: true,
-      autopopulate: { select: 'name code' }, // Autopopulate subject name and code
+      autopopulate: { select: 'name code' },
     },
-    teacherId: { // The user ID of the teacher who created the assignment
+    teacherId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      autopopulate: { select: 'firstName lastName email' }, // Autopopulate teacher details
+      autopopulate: { select: 'firstName lastName email' },
     },
     gradeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Grade",
       required: true,
-      autopopulate: { select: 'title levelCode' }, // Autopopulate grade title and level code
+      autopopulate: { select: 'title levelCode' },
     },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Branch",
       required: true,
-      autopopulate: { select: 'name branchCode' }, // Autopopulate branch name and code
+      autopopulate: { select: 'name branchCode' },
     },
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -56,57 +56,48 @@ const assignmentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    lateSubmissionPenaltyPercentage: { // Optional: Penalty percentage if late submission is allowed
+    lateSubmissionPenaltyPercentage: {
       type: Number,
       min: 0,
       max: 100,
       default: 0,
       validate: {
         validator: function(v) {
-          // This validator is only relevant if allowLateSubmission is true
           return !this.allowLateSubmission || (this.allowLateSubmission && v >= 0 && v <= 100);
         },
         message: 'Penalty percentage must be between 0 and 100 if late submissions are allowed.'
       }
     },
-    fileAttachments: [ // Optional files attached by the teacher for the assignment
+    fileAttachments: [
       {
         fileName: String,
-        filePath: String, // URL or path to the file
+        filePath: String,
         fileType: String,
       }
     ],
-    status: { // e.g., 'draft', 'published', 'archived'
+    status: {
         type: String,
         enum: ['draft', 'published', 'archived'],
         default: 'published',
     }
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt timestamps
+    timestamps: true,
   }
 );
 
-// Add plugins
-assignmentSchema.plugin(toJSON);
-assignmentSchema.plugin(paginate);
 assignmentSchema.plugin(autopopulate);
 
-// Indexes
+assignmentSchema.virtual('submissions', {
+  ref: 'Submission',
+  localField: '_id',
+  foreignField: 'assignmentId',
+});
+
 assignmentSchema.index({ schoolId: 1, gradeId: 1, subjectId: 1 });
 assignmentSchema.index({ teacherId: 1 });
 assignmentSchema.index({ dueDate: 1 });
 
-/**
- * Check if an assignment with the same title already exists for the same teacher, subject, and grade.
- * This is a basic example; uniqueness constraints can be more complex.
- * @param {string} title - The assignment's title
- * @param {ObjectId} teacherId - The ID of the teacher
- * @param {ObjectId} subjectId - The ID of the subject
- * @param {ObjectId} gradeId - The ID of the grade
- * @param {ObjectId} [excludeAssignmentId] - The ID of the assignment to be excluded (e.g., when updating)
- * @returns {Promise<boolean>}
- */
 assignmentSchema.statics.isTitleTaken = async function (title, teacherId, subjectId, gradeId, excludeAssignmentId) {
   const query = { title, teacherId, subjectId, gradeId };
   if (excludeAssignmentId) {
