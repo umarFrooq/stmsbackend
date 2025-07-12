@@ -102,14 +102,6 @@ const queryAssignments = async (filterParams, options, user) => {
       queryFilter.dueDate.$lte = new Date(filterParams.dueDateTo);
     }
   }
-
-  // Handle studentId filter
-  if (filterParams.studentId) {
-    const submissions = await Submission.find({ studentId: filterParams.studentId }).select('assignmentId');
-    const assignmentIds = submissions.map(s => s.assignmentId);
-    queryFilter._id = { $in: assignmentIds };
-  }
-
   const assignments = await Assignment.paginate(queryFilter, options);
   return assignments;
 };

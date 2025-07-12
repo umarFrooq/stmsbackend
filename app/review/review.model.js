@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const { toJSON, paginate } = require("../../utils/mongoose");
 const mongoose_delete = require('mongoose-delete');
 const { reviewType } = require("./review.enums");
-const { reportActions } = require("../../config/enums");
+const { reportActions } = require("@/config/enums");
 
 const autopopulate = require("mongoose-autopopulate");
 const { type } = require("@/utils/redis/redis");

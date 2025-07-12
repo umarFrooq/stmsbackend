@@ -60,12 +60,12 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
       <Grid container spacing={2} alignItems="center">
         {/* Content Grid Item */}
         <Grid 
-          key={`${assignment.id}-content`}
+          key={`${assignment._id}-content`}
           size={{ xs: 12, md: isStudent ? 9 : 7 }}
         >
           <Typography variant="h6" component="div" gutterBottom>
             {onViewDetails || isStudent ? (
-                 <MuiLink component={RouterLink} to={onViewDetails || `/student/assignments/${assignment.id}`} underline="hover">
+                 <MuiLink component={RouterLink} to={onViewDetails || `/student/assignments/${assignment._id}`} underline="hover">
                     {typeof assignment.title === 'string' ? assignment.title : "Default Title"}
                  </MuiLink>
             ) : (typeof assignment.title === 'string' ? assignment.title : "Default Title")}
@@ -92,7 +92,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
 
         {/* Status Grid Item */}
         <Grid 
-          key={`${assignment.id}-status`}
+          key={`${assignment._id}-status`}
           size={{ xs: 12, md: isStudent ? 3 : 2 }}
           sx={{ textAlign: { xs: 'left', md: 'center' }, mt: {xs: 1, md: 0} }}
         >
@@ -101,7 +101,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
 
         {/* Actions Grid Item */}
         <Grid 
-          key={`${assignment.id}-actions`}
+          key={`${assignment._id}-actions`}
           size={{ xs: 12, md: isStudent ? undefined : 3 }} // If isStudent, md size is not applied
           sx={{ textAlign: 'right' }}
         >
@@ -113,9 +113,9 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
                 color="primary"
                 size="small"
                 startIcon={<CloudUploadIcon />}
-                onClick={() => onSubmitAssignment(assignment.id)}
+                onClick={() => onSubmitAssignment(assignment._id)}
                 component={RouterLink}
-                to={`/student/assignments/${assignment.id}/submit`} // Or just trigger a modal
+                to={`/student/assignments/${assignment._id}/submit`} // Or just trigger a modal
               >
                 Submit
               </Button>
@@ -128,9 +128,9 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
                 color="warning"
                 size="small"
                 startIcon={<CloudUploadIcon />}
-                onClick={() => onSubmitAssignment(assignment.id)}
+                onClick={() => onSubmitAssignment(assignment._id)}
                 component={RouterLink}
-                to={`/student/assignments/${assignment.id}/submit`}
+                to={`/student/assignments/${assignment._id}/submit`}
               >
                 Submit Late
               </Button>
@@ -141,9 +141,9 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
             <Tooltip title="View Submissions">
               <IconButton
                 color="info"
-                onClick={() => onViewSubmissions(assignment.id)}
+                onClick={() => onViewSubmissions(assignment._id)}
                 component={RouterLink}
-                to={`/teacher/assignments/${assignment.id}/submissions`} // Example route
+                to={`/teacher/assignments/${assignment._id}/submissions`} // Example route
               >
                 <GradingIcon />
               </IconButton>
@@ -151,14 +151,14 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
           )}
           {canEdit && onEdit && (
             <Tooltip title="Edit Assignment">
-              <IconButton color="primary" onClick={() => onEdit(assignment.id)}>
+              <IconButton color="primary" onClick={() => onEdit(assignment._id)}>
                 <EditIcon />
               </IconButton>
             </Tooltip>
           )}
           {canDelete && onDelete && (
             <Tooltip title="Delete Assignment">
-              <IconButton color="error" onClick={() => onDelete(assignment.id)}>
+              <IconButton color="error" onClick={() => onDelete(assignment._id)}>
                 <DeleteIcon />
               </IconButton>
             </Tooltip>
@@ -166,7 +166,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
           {/* Generic View Details for admins if not primary action */}
           {isAdmin && onViewDetails && !canViewSubmissions && (
              <Tooltip title="View Details">
-              <IconButton color="default" onClick={() => onViewDetails(assignment.id)}>
+              <IconButton color="default" onClick={() => onViewDetails(assignment._id)}>
                 <VisibilityIcon />
               </IconButton>
             </Tooltip>

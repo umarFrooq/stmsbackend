@@ -20,7 +20,6 @@ import TeacherCreateAssignmentPage from '../pages/Teacher/TeacherCreateAssignmen
 import TeacherEditAssignmentPage from '../pages/Teacher/TeacherEditAssignmentPage.jsx';
 import TeacherViewSubmissionsPage from '../pages/Teacher/TeacherViewSubmissionsPage.jsx';
 import TeacherGradeSubmissionPage from '../pages/Teacher/TeacherGradeSubmissionPage.jsx';
-import TeacherSubmissionsListPage from '../pages/Teacher/TeacherSubmissionsListPage.jsx';
 
 // Student Assignment Pages
 import StudentAssignmentsPage from '../pages/Student/StudentAssignmentsPage.jsx';
@@ -216,7 +215,6 @@ const AppRouter = () => {
             <Route path="assignments/new" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherCreateAssignmentPage /></ProtectedRoute>} />
             <Route path="assignments/edit/:assignmentId" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherEditAssignmentPage /></ProtectedRoute>} />
             <Route path="assignments/:assignmentId/submissions" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherViewSubmissionsPage /></ProtectedRoute>} />
-            <Route path="assignments/:assignmentId/submissions/list" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherSubmissionsListPage /></ProtectedRoute>} />
             {/* Teacher grading their own assignment's submissions */}
             <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
 

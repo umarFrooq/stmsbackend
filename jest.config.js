@@ -7,7 +7,4 @@ module.exports = {
   restoreMocks: true,
   coveragePathIgnorePatterns: ['node_modules', 'config', 'server.js', 'tests'],
   coverageReporters: ['text', 'lcov', 'clover', 'html'],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
-  },
 };

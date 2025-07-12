@@ -39,15 +39,14 @@ const AdminAssignmentsListPage = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    schoolId: '',
-    branchId: '',
+    schoolId: user?.role === 'admin' ? user.schoolId : '', // Admin scoped to their school, SuperAdmin can select
+    branchId: user?.role === 'branchAdmin' ? user.branchId : '',
     gradeId: '',
     subjectId: '',
     teacherId: '',
     status: '',
-    studentId: '',
-    dueDateFrom: '',
-    dueDateTo: '',
+    // dueDateFrom: '',
+    // dueDateTo: '',
   });
 
   // Data for filter dropdowns
@@ -56,7 +55,6 @@ const AdminAssignmentsListPage = () => {
   const [grades, setGrades] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [students, setStudents] = useState([]);
   const [loadingFilterData, setLoadingFilterData] = useState(false);
 
   const [page, setPage] = useState(1);
@@ -76,19 +74,13 @@ const AdminAssignmentsListPage = () => {
         page,
         ...filters, // Spread all current filters
       };
-      const filteredParams = Object.entries(filters).reduce((acc, [key, value]) => {
-        if (value) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+      // Ensure schoolId is passed if not superadmin/root selecting "all schools"
+      if (!isSuperAdminOrRoot && !params.schoolId && user?.schoolId) {
+          params.schoolId = user.schoolId;
+      }
+      if (params.schoolId === '') delete params.schoolId; // Don't send empty schoolId for root if "All" is chosen
 
-      const data = await getAssignments({
-        sortBy: 'dueDate:desc',
-        limit,
-        page,
-        ...filteredParams,
-      });
+      const data = await getAssignments(params);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {
@@ -108,41 +100,36 @@ const AdminAssignmentsListPage = () => {
   const fetchDropdownData = useCallback(async () => {
     setLoadingFilterData(true);
     try {
+      const currentSchoolId = filters.schoolId || (isSuperAdminOrRoot ? '' : user?.schoolId);
+
       if (isSuperAdminOrRoot) {
         const schoolRes = await schoolService.getAllSchools({ limit: 500, sortBy: 'name:asc' }); // Assuming this service exists
         setSchools(schoolRes.results || []);
       }
 
-      const schoolId = filters.schoolId || (user?.role === 'admin' ? user.schoolId : '');
-
-      if (schoolId) {
-        const branchParams = { schoolId, limit: 200, sortBy: 'name:asc' };
+      if (currentSchoolId) {
+        const branchParams = { schoolId: currentSchoolId, limit: 200, sortBy: 'name:asc' };
         const branchRes = await branchService.getBranches(branchParams);
         setBranches(branchRes.results || []);
 
-        const gradeParams = { schoolId, limit: 500, sortBy: 'title:asc' };
+        const gradeParams = { schoolId: currentSchoolId, limit: 500, sortBy: 'title:asc' };
         const gradeRes = await gradeService.getGrades(gradeParams);
         setGrades(gradeRes.results || []);
 
-        const subjectParams = { schoolId, limit: 500, sortBy: 'name:asc' };
+        const subjectParams = { schoolId: currentSchoolId, limit: 500, sortBy: 'name:asc' };
         const subjectRes = await subjectService.getSubjects(subjectParams);
         setSubjects(subjectRes.results || []);
 
         // Fetch users with role 'teacher' for the current school
-        const teacherParams = { school: schoolId, role: 'teacher', limit: 500, sortBy: 'firstName:asc' };
+        const teacherParams = { school: currentSchoolId, role: 'teacher', limit: 500, sortBy: 'firstName:asc' };
         const teacherRes = await userService.getUsers(teacherParams); // Assuming userService.getUsers exists
         setTeachers(teacherRes.results || []);
 
-        // Fetch students for the current school
-        const studentParams = { school: schoolId, role: 'student', limit: 1000, sortBy: 'firstName:asc' };
-        const studentRes = await userService.getUsers(studentParams);
-        setStudents(studentRes.results || []);
-      } else {
+      } else { // If no school selected (SuperAdmin/Root viewing all), clear dependent filters
         setBranches([]);
         setGrades([]);
         setSubjects([]);
         setTeachers([]);
-        setStudents([]);
       }
     } catch (err) {
       console.error("Error fetching filter data:", err);
@@ -150,7 +137,7 @@ const AdminAssignmentsListPage = () => {
     } finally {
       setLoadingFilterData(false);
     }
-  }, [user, isSuperAdminOrRoot, filters.schoolId]);
+  }, [user?.schoolId, isSuperAdminOrRoot, filters.schoolId]);
 
   useEffect(() => {
     fetchDropdownData();
@@ -241,45 +228,6 @@ const AdminAssignmentsListPage = () => {
               <MenuItem value="draft">Draft</MenuItem>
               <MenuItem value="archived">Archived</MenuItem>
             </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              select
-              label="Student"
-              name="studentId"
-              value={filters.studentId}
-              onChange={handleFilterChange}
-              fullWidth
-              size="small"
-              disabled={loadingFilterData || (!filters.schoolId && !user?.schoolId) || students.length === 0}
-            >
-              <MenuItem value=""><em>All Students</em></MenuItem>
-              {students.map(s => <MenuItem key={s._id} value={s._id}>{s.firstName} {s.lastName}</MenuItem>)}
-            </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              type="date"
-              label="Due Date From"
-              name="dueDateFrom"
-              value={filters.dueDateFrom}
-              onChange={handleFilterChange}
-              fullWidth
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              type="date"
-              label="Due Date To"
-              name="dueDateTo"
-              value={filters.dueDateTo}
-              onChange={handleFilterChange}
-              fullWidth
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
           </Grid>
         </Grid>
         {loadingFilterData && <CircularProgress size={20} sx={{mt:1}}/>}

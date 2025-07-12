@@ -52,20 +52,9 @@ const gradeSubmission = {
   }).min(1), // At least obtainedMarks or teacherRemarks should be provided for grading
 };
 
-const updateSubmission = {
-    params: Joi.object().keys({
-        submissionId: Joi.string().custom(objectId).required(),
-    }),
-    body: Joi.object().keys({
-        obtainedMarks: Joi.number().min(0),
-        teacherRemarks: Joi.string().trim().allow(null, '').max(5000),
-    }).min(1),
-};
-
 module.exports = {
   createSubmission,
   getSubmissions,
   getSubmission,
   gradeSubmission,
-  updateSubmission,
 };

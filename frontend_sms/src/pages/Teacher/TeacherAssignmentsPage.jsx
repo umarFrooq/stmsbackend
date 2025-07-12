@@ -194,8 +194,7 @@ const TeacherAssignmentsPage = () => {
   };
 
   const handleViewSubmissions = (assignmentId) => {
-    console.log('assignmentId:', assignmentId);
-    navigate(`/teacher/assignments/${assignmentId}/submissions/list`);
+    navigate(`/teacher/assignments/${assignmentId}/submissions`);
   };
 
   const handleFilterChange = (event) => {

@@ -52,14 +52,10 @@ export const getSubmissions = async (params = {}) => {
  * @param {object} params - Optional query parameters (e.g., limit, page, sortBy, status).
  * @returns {Promise<object>} Paginated list of submissions for the assignment.
  */
-export const getSubmissionsForAssignment = async (assignmentId, params = {}, teacherId) => {
+export const getSubmissionsForAssignment = async (assignmentId, params = {}) => {
   try {
     if (!assignmentId) throw new Error('Assignment ID is required.');
-    const newParams = { ...params };
-    if (teacherId) {
-      newParams.teacherId = teacherId;
-    }
-    const response = await apiClient.get(`${ASSIGNMENTS_BASE_URL}/${assignmentId}${SUBMISSIONS_BASE_URL}`, { params: newParams });
+    const response = await apiClient.get(`${ASSIGNMENTS_BASE_URL}/${assignmentId}${SUBMISSIONS_BASE_URL}`, { params });
     return response.data;
   } catch (error) {
     console.error(`Error fetching submissions for assignment ${assignmentId}:`, error.response ? error.response.data : error.message);
@@ -104,22 +100,10 @@ export const gradeSubmission = async (submissionId, gradeData) => {
   }
 };
 
-export const updateSubmissionMarks = async (submissionId, marksData) => {
-  try {
-    if (!submissionId) throw new Error('Submission ID is required for updating marks.');
-    const response = await apiClient.patch(`${SUBMISSIONS_BASE_URL}/${submissionId}`, marksData);
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating marks for submission ${submissionId}:`, error.response ? error.response.data : error.message);
-    throw error.response?.data || { message: `Error updating marks for submission ${submissionId}`, error };
-  }
-};
-
 export default {
   createSubmission,
   getSubmissions,
   getSubmissionsForAssignment,
   getSubmissionById,
   gradeSubmission,
-  updateSubmissionMarks,
 };

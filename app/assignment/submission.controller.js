@@ -46,16 +46,9 @@ const gradeSubmissionHandler = catchAsync(async (req, res) => {
   res.send(submission);
 });
 
-const updateSubmissionHandler = catchAsync(async (req, res) => {
-    const { submissionId } = req.params;
-    const submission = await submissionService.updateSubmissionById(submissionId, req.body, req.user);
-    res.send(submission);
-});
-
 module.exports = {
   createSubmissionHandler,
   getSubmissionsHandler,
   getSubmissionHandler,
   gradeSubmissionHandler,
-  updateSubmissionHandler,
 };

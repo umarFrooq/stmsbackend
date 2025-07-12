@@ -81,11 +81,25 @@ const querySubmissions = async (filterParams, options, user) => {
     }
   } else if (user.role === 'teacher') {
     // Teachers can view submissions for assignments they created or assignments in their school/branch/grade
-    if (filterParams.assignmentId) {
+    if (!filterParams.assignmentId && !filterParams.schoolId && !filterParams.gradeId) {
+         // If no specific assignmentId, teacher must be scoped to their assignments by default
+         // This requires getting all assignment IDs for that teacher first.
+         const teacherAssignments = await Assignment.find({ teacherId: user._id, schoolId: user.schoolId }).select('_id');
+         const assignmentIds = teacherAssignments.map(a => a._id);
+         if (assignmentIds.length === 0) { // Teacher has no assignments
+             return { results: [], page: 1, limit: options.limit, totalPages: 0, totalResults: 0 };
+         }
+         queryFilter.assignmentId = { $in: assignmentIds };
+    } else if (filterParams.assignmentId) {
+        // Verify teacher has access to this specific assignment's submissions
         const assignment = await Assignment.findById(filterParams.assignmentId);
-        if (!assignment || assignment.teacherId.toString() !== user._id.toString()) {
-            throw new ApiError(httpStatus.FORBIDDEN, "You are not authorized to view submissions for this assignment.");
+        if (!assignment || assignment.schoolId.toString() !== user.schoolId.toString()) {
+            throw new ApiError(httpStatus.FORBIDDEN, "You cannot view submissions for this assignment.");
         }
+        // Optionally, restrict further to only assignments created by this teacher:
+        // if (assignment.teacherId.toString() !== user._id.toString()) {
+        //   throw new ApiError(httpStatus.FORBIDDEN, "You can only view submissions for your own assignments.");
+        // }
     } else { // Teacher is querying generally, scope to their school
         const schoolAssignments = await Assignment.find({ schoolId: user.schoolId }).select('_id');
         const schoolAssignmentIds = schoolAssignments.map(a => a._id);
@@ -181,9 +195,13 @@ const getSubmissionById = async (submissionId, user, populateOptionsStr) => {
   } else if (user.role === 'teacher') {
     // Teacher must be associated with the assignment (either created it or in the same school)
     const assignment = await Assignment.findById(submission.assignmentId._id); // submission.assignmentId is populated
-    if (!assignment || assignment.teacherId.toString() !== user._id.toString()) {
-      throw new ApiError(httpStatus.FORBIDDEN, "You are not authorized to view this submission.");
+    if (!assignment || assignment.schoolId.toString() !== user.schoolId.toString()) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to view this submission.');
     }
+    // Optional: Restrict to only teacher of the assignment
+    // if (assignment.teacherId._id.toString() !== user._id.toString()) {
+    //   throw new ApiError(httpStatus.FORBIDDEN, "You can only view submissions for your assignments.");
+    // }
   } else if (user.role === 'admin' || user.role === 'branchAdmin') {
     const assignment = await Assignment.findById(submission.assignmentId._id);
      if (!assignment || assignment.schoolId.toString() !== user.schoolId.toString()) {

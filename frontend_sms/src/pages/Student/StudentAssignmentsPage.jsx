@@ -28,8 +28,8 @@ const StudentAssignmentsPage = () => {
 
   const [filters, setFilters] = useState({
     subjectId: '',
-    dueDateFrom: '',
-    dueDateTo: '',
+    // dueDateFrom: '', // Could add date filters if needed
+    // dueDateTo: '',
   });
   const [subjects, setSubjects] = useState([]); // Subjects student is enrolled in or all for their grade
   const [loadingFilterData, setLoadingFilterData] = useState(false);
@@ -53,9 +53,7 @@ const StudentAssignmentsPage = () => {
         page,
       };
       if (filters.subjectId) params.subjectId = filters.subjectId;
-      if (filters.dueDateFrom) params.dueDateFrom = filters.dueDateFrom;
-      if (filters.dueDateTo) params.dueDateTo = filters.dueDateTo;
-
+      // Add other filters like date range if implemented
 
       const data = await getAssignments(params);
       setAssignments(data.results || []);
@@ -69,27 +67,37 @@ const StudentAssignmentsPage = () => {
   }, [user?.gradeId, filters, page, limit]);
 
   const fetchStudentSubjects = useCallback(async () => {
-    if (user?.enrolledSubjects && user.enrolledSubjects.length > 0) {
-      setSubjects(user.enrolledSubjects);
-      return;
-    }
-
-    // Fallback to fetching subjects by grade if not in user object
+    // This logic depends on how student's subjects are determined.
+    // Option 1: Student object has enrolledSubjectIds.
+    // Option 2: Fetch all subjects for the student's gradeId.
+    // For now, assume fetching subjects for the student's grade.
     if (!user?.gradeId || !user?.schoolId?._id) {
+      // console.warn("User schoolId or schoolId._id is not available for fetching subjects.");
+      // Optionally set an error or return if this data is critical for proceeding
       return;
     }
 
     setLoadingFilterData(true);
     try {
-      const subjectParams = { schoolId: user.schoolId._id, gradeId: user.gradeId, limit: 200, sortBy: 'name:asc' };
-      const subjectsForGrade = await subjectService.getSubjects(subjectParams);
-      setSubjects(subjectsForGrade.results || []);
+      // This might need a specific endpoint or adjustment if subjects are directly linked to students
+      // or if we just show all subjects available for their grade in that school.
+      // const subjectParams = { schoolId: user.schoolId._id, gradeId: user.gradeId, limit: 200, sortBy: 'name:asc' };
+      // The backend getSubjects might need to support gradeId filter or we filter from all school subjects.
+      // Let's assume for now subjectService.getSubjects can take gradeId or we fetch all school subjects and let user filter.
+      // For simplicity, we can use the same subjectService.getSubjects as teachers, assuming student has access to these subjects.
+      // A more robust solution would be to have a list of subjects the student is specifically enrolled in.
+      const schoolSubjects = await subjectService.getSubjects({ schoolId: user.schoolId._id, limit: 500 });
+      // TODO: Filter these subjects based on student's actual enrollment if that data is available.
+      // For now, showing all subjects in the school as an example.
+      setSubjects(schoolSubjects.results || []);
+
     } catch (error) {
       console.error("Error fetching student's subjects: ", error);
+      // setError("Could not load subject filter options."); // Don't overwrite main error
     } finally {
       setLoadingFilterData(false);
     }
-  }, [user]);
+  }, [user?.gradeId, user?.schoolId?._id]);
 
 
   useEffect(() => {
@@ -147,30 +155,7 @@ const StudentAssignmentsPage = () => {
             </TextField>
              {loadingFilterData && <CircularProgress size={20} sx={{mt:1}}/>}
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              type="date"
-              label="Due Date From"
-              name="dueDateFrom"
-              value={filters.dueDateFrom}
-              onChange={handleFilterChange}
-              fullWidth
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              type="date"
-              label="Due Date To"
-              name="dueDateTo"
-              value={filters.dueDateTo}
-              onChange={handleFilterChange}
-              fullWidth
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
+          {/* Add Date Filters if needed */}
         </Grid>
       </Paper>
 
