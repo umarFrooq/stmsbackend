@@ -45,7 +45,7 @@ const TeacherAssignmentsPage = () => {
   const fetchTeacherAssignments = useCallback(async () => {
     setIsLoading(true);
     setError('');
-    if (!user?._id || !user?.schoolId) {
+    if (!user?.id || !user?.schoolId) {
       setError('User ID or School ID is missing. Cannot fetch assignments.');
       setIsLoading(false);
       setAssignments([]);
@@ -96,7 +96,7 @@ const TeacherAssignmentsPage = () => {
       setSubjects([]); setGrades([]);
       return;
     }
-     if (!user._id) { // Though not directly used in params, good to have user fully loaded
+     if (!user.id) { // Though not directly used in params, good to have user fully loaded
       // console.warn("User ID not available for filter data context.");
       setSubjects([]); setGrades([]);
       return;
