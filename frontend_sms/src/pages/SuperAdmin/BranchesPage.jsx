@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Container, Typography, Alert, Snackbar } from '@mui/material';
 import BranchList from '../../components/branch/BranchList.jsx';
 import BranchForm from '../../components/branch/BranchForm.jsx';
-import { getBranches, createBranch, updateBranch, deleteBranch as deleteBranchApi } from '../../services/branchApi.js';
+import { branchApi } from '../../services';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Box, Grid } from '@mui/material'; // Added imports for filter UI
 import debounce from 'lodash.debounce'; // For debouncing search input
 
@@ -52,7 +52,7 @@ const BranchesPage = () => {
         params.type = currentType;
       }
 
-      const data = await getBranches(params);
+      const data = await branchApi.getBranches(params);
       setBranches(data.results || []);
       setTotalBranches(data.totalResults || 0);
     } catch (err) {
@@ -126,7 +126,7 @@ const BranchesPage = () => {
     if (window.confirm('Are you sure you want to delete this branch?')) {
       setLoading(true); // Can use a specific loading state for delete if preferred
       try {
-        await deleteBranchApi(branchId);
+        await branchApi.deleteBranch(branchId);
         setSnackbar({ open: true, message: 'Branch deleted successfully!', severity: 'success' });
         fetchBranchesList(); // Refresh list
       } catch (err) {
@@ -140,10 +140,10 @@ const BranchesPage = () => {
     setLoading(true); // Indicate loading state for form submission
     try {
       if (editingBranch) {
-        await updateBranch(editingBranch.id || editingBranch._id, branchData); // Handle _id from mongo
+        await branchApi.updateBranch(editingBranch.id || editingBranch._id, branchData); // Handle _id from mongo
         setSnackbar({ open: true, message: 'Branch updated successfully!', severity: 'success' });
       } else {
-        await createBranch(branchData);
+        await branchApi.createBranch(branchData);
         setSnackbar({ open: true, message: 'Branch created successfully!', severity: 'success' });
       }
       setShowForm(false);

@@ -25,8 +25,7 @@ import HourglassDisabledIcon from '@mui/icons-material/HourglassDisabled';
 
 import SubmissionForm from '../../components/assignment/SubmissionForm';
 import SubmissionListItem from '../../components/assignment/SubmissionListItem'; // To display their own submission
-import { getAssignmentById } from '../../services/assignmentService';
-import { createSubmission, getSubmissions } from '../../services/submissionService'; // getSubmissions to check existing
+import { assignmentService, submissionService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 import { format } from 'date-fns';
 
@@ -51,7 +50,7 @@ const StudentViewAssignmentPage = () => {
     try {
       // Fetch assignment details
       // Service should ensure student can only access assignments for their grade and are published
-      const assignmentData = await getAssignmentById(assignmentId);
+      const assignmentData = await assignmentService.getAssignmentById(assignmentId);
        if (assignmentData.gradeId?._id !== user.gradeId && assignmentData.gradeId !== user.gradeId) {
            setError("This assignment is not intended for your grade.");
            setIsLoading(false);
@@ -70,7 +69,7 @@ const StudentViewAssignmentPage = () => {
         studentId: user.id,
         limit: 1
       };
-      const existingSubmissions = await getSubmissions(submissionParams);
+      const existingSubmissions = await submissionService.getSubmissions(submissionParams);
       if (existingSubmissions.results && existingSubmissions.results.length > 0) {
         setMySubmission(existingSubmissions.results[0]);
       }
@@ -91,7 +90,7 @@ const StudentViewAssignmentPage = () => {
     setSubmitError('');
     setSubmitSuccess('');
     try {
-      const newSubmission = await createSubmission(assignmentId, formData);
+      const newSubmission = await submissionService.createSubmission(assignmentId, formData);
       setMySubmission(newSubmission); // Update view with the new submission
       setSubmitSuccess('Assignment submitted successfully!');
       // Optionally, navigate away or disable form

@@ -18,8 +18,7 @@ import {
 import { Formik, Form } from 'formik'; // Removed Field as it's not directly used
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
-import { getAllBranches } from '../../services/branchService';
-import gradeService from '../../services/gradeService'; // Import grade service
+import { branchService, gradeService } from '../../services';
 import useAuthStore from '../../store/auth.store'; // To get current user/school context
 
 const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) => {
@@ -52,7 +51,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     if (open) {
       setLoadingBranches(true);
       setBranchError(null);
-      getAllBranches() // This should ideally be scoped by school if not already
+      branchService.getAllBranches() // This should ideally be scoped by school if not already
         .then((response) => { // Renamed to 'response' for clarity
           setAvailableBranches(response && response.results ? response.results : []);
         })

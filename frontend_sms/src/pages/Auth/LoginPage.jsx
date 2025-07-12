@@ -10,7 +10,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import authService from '../../services/auth.service';
+import { authService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 const LoginPage = () => {

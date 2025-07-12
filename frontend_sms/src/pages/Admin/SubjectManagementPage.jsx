@@ -14,10 +14,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import NotificationToast from '../../components/common/NotificationToast';
 
-import subjectService from '../../services/subjectService';
-import gradeService from '../../services/gradeService';
-import userService from '../../services/userService';
-import branchService from '../../services/branchService'; // Assuming you have this
+import { subjectService, gradeService, userService, branchService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 

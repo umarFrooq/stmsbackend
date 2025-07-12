@@ -20,13 +20,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 // import DeleteIcon from '@mui/icons-material/Delete'; // If admin can delete
 
 import AssignmentListItem from '../../components/assignment/AssignmentListItem'; // Reusable component
-import { getAssignments } from '../../services/assignmentService';
-// Assuming services to fetch filter data
-import schoolService from '../../services/schoolService';   // For SuperAdmin/RootAdmin school filter
-import branchService from '../../services/branchService';
-import gradeService from '../../services/gradeService';
-import subjectService from '../../services/subjectService';
-import userService from '../../services/userService'; // To fetch teachers for filter
+import { assignmentService, schoolService, branchService, gradeService, subjectService, userService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 const AdminAssignmentsListPage = () => {
@@ -80,7 +74,7 @@ const AdminAssignmentsListPage = () => {
       }
       if (params.schoolId === '') delete params.schoolId; // Don't send empty schoolId for root if "All" is chosen
 
-      const data = await getAssignments(params);
+      const data = await assignmentService.getAssignments(params);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {
@@ -103,13 +97,13 @@ const AdminAssignmentsListPage = () => {
       const currentSchoolId = filters.schoolId || (isSuperAdminOrRoot ? '' : user?.schoolId);
 
       if (isSuperAdminOrRoot) {
-        const schoolRes = await schoolService.getAllSchools({ limit: 500, sortBy: 'name:asc' }); // Assuming this service exists
+        const schoolRes = await schoolService.getSchools({ limit: 500, sortBy: 'name:asc' }); // Assuming this service exists
         setSchools(schoolRes.results || []);
       }
 
       if (currentSchoolId) {
         const branchParams = { schoolId: currentSchoolId, limit: 200, sortBy: 'name:asc' };
-        const branchRes = await branchService.getBranches(branchParams);
+        const branchRes = await branchApi.getBranches(branchParams);
         setBranches(branchRes.results || []);
 
         const gradeParams = { schoolId: currentSchoolId, limit: 500, sortBy: 'title:asc' };
@@ -122,7 +116,7 @@ const AdminAssignmentsListPage = () => {
 
         // Fetch users with role 'teacher' for the current school
         const teacherParams = { school: currentSchoolId, role: 'teacher', limit: 500, sortBy: 'firstName:asc' };
-        const teacherRes = await userService.getUsers(teacherParams); // Assuming userService.getUsers exists
+        const teacherRes = await userService.getAllUsers(teacherParams); // Assuming userService.getUsers exists
         setTeachers(teacherRes.results || []);
 
       } else { // If no school selected (SuperAdmin/Root viewing all), clear dependent filters

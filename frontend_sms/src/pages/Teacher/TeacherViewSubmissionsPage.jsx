@@ -17,8 +17,7 @@ import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import SubmissionListItem from '../../components/assignment/SubmissionListItem';
-import { getSubmissionsForAssignment } from '../../services/submissionService';
-import { getAssignmentById } from '../../services/assignmentService';
+import { submissionService, assignmentService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 import { format } from 'date-fns';
 
@@ -48,7 +47,7 @@ const TeacherViewSubmissionsPage = () => {
     setError('');
     try {
       // Fetch assignment details
-      const assignmentData = await getAssignmentById(assignmentId);
+      const assignmentData = await assignmentService.getAssignmentById(assignmentId);
       // Basic check: ensure teacher is the one who created this assignment or has rights
       if (assignmentData.teacherId?._id !== user.id && assignmentData.teacherId !== user.id) {
           if(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'rootUser'){ // Admins can view
@@ -69,7 +68,7 @@ const TeacherViewSubmissionsPage = () => {
       if (filters.status) submissionParams.status = filters.status;
       // if (filters.studentName) submissionParams.studentName = filters.studentName; // Add if backend supports
 
-      const submissionsData = await getSubmissionsForAssignment(assignmentId, submissionParams);
+      const submissionsData = await submissionService.getSubmissionsByAssignment(assignmentId, submissionParams);
       setSubmissions(submissionsData.results || []);
       setTotalPages(submissionsData.totalPages || 0);
       setTotalResults(submissionsData.totalResults || 0);

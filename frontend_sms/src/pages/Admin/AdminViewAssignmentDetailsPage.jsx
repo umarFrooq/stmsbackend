@@ -22,8 +22,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArticleIcon from '@mui/icons-material/Article';
 
 import SubmissionListItem from '../../components/assignment/SubmissionListItem';
-import { getSubmissionsForAssignment } from '../../services/submissionService';
-import { getAssignmentById } from '../../services/assignmentService';
+import { submissionService, assignmentService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 import { format } from 'date-fns';
 
@@ -47,7 +46,7 @@ const AdminViewAssignmentDetailsPage = () => {
     setError('');
     try {
       // Fetch assignment details - admin should have access within their scope (schoolId or all for root)
-      const assignmentData = await getAssignmentById(assignmentId, {
+      const assignmentData = await assignmentService.getAssignmentById(assignmentId, {
           // For root/superadmin, if they selected a school in a previous filter,
           // that schoolId might need to be passed if getAssignmentById service requires it for scoping.
           // However, assignmentId is globally unique, so it might not be needed if permissions are right.
@@ -61,7 +60,7 @@ const AdminViewAssignmentDetailsPage = () => {
           limit,
           page
       };
-      const submissionsData = await getSubmissionsForAssignment(assignmentId, submissionParams);
+      const submissionsData = await submissionService.getSubmissionsByAssignment(assignmentId, submissionParams);
       setSubmissions(submissionsData.results || []);
       setTotalPages(submissionsData.totalPages || 0);
 

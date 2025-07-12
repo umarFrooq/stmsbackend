@@ -3,7 +3,7 @@ import { Container, Typography, Paper, Grid, Card, CardContent, CardActions, But
 import { Link as RouterLink } from 'react-router-dom';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import useAuthStore from '../../store/auth.store'; // To get logged-in teacher's ID
-import classScheduleService from '../../services/classScheduleService'; // Real service
+import { classScheduleService } from '../../services';
 
 const MyClassesPage = () => {
   const [myClasses, setMyClasses] = useState([]);

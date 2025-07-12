@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { createSubmission } from '../../services/submissionService';
+import { submissionService } from '../../services';
 
 const SubmissionForm = () => {
   const { assignmentId } = useParams();
@@ -28,7 +28,7 @@ const SubmissionForm = () => {
     formData.append('assignmentId', assignmentId);
 
     try {
-      await createSubmission(assignmentId, formData);
+      await submissionService.createSubmission(assignmentId, formData);
       navigate(`/student/assignments/${assignmentId}`);
     } catch (error) {
       console.error('Error submitting assignment:', error);

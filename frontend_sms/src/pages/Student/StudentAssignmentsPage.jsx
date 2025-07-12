@@ -14,8 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import AssignmentListItem from '../../components/assignment/AssignmentListItem'; // Student version will have different actions
-import { getAssignments } from '../../services/assignmentService';
-import subjectService from '../../services/subjectService'; // Placeholder for student's subjects
+import { assignmentService, subjectService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 const StudentAssignmentsPage = () => {
@@ -55,7 +54,7 @@ const StudentAssignmentsPage = () => {
       if (filters.subjectId) params.subjectId = filters.subjectId;
       // Add other filters like date range if implemented
 
-      const data = await getAssignments(params);
+      const data = await assignmentService.getAssignments(params);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {

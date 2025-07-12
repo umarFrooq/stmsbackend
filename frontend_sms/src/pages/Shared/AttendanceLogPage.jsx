@@ -24,9 +24,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NotificationToast from '../../components/common/NotificationToast';
 
 // Services
-import attendanceService from '../../services/attendanceService';
-import userService from '../../services/userService';
-import gradeService from '../../services/gradeService';
+import { attendanceService, userService, gradeService } from '../../services';
 // import branchService from '../../services/branchService'; // Uncomment if branch filter is added
 // import subjectService from '../../services/subjectService'; // For subject filter if added
 

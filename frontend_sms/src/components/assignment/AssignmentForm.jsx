@@ -23,9 +23,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FileUploadIcon from '@mui/icons-material/FileUpload'; // Placeholder for actual upload
 
 // Services (assuming they exist and are structured similarly to gradeService)
-import subjectService from '../../services/subjectService'; // Placeholder
-import gradeService from '../../services/gradeService';     // Placeholder
-import branchService from '../../services/branchService';   // Placeholder
+import { subjectService, gradeService, branchService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 // Helper to check if a value is an object and not null

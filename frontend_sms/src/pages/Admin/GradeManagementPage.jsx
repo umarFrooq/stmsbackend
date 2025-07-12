@@ -12,7 +12,7 @@ import GradeFormDialog from '../../components/grade/GradeFormDialog';
 import NotificationToast from '../../components/common/NotificationToast';
 import useAuthStore from '../../store/auth.store';
 
-import gradeService from '../../services/gradeService'; // Assuming default export
+import { gradeService } from '../../services';
 
 const GradeManagementPage = () => {
   const [grades, setGrades] = useState([]);

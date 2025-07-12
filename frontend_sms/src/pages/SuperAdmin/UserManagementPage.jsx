@@ -12,8 +12,7 @@ import NotificationToast from '../../components/common/NotificationToast';
 import { TextField } from '@mui/material'; // Removed InputAdornment, SearchIcon if not used directly here
 import debounce from 'lodash.debounce';
 
-import userService from '../../services/userService';
-import { getGrades as fetchGradesService } from '../../services/gradeService'; // Import grade service
+import { userService, gradeService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 // Assuming branchApi.js will be used for fetching branches for filter
 // import { getBranches as fetchBranchesForFilterService } from '../../services/branchApi';
@@ -137,7 +136,7 @@ const UserManagementPage = () => {
     const gradeParams = { limit: 500, sortBy: 'title:asc' };
     const fetchGradeListForFilter = async () => {
       try {
-        const gradesResponse = await fetchGradesService(gradeParams);
+        const gradesResponse = await gradeService.getGrades(gradeParams);
         setAvailableGrades(gradesResponse.results || []);
       } catch (e) {
         showToast('Failed to load grades for filter.', 'error');

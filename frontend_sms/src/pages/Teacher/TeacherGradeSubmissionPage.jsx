@@ -21,7 +21,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArticleIcon from '@mui/icons-material/Article';
 import SaveIcon from '@mui/icons-material/Save';
 
-import { getSubmissionById, gradeSubmission } from '../../services/submissionService';
+import { submissionService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 import { format } from 'date-fns';
 
@@ -45,7 +45,7 @@ const TeacherGradeSubmissionPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      const subData = await getSubmissionById(submissionId);
+      const subData = await submissionService.getSubmissionById(submissionId);
       // Authorization: Ensure the teacher is allowed to grade this.
       // The backend service for grading will do the final check, but a client-side check is good UX.
       if (subData.assignmentId?.teacherId?._id !== user.id && subData.assignmentId?.teacherId !== user.id) {
@@ -97,7 +97,7 @@ const TeacherGradeSubmissionPage = () => {
 
 
     try {
-      await gradeSubmission(submissionId, {
+      await submissionService.gradeSubmission(submissionId, {
         obtainedMarks: marks,
         teacherRemarks: gradeData.teacherRemarks,
       });

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Typography, Box, Alert, CircularProgress, Paper } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import AssignmentForm from '../../components/assignment/AssignmentForm';
-import { getAssignmentById, updateAssignment } from '../../services/assignmentService';
+import { assignmentService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 const TeacherEditAssignmentPage = () => {
@@ -22,7 +22,7 @@ const TeacherEditAssignmentPage = () => {
     try {
       // For teachers, the service getAssignmentById should scope to their school
       // and ensure they have permission (e.g. created it)
-      const data = await getAssignmentById(assignmentId);
+      const data = await assignmentService.getAssignmentById(assignmentId);
       if (data.teacherId?._id !== user.id && data.teacherId !== user.id) { // Check both populated and non-populated ID
           setError("You are not authorized to edit this assignment.");
           setInitialData(null);
@@ -55,7 +55,7 @@ const TeacherEditAssignmentPage = () => {
 
 
     try {
-      const updatedAssignment = await updateAssignment(assignmentId, updateData);
+      const updatedAssignment = await assignmentService.updateAssignment(assignmentId, updateData);
       setSuccess(`Assignment "${updatedAssignment.title}" updated successfully!`);
       // Optionally, update initialData if user might make further edits without navigating away
       // setInitialData(updatedAssignment);

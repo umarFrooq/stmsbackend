@@ -21,8 +21,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 
-import { getAllBranches } from '../../services/branchService'; // To fetch branches
-import { getGrades } from '../../services/gradeService'; // To fetch other grades for 'Next Grade'
+import { branchService, gradeService } from '../../services';
 
 const GradeFormDialog = ({ open, onClose, grade, onSubmit, currentSchoolId }) => {
   const isEditing = Boolean(grade);
@@ -39,7 +38,7 @@ const GradeFormDialog = ({ open, onClose, grade, onSubmit, currentSchoolId }) =>
       // Fetch Branches
       setLoadingBranches(true);
       setBranchError(null);
-      getAllBranches() // Assuming this fetches branches relevant to the current user/school context
+      branchService.getAllBranches() // Assuming this fetches branches relevant to the current user/school context
         .then((branches) => {
           setAvailableBranches(branches || []);
         })
@@ -57,7 +56,7 @@ const GradeFormDialog = ({ open, onClose, grade, onSubmit, currentSchoolId }) =>
       setNextGradeError(null);
       // Pass currentSchoolId if available, backend service for getGrades should handle scoping
       const gradeParams = currentSchoolId ? { schoolId: currentSchoolId, limit: 200 } : { limit: 200 };
-      getGrades(gradeParams)
+      gradeService.getGrades(gradeParams)
         .then((response) => {
           // Filter out the current grade being edited from the list of next possible grades
           const filteredGrades = response.results.filter(g => g.id !== grade?.id);

@@ -14,14 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import SubmissionListItem from '../../components/assignment/SubmissionListItem';
-import { getSubmissions } from '../../services/submissionService';
-// Assuming services to fetch filter data
-import schoolService from '../../services/schoolService';
-import branchService from '../../services/branchService';
-import gradeService from '../../services/gradeService';
-import subjectService from '../../services/subjectService'; // To filter by assignment's subject
-import userService from '../../services/userService'; // To filter by student or teacher
-import assignmentService from '../../services/assignmentService'; // To filter by assignment
+import { submissionService, schoolService, branchService, gradeService, subjectService, userService, assignmentService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 const AdminViewSubmissionsPage = () => {
@@ -77,7 +70,7 @@ const AdminViewSubmissionsPage = () => {
       if (params.schoolId === '') delete params.schoolId;
 
 
-      const data = await getSubmissions(params); // General getSubmissions endpoint
+      const data = await submissionService.getSubmissions(params); // General getSubmissions endpoint
       setSubmissions(data.results || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {
@@ -99,17 +92,17 @@ const AdminViewSubmissionsPage = () => {
         const currentSchoolId = filters.schoolId || (isSuperAdminOrRoot ? '' : user?.schoolId);
 
         if (isSuperAdminOrRoot) {
-            const schoolRes = await schoolService.getAllSchools({ limit: 500, sortBy: 'name:asc' });
+            const schoolRes = await schoolService.getSchools({ limit: 500, sortBy: 'name:asc' });
             setSchools(schoolRes.results || []);
         }
 
         if (currentSchoolId) {
             const commonParams = { schoolId: currentSchoolId, limit: 500 };
             const [branchRes, gradeRes, subjectRes, studentRes, assignmentRes] = await Promise.all([
-                branchService.getBranches({ ...commonParams, sortBy: 'name:asc' }),
+                branchApi.getBranches({ ...commonParams, sortBy: 'name:asc' }),
                 gradeService.getGrades({ ...commonParams, sortBy: 'title:asc' }),
                 subjectService.getSubjects({ ...commonParams, sortBy: 'name:asc' }),
-                userService.getUsers({ school: currentSchoolId, role: 'student', ...commonParams, sortBy: 'firstName:asc' }),
+                userService.getAllUsers({ school: currentSchoolId, role: 'student', ...commonParams, sortBy: 'firstName:asc' }),
                 assignmentService.getAssignments({ schoolId: currentSchoolId, limit:1000, sortBy: 'title:asc', status:'published' }) // For assignment filter
             ]);
             setBranches(branchRes.results || []);

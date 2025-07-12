@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Container, Typography, Box, Alert, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AssignmentForm from '../../components/assignment/AssignmentForm';
-import { createAssignment } from '../../services/assignmentService';
+import { assignmentService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 const TeacherCreateAssignmentPage = () => {
@@ -28,7 +28,7 @@ const TeacherCreateAssignmentPage = () => {
     // For rootUser creating, schoolId would be passed in formData.schoolId or a separate prop to AssignmentForm
 
     try {
-      const newAssignment = await createAssignment(assignmentData);
+      const newAssignment = await assignmentService.createAssignment(assignmentData);
       setSuccess(`Assignment "${newAssignment.title}" created successfully!`);
       setTimeout(() => {
         navigate('/teacher/assignments'); // Redirect to the list page

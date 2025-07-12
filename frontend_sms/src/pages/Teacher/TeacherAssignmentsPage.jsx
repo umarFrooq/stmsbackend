@@ -16,9 +16,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 
 import AssignmentListItem from '../../components/assignment/AssignmentListItem';
-import { getAssignments, deleteAssignment } from '../../services/assignmentService';
-import subjectService from '../../services/subjectService'; // Placeholder
-import gradeService from '../../services/gradeService';     // Placeholder
+import { assignmentService, subjectService, gradeService } from '../../services';
 import useAuthStore from '../../store/auth.store';
 
 const TeacherAssignmentsPage = () => {
@@ -73,7 +71,7 @@ const TeacherAssignmentsPage = () => {
       if (filters.status) params.status = filters.status;
       if (filters.subjectId) params.subjectId = filters.subjectId;
       if (filters.gradeId) params.gradeId = filters.gradeId;
-      const data = await getAssignments(params);
+      const data = await assignmentService.getAssignments(params);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
       setTotalResults(data.totalResults || 0);
@@ -173,7 +171,7 @@ const TeacherAssignmentsPage = () => {
     if (window.confirm('Are you sure you want to delete this assignment? This may also delete related submissions.')) {
       setIsLoading(true); // Consider a specific loading state for delete
       try {
-        await deleteAssignment(assignmentId);
+        await assignmentService.deleteAssignment(assignmentId);
         // Refetch assignments after delete
         setAssignments(prev => prev.filter(a => a._id !== assignmentId));
         setTotalResults(prev => prev -1);

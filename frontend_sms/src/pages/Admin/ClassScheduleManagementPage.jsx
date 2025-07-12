@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NotificationToast from '../../components/common/NotificationToast';
-import classScheduleService from '../../services/classScheduleService';
+import { classScheduleService } from '../../services';
 import useAuthStore from '../../store/auth.store'; // To get schoolId for admin
 
 // TODO: Implement ConfirmationDialog

@@ -6,11 +6,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 import useAuthStore from '../../store/auth.store';
-import classScheduleService from '../../services/classScheduleService';
-import branchService from '../../services/branchService';
-import gradeService from '../../services/gradeService';
-import subjectService from '../../services/subjectService';
-import userService from '../../services/userService'; // For fetching teachers
+import { classScheduleService, branchService, gradeService, subjectService, userService } from '../../services';
 import NotificationToast from '../common/NotificationToast';
 
 
