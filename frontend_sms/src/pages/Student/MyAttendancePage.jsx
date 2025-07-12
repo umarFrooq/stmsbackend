@@ -203,11 +203,6 @@ const MyAttendancePage = () => {
               <FormControl fullWidth>
                 <InputLabel id="status-select-label">Status</InputLabel>
                 <Select
-                  name="status"
-                  value={filters.status}
-                  label="Status"
-                  onChange={handleFilterChange}
-                >
                   labelId="status-select-label"
                   name="status"
                   value={filters.status}

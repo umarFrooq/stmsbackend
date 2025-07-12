@@ -44,62 +44,33 @@ const TeacherAssignmentsPage = () => {
 
   const fetchTeacherAssignments = useCallback(async () => {
     setIsLoading(true);
-    setError(''); // Clear previous errors
-
-    if (!user) {
-      setError("User data is not available. Cannot fetch assignments.");
+    setError('');
+    if (!user?._id || !user?.schoolId) {
+      setError('User ID or School ID is missing. Cannot fetch assignments.');
       setIsLoading(false);
-      setAssignments([]); setTotalPages(0); setTotalResults(0);
-      return;
-    }
-    if (!user._id) {
-      setError("User ID is missing. Cannot fetch assignments.");
-      setIsLoading(false);
-      setAssignments([]); setTotalPages(0); setTotalResults(0);
+      setAssignments([]);
+      setTotalPages(0);
+      setTotalResults(0);
       return;
     }
 
-    let actualSchoolId = null;
-    if (user.schoolId) {
-      if (typeof user.schoolId === 'object') {
-        if (user.schoolId._id) {
-          actualSchoolId = user.schoolId._id;
-        } else if (user.schoolId.id) {
-          actualSchoolId = user.schoolId.id;
-        } else {
-          setError("School ID object is missing '_id' or 'id' property. Cannot fetch assignments.");
-        }
-        } else if (typeof user.schoolId === 'string') {
-          actualSchoolId = user.schoolId;
-      } else {
-        setError("User School ID is not in a recognized format (object or string). Cannot fetch assignments.");
-        }
-    } else {
-      setError("School information (user.schoolId) is missing. Cannot fetch assignments.");
-      }
+    const actualSchoolId = typeof user.schoolId === 'object' ? user.schoolId._id || user.schoolId.id : user.schoolId;
 
     if (!actualSchoolId) {
-      if (!error) { // Only set this if no more specific error was set by the checks above
-          setError("School ID could not be determined. Cannot fetch assignments.");
-      }
-        setIsLoading(false);
-      setAssignments([]); setTotalPages(0); setTotalResults(0);
+      setError('School ID could not be determined. Cannot fetch assignments.');
+      setIsLoading(false);
       return;
     }
 
-    // If we reach here, user._id and actualSchoolId should be valid.
     try {
       const params = {
         teacherId: user._id,
-        schoolId: actualSchoolId, // Use the extracted string ID
+        schoolId: actualSchoolId,
         sortBy: 'dueDate:desc',
         limit,
         page,
+        ...filters,
       };
-      if (filters.status) params.status = filters.status;
-      if (filters.subjectId) params.subjectId = filters.subjectId;
-      if (filters.gradeId) params.gradeId = filters.gradeId;
-
       const data = await getAssignments(params);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
@@ -107,13 +78,13 @@ const TeacherAssignmentsPage = () => {
     } catch (err) {
       console.error('Error fetching assignments:', err);
       setError(err.message || 'Failed to fetch assignments.');
-      setAssignments([]); // Clear assignments on error
-        setTotalPages(0);
-        setTotalResults(0);
+      setAssignments([]);
+      setTotalPages(0);
+      setTotalResults(0);
     } finally {
       setIsLoading(false);
-      }
-  }, [user, filters, page, limit]); // user itself is a dependency
+    }
+  }, [user, filters, page, limit]);
 
   const fetchFilterDropdownData = useCallback(async () => {
     // setError(''); // Don't clear main error, or use a separate error state for filters
