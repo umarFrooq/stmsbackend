@@ -11,7 +11,7 @@ roleRights.set(roles[0], [ // student
   "manageQuestion","validCode","manageStatus","manageOrderStatus", "CardInfo", "transaction","oderDetial",
   "subject", "viewAttendances","viewAssignmentsGrade",
   // Assignment related for student
-  "viewAssignmentsGrade", "submitAssignment", "viewOwnSubmissions"
+  "getAssignments", "submitAssignment", "viewOwnSubmissions"
 ]);
 
 roleRights.set(roles[1], [ // teacher
@@ -26,7 +26,7 @@ roleRights.set(roles[1], [ // teacher
   "manageTransaction","attendanceManagement", "viewAttendances", "testManagement","testResultManagement","subject", "viewGrades","manageAttendances",
   "viewOwnClassSchedule", // Teacher can view their own schedule
   // Assignment related for teacher
-  "manageOwnAssignments", "viewAssignmentSubmissions", "gradeSubmission"
+  "manageAssignments", "getAssignments", "viewAssignmentSubmissions", "gradeSubmission"
 ]);
 
 roleRights.set(roles[2], [ // admin (School Admin)
@@ -37,7 +37,7 @@ roleRights.set(roles[2], [ // admin (School Admin)
   "gradeManagement", "viewGrades", "attendanceManagement", "viewAttendances", "testManagement","testResultManagement","manageUser","manageUsers","subject", "viewBranches",
   "manageClassSchedules", "viewClassSchedules", // School admin can manage and view all schedules in their school
   // Assignment related for admin
-  "manageAllAssignmentsSchool", "viewAllSubmissionsSchool", "gradeSubmission"
+  "manageAssignments", "getAssignments", "viewAllSubmissionsSchool", "gradeSubmission"
 ]);
 
 roleRights.set(roles[3], [ // superadmin (Platform Admin - can manage multiple schools if system designed for it, or top-level school admin)
@@ -86,7 +86,7 @@ roleRights.set(roles[4], [ // rootUser
   "viewSystemAnalytics", // Example permission
   "manageSystemSettings","subject", // Example permission
   // Assignment related for rootUser
-  "manageAllAssignmentsRoot", "viewAllSubmissionsRoot"
+  "manageAssignments", "getAssignments", "viewAllSubmissionsRoot"
 ]);
 module.exports = {
   roles,

@@ -22,12 +22,12 @@ router.use(auth(), schoolScopeMiddleware); // schoolScopeMiddleware will extract
 router
   .route('/')
   .post(
-    auth(MANAGE_OWN_ASSIGNMENTS, MANAGE_ALL_ASSIGNMENTS_SCHOOL, MANAGE_ALL_ASSIGNMENTS_ROOT),
+    auth('manageAssignments'),
     validate(assignmentValidation.createAssignment),
     assignmentController.createAssignmentHandler
   )
   .get(
-    auth(VIEW_ASSIGNMENTS_GRADE, VIEW_ALL_ASSIGNMENTS_SCHOOL, MANAGE_OWN_ASSIGNMENTS, MANAGE_ALL_ASSIGNMENTS_ROOT),
+    auth('getAssignments'),
     validate(assignmentValidation.getAssignments),
     assignmentController.getAssignmentsHandler
   );
@@ -35,17 +35,17 @@ router
 router
   .route('/:assignmentId')
   .get(
-    auth(VIEW_ASSIGNMENTS_GRADE, VIEW_ALL_ASSIGNMENTS_SCHOOL, VIEW_ASSIGNMENTS_BRANCH, MANAGE_OWN_ASSIGNMENTS, MANAGE_ALL_ASSIGNMENTS_ROOT),
+    auth('getAssignments'),
     validate(assignmentValidation.getAssignment),
     assignmentController.getAssignmentHandler
   )
   .patch(
-    auth(MANAGE_OWN_ASSIGNMENTS, MANAGE_ALL_ASSIGNMENTS_SCHOOL, MANAGE_ALL_ASSIGNMENTS_ROOT),
+    auth('manageAssignments'),
     validate(assignmentValidation.updateAssignment),
     assignmentController.updateAssignmentHandler
   )
   .delete(
-    auth(MANAGE_OWN_ASSIGNMENTS, MANAGE_ALL_ASSIGNMENTS_SCHOOL, MANAGE_ALL_ASSIGNMENTS_ROOT),
+    auth('manageAssignments'),
     validate(assignmentValidation.deleteAssignment),
     assignmentController.deleteAssignmentHandler
   );
