@@ -76,13 +76,19 @@ const AdminAssignmentsListPage = () => {
         page,
         ...filters, // Spread all current filters
       };
-      // Ensure schoolId is passed if not superadmin/root selecting "all schools"
-      if (!isSuperAdminOrRoot && !params.schoolId && user?.schoolId) {
-          params.schoolId = user.schoolId;
-      }
-      if (params.schoolId === '') delete params.schoolId; // Don't send empty schoolId for root if "All" is chosen
+      const filteredParams = Object.entries(filters).reduce((acc, [key, value]) => {
+        if (value) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
 
-      const data = await getAssignments(params);
+      const data = await getAssignments({
+        sortBy: 'dueDate:desc',
+        limit,
+        page,
+        ...filteredParams,
+      });
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {
@@ -102,38 +108,36 @@ const AdminAssignmentsListPage = () => {
   const fetchDropdownData = useCallback(async () => {
     setLoadingFilterData(true);
     try {
-      const currentSchoolId = filters.schoolId || (isSuperAdminOrRoot ? '' : user?.schoolId);
-
       if (isSuperAdminOrRoot) {
         const schoolRes = await schoolService.getAllSchools({ limit: 500, sortBy: 'name:asc' }); // Assuming this service exists
         setSchools(schoolRes.results || []);
       }
 
-      if (currentSchoolId) {
-        const branchParams = { schoolId: currentSchoolId, limit: 200, sortBy: 'name:asc' };
+      const schoolId = filters.schoolId || (user?.role === 'admin' ? user.schoolId : '');
+
+      if (schoolId) {
+        const branchParams = { schoolId, limit: 200, sortBy: 'name:asc' };
         const branchRes = await branchService.getBranches(branchParams);
         setBranches(branchRes.results || []);
 
-        const gradeParams = { schoolId: currentSchoolId, limit: 500, sortBy: 'title:asc' };
+        const gradeParams = { schoolId, limit: 500, sortBy: 'title:asc' };
         const gradeRes = await gradeService.getGrades(gradeParams);
         setGrades(gradeRes.results || []);
 
-        const subjectParams = { schoolId: currentSchoolId, limit: 500, sortBy: 'name:asc' };
+        const subjectParams = { schoolId, limit: 500, sortBy: 'name:asc' };
         const subjectRes = await subjectService.getSubjects(subjectParams);
         setSubjects(subjectRes.results || []);
 
         // Fetch users with role 'teacher' for the current school
-        const teacherParams = { school: currentSchoolId, role: 'teacher', limit: 500, sortBy: 'firstName:asc' };
+        const teacherParams = { school: schoolId, role: 'teacher', limit: 500, sortBy: 'firstName:asc' };
         const teacherRes = await userService.getUsers(teacherParams); // Assuming userService.getUsers exists
         setTeachers(teacherRes.results || []);
 
         // Fetch students for the current school
-        const studentParams = { school: currentSchoolId, role: 'student', limit: 1000, sortBy: 'firstName:asc' };
+        const studentParams = { school: schoolId, role: 'student', limit: 1000, sortBy: 'firstName:asc' };
         const studentRes = await userService.getUsers(studentParams);
         setStudents(studentRes.results || []);
-
-
-      } else { // If no school selected (SuperAdmin/Root viewing all), clear dependent filters
+      } else {
         setBranches([]);
         setGrades([]);
         setSubjects([]);
@@ -146,7 +150,7 @@ const AdminAssignmentsListPage = () => {
     } finally {
       setLoadingFilterData(false);
     }
-  }, [user?.schoolId, isSuperAdminOrRoot, filters.schoolId]);
+  }, [user, isSuperAdminOrRoot, filters.schoolId]);
 
   useEffect(() => {
     fetchDropdownData();
