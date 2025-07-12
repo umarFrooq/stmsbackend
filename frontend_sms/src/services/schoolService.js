@@ -84,12 +84,10 @@ export const deleteSchool = async (schoolId) => {
   }
 };
 
-const schoolService = {
+export {
   createSchool,
   getSchools,
   getSchoolById,
   updateSchool,
   deleteSchool,
 };
-
-export default schoolService;

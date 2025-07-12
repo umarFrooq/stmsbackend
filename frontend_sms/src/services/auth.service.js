@@ -72,13 +72,4 @@ const fetchUserProfile = async () => {
 };
 
 
-const authService = {
-  login,
-  logout,
-  fetchUserProfile,
-  // register, // Add if you have registration
-  // forgotPassword,
-  // resetPassword,
-};
-
-export default authService;
+export { login, logout, fetchUserProfile };

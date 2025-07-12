@@ -14,9 +14,9 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NotificationToast from '../../components/common/NotificationToast';
 
 // Real services
-import attendanceService from '../../services/attendanceService';
-import userService from '../../services/userService'; // To get students
-import classScheduleService from '../../services/classScheduleService'; // Service to get class details by classId
+import { getAttendances, markBulkAttendance } from '../../services/attendanceService';
+import { getAllUsers } from '../../services/userService'; // To get students
+import { getClassScheduleById } from '../../services/classScheduleService'; // Service to get class details by classId
 
 import useAuthStore from '../../store/auth.store';
 
@@ -69,7 +69,7 @@ const AttendanceTakingPage = () => {
         // The backend service getClassScheduleById populates based on the 'populate' query param.
         // The frontend service getClassScheduleById(scheduleId, populate) passes this along.
         const populateFields = 'subjectId,gradeId,branchId,schoolId'; // teacherId is part of the schedule doc itself
-        const classData = await classScheduleService.getClassScheduleById(classId, populateFields);
+        const classData = await getClassScheduleById(classId, populateFields);
 
         // classData should now include populated fields if successful, e.g.,
         // classData.subjectId = { id: 'xyz', title: 'Mathematics', ... }
@@ -118,7 +118,7 @@ const AttendanceTakingPage = () => {
           limit: 500,
           // sortBy: 'fullname:asc',
         };
-        const studentRes = await userService.getAllUsers(studentParams);
+        const studentRes = await getAllUsers(studentParams);
         setStudents(studentRes?.data?.results || []);
       } catch (err) {
         const errMsg = err.message || 'Failed to load students for the class.';
@@ -160,7 +160,7 @@ const AttendanceTakingPage = () => {
           limit: students.length,
           populate: 'studentId',
         };
-        const existingRecordsResponse = await attendanceService.getAttendances(attendanceParams);
+        const existingRecordsResponse = await getAttendances(attendanceParams);
         const existingData = existingRecordsResponse.results || [];
 
         let allMarked = students.length > 0; // Assume all marked if students exist
@@ -284,7 +284,7 @@ const AttendanceTakingPage = () => {
     }
 
     try {
-      const response = await attendanceService.markBulkAttendance(recordsToSave);
+      const response = await markBulkAttendance(recordsToSave);
 
       let successfulSaves = response.success ? response.success.length : 0;
       let errorsPresent = response.errors && response.errors.length > 0;

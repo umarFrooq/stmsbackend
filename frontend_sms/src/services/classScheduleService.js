@@ -157,13 +157,11 @@ const deleteClassSchedule = async (scheduleId) => {
 };
 
 
-const classScheduleService = {
+export {
   getClassScheduleById,
-  queryClassSchedules, // Added for admin listing
+  queryClassSchedules,
   getTeacherClassSchedules,
   createClassSchedule,
   updateClassSchedule,
   deleteClassSchedule,
 };
-
-export default classScheduleService;

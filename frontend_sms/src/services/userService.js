@@ -86,7 +86,7 @@ export const deleteUser = async (userId) => {
   }
 };
 
-export default {
+export {
   getAllUsers,
   addUser,
   updateUser,
