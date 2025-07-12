@@ -26,7 +26,7 @@ roleRights.set(roles[1], [ // teacher
   "manageTransaction","attendanceManagement", "viewAttendances", "testManagement","testResultManagement","subject", "viewGrades","manageAttendances",
   "viewOwnClassSchedule", // Teacher can view their own schedule
   // Assignment related for teacher
-  "manageOwnAssignments", "viewAssignmentSubmissions", "gradeSubmission"
+  "manageOwnAssignments", "viewAssignmentSubmissions", "gradeSubmission","viewAssignmentsGrade"
 ]);
 
 roleRights.set(roles[2], [ // admin (School Admin)
