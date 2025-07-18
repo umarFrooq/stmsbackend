@@ -65,8 +65,8 @@ const ClassScheduleManagementPage = () => {
       setSchedules(response.results || []);
       setTotalRows(response.totalResults || 0);
     } catch (err) {
-      setError(err.message || 'Failed to fetch class schedules.');
-      showToast(err.message || 'Failed to fetch schedules', 'error');
+      const message = err.message || 'Failed to fetch class schedules.';
+      setError(message);
       setSchedules([]);
       setTotalRows(0);
     } finally {
@@ -105,7 +105,9 @@ const ClassScheduleManagementPage = () => {
       showToast('Schedule deleted successfully!', 'success');
       fetchSchedules(); // Refresh list
     } catch (err) {
-      showToast(err.message || 'Failed to delete schedule.', 'error');
+      const message = err.message || 'Failed to delete schedule.';
+      setError(message);
+      showToast(message, 'error');
       // setLoading(false);
     }
   };
