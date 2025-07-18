@@ -4,56 +4,6 @@ const Assignment = require('./assignment.model');
 const ApiError = require('../../utils/ApiError');
 const pick = require('../../utils/pick'); // Corrected from 'पानी' to 'pick'
 
-/**
- * Create a new submission for an assignment
- * @param {ObjectId} assignmentId - ID of the assignment
- * @param {Object} submissionBody - Data for the submission (files, remarks)
- * @param {Object} student - The student user submitting
- * @returns {Promise<Submission>}
- */
-const createSubmission = async (assignmentId, submissionBody, student) => {
-  const assignment = await Assignment.findById(assignmentId);
-  if (!assignment) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Assignment not found.');
-  }
-  if (assignment.status !== 'published') {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'This assignment is not currently accepting submissions.');
-  }
-
-  // Check if student's grade matches assignment's grade
-  if (!student.gradeId || student.gradeId.toString() !== assignment.gradeId._id.toString()) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'You cannot submit to an assignment not intended for your grade.');
-  }
-
-
-  const now = new Date();
-  let isLate = false;
-  if (now > assignment.dueDate) {
-    if (!assignment.allowLateSubmission) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Late submission is not allowed for this assignment.');
-    }
-    isLate = true;
-  }
-
-  // Check for existing submission by the same student for this assignment (model has unique index too)
-  const existingSubmission = await Submission.findOne({ assignmentId, studentId: student._id });
-  if (existingSubmission) {
-    // Potentially allow resubmission if assignment settings permit and due date hasn't passed or late submission is allowed.
-    // For now, strictly prevent re-submission.
-    throw new ApiError(httpStatus.BAD_REQUEST, 'You have already submitted this assignment.');
-  }
-
-  const submissionPayload = {
-    ...submissionBody,
-    assignmentId,
-    studentId: student._id,
-    isLateSubmission: isLate,
-    submissionDate: now,
-    status: 'submitted',
-  };
-
-  return Submission.create(submissionPayload);
-};
 
 /**
  * Query for submissions
@@ -269,7 +219,6 @@ const gradeSubmissionById = async (submissionId, gradeBody, teacher) => {
 
 
 module.exports = {
-  createSubmission,
   querySubmissions,
   getSubmissionById,
   gradeSubmissionById,
