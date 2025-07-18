@@ -18,7 +18,7 @@ import {
 import { useParams } from 'react-router-dom';
 import { getSubmissionsForAssignment, gradeSubmission } from '../../services/submissionService';
 import { getAssignmentById } from '../../services/assignmentService';
-import { getUsers } from '../../services/userService';
+import { getAllUsers as getUsers } from '../../services/userService';
 import useAuthStore from '../../store/auth.store';
 
 const TeacherSubmissionsPage = () => {
