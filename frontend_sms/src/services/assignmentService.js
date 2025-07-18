@@ -26,7 +26,20 @@ export const createAssignment = async (assignmentData) => {
  */
 export const getAssignments = async (params = {}) => {
   try {
-    const response = await apiClient.get(ASSIGNMENTS_BASE_URL, { params });
+    // Manually build the query string
+    const queryString = Object.keys(params)
+      .map(key => {
+        const value = params[key];
+        if (value) {
+          return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .join('&');
+
+    const url = `${ASSIGNMENTS_BASE_URL}?${queryString}`;
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching assignments:', error.response ? error.response.data : error.message);
