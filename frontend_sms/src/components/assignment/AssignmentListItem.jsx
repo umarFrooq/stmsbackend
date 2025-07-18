@@ -106,49 +106,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
           sx={{ textAlign: 'right' }}
         >
             <Box sx={{ display: 'flex', justifyContent: {xs: 'flex-start', md:'flex-end'}, flexWrap: 'wrap', gap: 0.5 }}>
-          {isStudent && assignment.status === 'published' && !isPastDue && onSubmitAssignment && (
-            <Tooltip title="Submit Assignment">
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                startIcon={<CloudUploadIcon />}
-                onClick={() => onSubmitAssignment(assignment._id)}
-                component={RouterLink}
-                to={`/student/assignments/${assignment._id}/submit`} // Or just trigger a modal
-              >
-                Submit
-              </Button>
-            </Tooltip>
-          )}
-           {isStudent && assignment.status === 'published' && isPastDue && assignment.allowLateSubmission && onSubmitAssignment && (
-            <Tooltip title="Submit Late">
-              <Button
-                variant="outlined"
-                color="warning"
-                size="small"
-                startIcon={<CloudUploadIcon />}
-                onClick={() => onSubmitAssignment(assignment._id)}
-                component={RouterLink}
-                to={`/student/assignments/${assignment._id}/submit`}
-              >
-                Submit Late
-              </Button>
-            </Tooltip>
-          )}
 
-          {canViewSubmissions && onViewSubmissions && (
-            <Tooltip title="View Submissions">
-              <IconButton
-                color="info"
-                onClick={() => onViewSubmissions(assignment._id)}
-                component={RouterLink}
-                to={`/teacher/assignments/${assignment._id}/submissions`} // Example route
-              >
-                <GradingIcon />
-              </IconButton>
-            </Tooltip>
-          )}
           {canEdit && onEdit && (
             <Tooltip title="Edit Assignment">
               <IconButton color="primary" onClick={() => onEdit(assignment._id)}>
