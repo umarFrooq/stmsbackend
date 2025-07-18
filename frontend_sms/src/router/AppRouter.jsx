@@ -211,7 +211,7 @@ const AppRouter = () => {
             <Route path="assignments" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherAssignmentsPage /></ProtectedRoute>} />
             <Route path="assignments/new" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherCreateAssignmentPage /></ProtectedRoute>} />
             <Route path="assignments/edit/:assignmentId" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherEditAssignmentPage /></ProtectedRoute>} />
-            <Route path="assignments/:assignmentId/submissions" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherViewSubmissionsPage /></ProtectedRoute>} />
+            <Route path="assignments/:assignmentId/submissions" element={<ProtectedRoute permission="manageOwnAssignments"><div /></ProtectedRoute>} />
             {/* Teacher grading their own assignment's submissions */}
             <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
 
