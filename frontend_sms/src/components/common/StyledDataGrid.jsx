@@ -43,8 +43,7 @@ const StyledDataGrid = ({
   }
 
   return (
-    <Box sx={{ overflow: 'auto', width: '100%' }}>
-    <Paper sx={{ height: autoHeight ? 'auto' : minHeight, width: '100%' }} elevation={2}>
+    <Paper sx={{ height: autoHeight ? 'auto' : minHeight, width: '100%', overflow: 'hidden' }} elevation={2}>
       {title && (
         <Typography variant="h6" sx={{ p: 2 }}>
           {title}
@@ -74,11 +73,14 @@ const StyledDataGrid = ({
             },
             ...slotProps
         }}
-        // sx={{
-        //   '& .MuiDataGrid-columnHeaders': {
-        //     backgroundColor: 'primary.light', // Example header styling
-        //   },
-        // }}
+        sx={{
+          '& .MuiDataGrid-main': {
+            overflow: 'auto',
+          },
+          '& .MuiDataGrid-columnHeaders': {
+            // backgroundColor: 'primary.light', // Example header styling
+          },
+        }}
         {...rest} // Pass any other DataGrid props
       />
     </Paper>

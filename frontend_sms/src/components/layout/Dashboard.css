@@ -3,7 +3,6 @@
   display: flex;
   min-height: 100vh;
   background-color: #f4f6f8; /* Light grey background for the whole dashboard */
-  overflow: hidden; /* Prevent the entire page from scrolling */
 }
 
 /* Navigation Drawer */
