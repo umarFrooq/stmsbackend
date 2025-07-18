@@ -69,9 +69,11 @@ const ClassScheduleManagementPage = () => {
         limit: rowsPerPage,
         sortBy: 'dayOfWeek,startTime', // Default sort
         populate: 'subjectId,gradeId,teacherId,branchId', // Populate for display
-        ...filters,
-        // schoolId: user?.schoolId, // Backend should scope automatically for admin role via schoolScopeMiddleware
       };
+
+      if (filters.branchId) params.branchId = filters.branchId;
+      if (filters.gradeId) params.gradeId = filters.gradeId;
+      if (filters.teacherId) params.teacherId = filters.teacherId;
       // If user is rootUser and a school filter is implemented, pass schoolId here
       // For now, assuming 'admin' role is scoped by middleware
 
@@ -91,7 +93,7 @@ const ClassScheduleManagementPage = () => {
   const fetchFilterData = useCallback(async () => {
     if (!user?.schoolId) return;
     try {
-      const schoolId = user.schoolId.id || user.schoolId;
+      const schoolId = typeof user.schoolId === 'object' ? user.schoolId.id : user.schoolId;
       const [branchRes, gradeRes, teacherRes] = await Promise.all([
         branchService.getAllBranches({ schoolId, limit: 500, sortBy: 'name:asc' }),
         gradeService.getGrades({ schoolId, limit: 1000, sortBy: 'title:asc' }),

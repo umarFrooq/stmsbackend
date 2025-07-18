@@ -13,14 +13,7 @@ const AddClassSchedulePage = () => {
 
   // Admins are scoped to their school. schoolId is needed by the form.
   // Ensure user and user.schoolId are available and schoolId is a string.
-  let schoolIdString = null;
-  if (user?.schoolId) {
-    if (typeof user.schoolId === 'object' && user.schoolId?.id) {
-      schoolIdString = user.schoolId.id; // If schoolId is an object like { id: '...', name: '...' }
-    } else if (typeof user.schoolId === 'string') {
-      schoolIdString = user.schoolId; // If schoolId is already a string
-    }
-  }
+  const schoolIdString = typeof user?.schoolId === 'object' ? user.schoolId.id : user?.schoolId;
 
   const handleSave = () => {
     navigate('/admin/schedules'); // Navigate back to the list after save
