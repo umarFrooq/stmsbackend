@@ -184,8 +184,9 @@ const ClassScheduleForm = ({ scheduleId, schoolIdFromAdmin, onSave, onCancel }) 
       }
       if (onSave) onSave(); // Callback to refresh list or close modal
     } catch (err) {
-      showToast(err.message || 'Failed to save schedule.', 'error');
-      setFormError(err.message || 'An unexpected error occurred.');
+      const message = err.response?.data?.userMessage || err.message || 'Failed to save schedule.';
+      showToast(message, 'error');
+      setFormError(message);
     } finally {
       setLoading(false);
     }
