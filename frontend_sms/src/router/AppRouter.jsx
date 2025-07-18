@@ -193,8 +193,8 @@ const AppRouter = () => {
             <Route path="assignments/:assignmentId/details" element={<ProtectedRoute permission="viewAllAssignmentsSchool"><AdminViewAssignmentDetailsPage /></ProtectedRoute>} />
             <Route path="submissions" element={<ProtectedRoute permission="viewAllSubmissionsSchool"><AdminViewSubmissionsPage /></ProtectedRoute>} />
             {/* Admin view/grade submission might reuse teacher's page or have its own */}
-            <Route path="submissions/:submissionId/details" element={<ProtectedRoute permission="viewAllSubmissionsSchool"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
-            <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><TeacherGradeSubmissionPage /></ProtectedRoute>} />
+            <Route path="submissions/:submissionId/details" element={<ProtectedRoute permission="viewAllSubmissionsSchool"><div /></ProtectedRoute>} />
+            <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><div /></ProtectedRoute>} />
           </Route>
 
           {/* Teacher Routes */}
