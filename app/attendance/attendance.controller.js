@@ -59,7 +59,7 @@ const markBulkAttendanceHandler = catchAsync(async (req, res) => {
 const getAttendancesHandler = catchAsync(async (req, res) => {
   let filter = pick(req.query, ['studentId', 'subjectId', 'gradeId', 'section', 'branchId', 'date', 'status', 'markedBy', 'startDate', 'endDate']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'populate']);
-  let schoolId = req.user.role === 'rootUser' ? req.query.schoolId : req.user.schoolId;
+  let schoolId = req.user.role === 'rootUser' ? req.query.schoolId : req.schoolId;
 console.log("school id",schoolId)
   if (!schoolId && req.user.role !== 'rootUser') {
     throw new ApiError(httpStatus.BAD_REQUEST, 'School context is required.');
@@ -92,9 +92,12 @@ console.log("school id",schoolId)
     // For non-root, non-student users, schoolId must be provided in the query if not available from a default scope (e.g. if req.schoolId was not set by middleware)
      throw new ApiError(httpStatus.BAD_REQUEST, 'School ID must be provided in query for this role to list attendance.');
   }
-schoolId=mongoose.Types.ObjectId(schoolId)
-filter.studentId=mongoose.Types.ObjectId(req.user.id)
-  const result = await attendanceService.queryAttendances(filter, options, schoolId); // schoolId here is for context, actual filtering by schoolId is in service
+  if (mongoose.Types.ObjectId.isValid(schoolId)) {
+    schoolId = mongoose.Types.ObjectId(schoolId);
+  }
+  // Remove the line that forces studentId to the current user's ID
+  // filter.studentId=mongoose.Types.ObjectId(req.user.id)
+  const result = await attendanceService.queryAttendances(filter, options, schoolId);
   res.send(result);
 });
 
