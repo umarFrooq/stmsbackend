@@ -65,7 +65,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
         >
           <Typography variant="h6" component="div" gutterBottom>
             {onViewDetails || isStudent ? (
-                 <MuiLink component={RouterLink} to={onViewDetails || `/student/assignments/${assignment._id}`} underline="hover">
+                 <MuiLink component={RouterLink} to={onViewDetails ? `/admin/assignments/${assignment._id}/details` : `/student/assignments/${assignment._id}`} underline="hover">
                     {typeof assignment.title === 'string' ? assignment.title : "Default Title"}
                  </MuiLink>
             ) : (typeof assignment.title === 'string' ? assignment.title : "Default Title")}
