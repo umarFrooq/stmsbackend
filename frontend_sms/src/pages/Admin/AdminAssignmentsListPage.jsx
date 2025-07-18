@@ -86,6 +86,11 @@ const AdminAssignmentsListPage = () => {
         queryParams.schoolId = user.schoolId?._id || user.schoolId;
       }
 
+      // Ensure schoolId is a string if it's an object
+      if (typeof queryParams.schoolId === 'object' && queryParams.schoolId !== null) {
+        queryParams.schoolId = queryParams.schoolId._id;
+      }
+
       const data = await getAssignments(queryParams);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
@@ -106,10 +111,13 @@ const AdminAssignmentsListPage = () => {
   const fetchDropdownData = useCallback(async () => {
     setLoadingFilterData(true);
     try {
-      const currentSchoolId = filters.schoolId || (isSuperAdminOrRoot ? '' : user?.schoolId);
+      let currentSchoolId = filters.schoolId;
+      if (!currentSchoolId && !isSuperAdminOrRoot) {
+        currentSchoolId = user?.schoolId?._id || user?.schoolId;
+      }
 
       if (isSuperAdminOrRoot) {
-        const schoolRes = await schoolService.getAllSchools({ limit: 500, sortBy: 'name:asc' }); // Assuming this service exists
+        const schoolRes = await schoolService.getAllSchools({ limit: 500, sortBy: 'name:asc' });
         setSchools(schoolRes.results || []);
       }
 
