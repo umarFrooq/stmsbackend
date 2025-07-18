@@ -34,7 +34,7 @@ roleRights.set(roles[2], [ // admin (School Admin)
   "manageOrders", "getOrders", "manageSellerDetail", "subjectManagement", "manageVideo", "manageSellerConfidentialDetail", "print", "notification",
   "firebaseToken", "changePassword", "csvUpload", "manageRefund", "refund", "userManageAddress",  "pushNotification","manageAnswer", "manageSeller", "manageDashboard", "manageTranslation", "manageStatus",
   "manageAnswer","manageCurrency","manageToken","manageFeedSync","videoCount","apiKey","manageShopify","premium","sellerSetting","getUsers",
-  "gradeManagement", "viewGrades", "attendanceManagement", "viewAttendances", "testManagement","testResultManagement","manageUser","manageUsers","subject", "viewBranches",
+  "gradeManagement", "viewGrades", "attendanceManagement", "viewAttendances", "testManagement","testResultManagement","manageUser","manageUsers","subject", "viewBranches", "manageBranches",
   "manageClassSchedules", "viewClassSchedules", // School admin can manage and view all schedules in their school
   // Assignment related for admin
   "manageAssignments", "getAssignments", "viewAllAssignmentsSchool", "viewAllSubmissionsSchool", "gradeSubmission"
