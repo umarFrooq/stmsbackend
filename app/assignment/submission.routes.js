@@ -18,6 +18,14 @@ router.use(auth());
 assignmentSubmissionsRouter.use(auth());
 
 
+// Route: POST /assignments/:assignmentId/submissions
+// Student submits work for a specific assignment.
+assignmentSubmissionsRouter.post(
+  '/', // Path relative to assignmentSubmissionsRouter ('/:assignmentId/submissions/')
+  auth(SUBMIT_ASSIGNMENT),
+  validate(submissionValidation.createSubmission), // Validation uses :assignmentId from params
+  submissionController.createSubmissionHandler
+);
 
 // Route: GET /assignments/:assignmentId/submissions
 // Teacher/Admin views all submissions for a specific assignment.
