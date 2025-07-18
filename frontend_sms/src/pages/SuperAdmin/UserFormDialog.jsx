@@ -169,11 +169,14 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
       then: (schema) => schema.required('Status is required'),
       otherwise: (schema) => schema.optional(),
     }),
-    gradeId: Yup.string().when(['$isEditing', 'role'], ([isEditing, role], schema) => {
-      if (role === 'student' && !isEditing) {
-        return schema.required('Grade is required for students.');
-      }
-      return schema.optional().nullable();
+    gradeId: Yup.string().when('role', {
+      is: 'student',
+      then: schema => schema.when('$isEditing', {
+        is: false,
+        then: schema => schema.required('Grade is required for students.'),
+        otherwise: schema => schema.optional().nullable(),
+      }),
+      otherwise: schema => schema.optional().nullable(),
     }),
     cnic: Yup.string().trim().optional().nullable()
       .matches(/^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$/, 'Invalid CNIC format. Expected: XXXXX-XXXXXXX-X')
@@ -459,7 +462,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                   type="submit"
                   variant="contained"
                   color="primary"
-                  disabled={isSubmitting || loadingBranches || loadingGrades}
+                  disabled={isSubmitting}
                 startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
               >
                 {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create User')}
