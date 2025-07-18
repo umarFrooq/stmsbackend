@@ -45,8 +45,6 @@ const updateSubmissionHandler = catchAsync(async (req, res) => {
 });
 
 module.exports = {
-  createSubmissionHandler,
-  getSubmissionsHandler,
   getSubmissionHandler,
   gradeSubmissionHandler,
   updateSubmissionHandler,
