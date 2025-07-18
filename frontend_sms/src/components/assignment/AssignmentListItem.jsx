@@ -110,7 +110,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
             <Tooltip title="View Submissions">
               <IconButton
                 color="info"
-                onClick={() => onViewSubmissions(assignment._id)}
+                onClick={() => navigate(`/teacher/assignments/${assignment._id}/submissions`)}
                 component={RouterLink}
                 to={`/teacher/assignments/${assignment._id}/submissions`} // Example route
               >
