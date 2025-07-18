@@ -133,65 +133,52 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
   }, [open, user?.role, initialValues.role, initialValues.branchId, isEditing, user?.branchId, currentUser?.schoolScope]);
 
   const validationSchema = Yup.object().shape({
-    fullname: Yup.string().trim()
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Full name is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    email: Yup.string()
-      .email('Invalid email address')
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Email is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    password: Yup.string().when('$isEditing', (isEditingValue, schema) => {
-      if (isEditingValue) return schema.optional();
-      return schema.required('Password is required').min(8, 'Password must be at least 8 characters');
+    fullname: Yup.string().trim().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Full name is required'),
+      otherwise: (schema) => schema.optional(),
     }),
-    confirmPassword: Yup.string().when('$isEditing', (isEditingValue, schema) => {
-      if (isEditingValue) return schema.optional();
-      return schema.when('password', (passwordAttempt, currentSchema) => {
-        if (passwordAttempt && passwordAttempt.length > 0) {
-          return currentSchema.oneOf([Yup.ref('password'), null], 'Passwords must match')
-            .required('Confirm password is required');
-        }
-        return currentSchema.optional();
-      });
+    email: Yup.string().email('Invalid email address').when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Email is required'),
+      otherwise: (schema) => schema.optional(),
     }),
-    role: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Role is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    branchId: Yup.string()
-      .when('$isEditing', {
-        is: false, // Create mode
-        then: (schema) => schema.required('Branch/Campus is required'),
-        otherwise: (schema) => schema.optional(), // Edit mode
-      }),
-    status: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Status is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    // For gradeId, it's required if role is 'student' during creation.
-    // During an update (isEditing=true), it's optional even if role is 'student', to allow unsetting it.
-    // If role is changed TO 'student' during an update, this logic implies gradeId is not strictly required by Yup,
-    // but the backend or service layer should handle consistency if a student must have a grade.
-    gradeId: Yup.string().when(['$isEditing', 'role'], ([isEditingValue, roleValue], schema) => {
-      if (roleValue === 'student') {
-        return isEditingValue ? schema.nullable().optional() : schema.required('Grade is required for students.');
+    password: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Password is required').min(8, 'Password must be at least 8 characters'),
+      otherwise: (schema) => schema.optional().min(8, 'Password must be at least 8 characters'),
+    }),
+    confirmPassword: Yup.string().when('password', (password, schema) => {
+      if (password && password.length > 0) {
+        return schema.oneOf([Yup.ref('password'), null], 'Passwords must match').required('Confirm password is required');
       }
-      return schema.nullable().optional();
-    }), // Ensure comma here if it was missing before cnic
+      return schema.optional();
+    }),
+    role: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Role is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    branchId: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Branch/Campus is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    status: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Status is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    gradeId: Yup.string().when(['$isEditing', 'role'], ([isEditing, role], schema) => {
+      if (role === 'student' && !isEditing) {
+        return schema.required('Grade is required for students.');
+      }
+      return schema.optional().nullable();
+    }),
     cnic: Yup.string().trim().optional().nullable()
       .matches(/^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$/, 'Invalid CNIC format. Expected: XXXXX-XXXXXXX-X')
       .test('is-valid-cnic-length', 'CNIC must be exactly 15 characters including hyphens', value => {
-        if (!value) return true; // Optional, so valid if empty
+        if (!value) return true;
         return value.length === 15;
       }),
   });
