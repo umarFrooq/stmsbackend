@@ -319,7 +319,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                       value={values.fullname} onChange={handleChange} onBlur={handleBlur}
                       error={touched.fullname && Boolean(errors.fullname)}
                       helperText={touched.fullname && errors.fullname}
-                      disabled={isSubmitting} required
+                      disabled={isSubmitting} required={!isEditing}
                     />
                   </Grid>
 
@@ -332,7 +332,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                           value={values.email} onChange={handleChange} onBlur={handleBlur}
                           error={touched.email && Boolean(errors.email)}
                           helperText={touched.email && errors.email}
-                          disabled={isSubmitting} required
+                          disabled={isSubmitting} required={!isEditing}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -341,7 +341,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                           value={values.password} onChange={handleChange} onBlur={handleBlur}
                           error={touched.password && Boolean(errors.password)}
                           helperText={touched.password && errors.password}
-                          disabled={isSubmitting} required
+                          disabled={isSubmitting} required={!isEditing}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -350,7 +350,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                           value={values.confirmPassword} onChange={handleChange} onBlur={handleBlur}
                           error={touched.confirmPassword && Boolean(errors.confirmPassword)}
                           helperText={touched.confirmPassword && errors.confirmPassword}
-                          disabled={isSubmitting || !values.password} required
+                          disabled={isSubmitting || !values.password} required={!isEditing}
                         />
                       </Grid>
                     </>
@@ -363,7 +363,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                       <Select
                         labelId="role-select-label" name="role" value={values.role} label="Role"
                         onChange={(e) => handleRoleChange(e, handleChange, setFieldValue, values)}
-                        onBlur={handleBlur} required
+                        onBlur={handleBlur} required={!isEditing}
                       >
                         {availableRoles.map((role) => (
                           <MenuItem key={role} value={role}>
@@ -381,7 +381,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                       <InputLabel id="branch-select-label" required>Branch/Campus</InputLabel>
                       <Select
                         labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch/Campus"
-                        onChange={handleChange} onBlur={handleBlur} required
+                        onChange={handleChange} onBlur={handleBlur} required={!isEditing}
                       >
                         <MenuItem value=""><em>{loadingBranches ? 'Loading...' : branchError ? 'Error loading' : 'Select Branch'}</em></MenuItem>
                         {availableBranches.map((branch) => (
@@ -416,7 +416,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                         <InputLabel id="grade-select-label" required>Grade</InputLabel>
                         <Select
                           labelId="grade-select-label" name="gradeId" value={values.gradeId} label="Grade"
-                          onChange={handleChange} onBlur={handleBlur} required
+                          onChange={handleChange} onBlur={handleBlur} required={!isEditing && values.role === 'student'}
                         >
                           <MenuItem value="">
                             <em>{loadingGrades ? 'Loading...' : gradeError ? 'Error loading grades' : (!values.branchId && !availableGrades.length ? 'Select Branch first' : 'Select Grade')}</em>
@@ -441,7 +441,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                         <InputLabel id="status-select-label" required>Status</InputLabel>
                         <Select
                           labelId="status-select-label" name="status" value={values.status} label="Status"
-                          onChange={handleChange} onBlur={handleBlur} required
+                          onChange={handleChange} onBlur={handleBlur} required={!isEditing}
                         >
                           <MenuItem value="active">Active</MenuItem>
                           <MenuItem value="inactive">Inactive</MenuItem>
