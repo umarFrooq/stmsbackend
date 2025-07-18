@@ -39,8 +39,8 @@ const AdminAssignmentsListPage = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    schoolId: user?.role === 'admin' ? user.schoolId : '', // Admin scoped to their school, SuperAdmin can select
-    branchId: user?.role === 'branchAdmin' ? user.branchId : '',
+    schoolId: user?.role === 'admin' ? user.schoolId?._id : '', // Admin is scoped to their school
+    branchId: user?.role === 'branchAdmin' ? user.branchId : '', // Branch admin is scoped to their branch
     gradeId: '',
     subjectId: '',
     teacherId: '',
@@ -73,19 +73,20 @@ const AdminAssignmentsListPage = () => {
         limit,
         page,
       };
-      if (filters.schoolId) params.schoolId = filters.schoolId;
-      if (filters.branchId) params.branchId = filters.branchId;
-      if (filters.gradeId) params.gradeId = filters.gradeId;
-      if (filters.subjectId) params.subjectId = filters.subjectId;
-      if (filters.teacherId) params.teacherId = filters.teacherId;
-      if (filters.status) params.status = filters.status;
-      // Ensure schoolId is passed if not superadmin/root selecting "all schools"
-      if (!isSuperAdminOrRoot && !params.schoolId && user?.schoolId) {
-          params.schoolId = user.schoolId;
-      }
-      if (params.schoolId === '') delete params.schoolId; // Don't send empty schoolId for root if "All" is chosen
+      // Build params from filters, ensuring not to send empty strings
+      const queryParams = { ...params };
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+          queryParams[key] = filters[key];
+        }
+      });
 
-      const data = await getAssignments(params);
+      // Default to user's school ID if admin and no school is selected in filter
+      if (user?.role === 'admin' && !queryParams.schoolId) {
+        queryParams.schoolId = user.schoolId?._id || user.schoolId;
+      }
+
+      const data = await getAssignments(queryParams);
       setAssignments(data.results || []);
       setTotalPages(data.totalPages || 0);
     } catch (err) {
@@ -146,15 +147,14 @@ const AdminAssignmentsListPage = () => {
 
   useEffect(() => {
     fetchDropdownData();
-  }, [fetchDropdownData]);
+  }, [user?.schoolId, isSuperAdminOrRoot, filters.schoolId]);
 
   // Refetch dependent dropdowns if schoolId filter changes
   useEffect(() => {
     if (isSuperAdminOrRoot) { // Only run if school selection can change
         setFilters(f => ({ ...f, branchId: '', gradeId: '', subjectId: '', teacherId: ''})); // Reset dependent filters
-        fetchDropdownData(); // This will now use the new filters.schoolId
     }
-  }, [filters.schoolId, isSuperAdminOrRoot]); // Removed fetchDropdownData from deps to avoid loop with its own state changes
+  }, [filters.schoolId, isSuperAdminOrRoot]);
 
 
   const handleFilterChange = (event) => {
@@ -203,25 +203,25 @@ const AdminAssignmentsListPage = () => {
             </Grid>
           )}
           <Grid item xs={12} sm={6} md={isSuperAdminOrRoot ? 2 : 3}>
-            <TextField select label="Branch" name="branchId" value={filters.branchId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user?.schoolId) || branches.length === 0}>
+            <TextField select label="Branch" name="branchId" value={filters.branchId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user.schoolId) || branches.length === 0}>
               <MenuItem value=""><em>All Branches</em></MenuItem>
               {branches.map(b => <MenuItem key={b._id} value={b._id}>{b.name}</MenuItem>)}
             </TextField>
           </Grid>
           <Grid item xs={12} sm={6} md={isSuperAdminOrRoot ? 2 : 3}>
-            <TextField select label="Grade" name="gradeId" value={filters.gradeId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user?.schoolId) || grades.length === 0}>
+            <TextField select label="Grade" name="gradeId" value={filters.gradeId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user.schoolId) || grades.length === 0}>
               <MenuItem value=""><em>All Grades</em></MenuItem>
               {grades.map(g => <MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>)}
             </TextField>
           </Grid>
           <Grid item xs={12} sm={6} md={isSuperAdminOrRoot ? 2 : 3}>
-            <TextField select label="Subject" name="subjectId" value={filters.subjectId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user?.schoolId) || subjects.length === 0}>
+            <TextField select label="Subject" name="subjectId" value={filters.subjectId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user.schoolId) || subjects.length === 0}>
               <MenuItem value=""><em>All Subjects</em></MenuItem>
               {subjects.map(s => <MenuItem key={s._id} value={s._id}>{s.name}</MenuItem>)}
             </TextField>
           </Grid>
           <Grid item xs={12} sm={6} md={isSuperAdminOrRoot ? 3 : 3}>
-            <TextField select label="Teacher" name="teacherId" value={filters.teacherId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user?.schoolId) || teachers.length === 0}>
+            <TextField select label="Teacher" name="teacherId" value={filters.teacherId} onChange={handleFilterChange} fullWidth size="small" disabled={loadingFilterData || (!filters.schoolId && !user.schoolId) || teachers.length === 0}>
               <MenuItem value=""><em>All Teachers</em></MenuItem>
               {teachers.map(t => <MenuItem key={t._id} value={t._id}>{t.firstName} {t.lastName}</MenuItem>)}
             </TextField>
