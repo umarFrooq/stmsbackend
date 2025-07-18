@@ -43,7 +43,8 @@ const StyledDataGrid = ({
   }
 
   return (
-    <Paper sx={{ height: autoHeight ? 'auto' : minHeight, width: '100%', overflowX: 'auto' }} elevation={2}>
+    <Box sx={{ overflow: 'auto', width: '100%' }}>
+    <Paper sx={{ height: autoHeight ? 'auto' : minHeight, width: '100%' }} elevation={2}>
       {title && (
         <Typography variant="h6" sx={{ p: 2 }}>
           {title}

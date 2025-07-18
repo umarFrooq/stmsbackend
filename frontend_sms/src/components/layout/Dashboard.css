@@ -3,6 +3,7 @@
   display: flex;
   min-height: 100vh;
   background-color: #f4f6f8; /* Light grey background for the whole dashboard */
+  overflow: hidden; /* Prevent the entire page from scrolling */
 }
 
 /* Navigation Drawer */
@@ -25,7 +26,9 @@
   padding: 24px;
   margin-top: 64px; /* AppBar height */
   transition: margin-left 0.3s ease;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  display: flex; /* Enable flexbox for child control */
+  flex-direction: column; /* Stack children vertically */
+  overflow-y: auto; /* Allow vertical scrolling for the main content area */
 }
 
 /* Header/AppBar adjustments */
