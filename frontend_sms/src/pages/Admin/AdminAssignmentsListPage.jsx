@@ -253,6 +253,7 @@ const AdminAssignmentsListPage = () => {
               // Pass admin-specific actions if implemented
               // onEdit={user.permissions?.includes('manageAllAssignmentsSchool') ? () => handleAdminEdit(assignment._id) : undefined}
               // onDelete={user.permissions?.includes('manageAllAssignmentsSchool') ? () => handleAdminDelete(assignment._id) : undefined}
+              onViewDetails={() => handleViewDetails(assignment._id)}
               onViewSubmissions={() => navigate(`/admin/assignments/${assignment._id}/submissions`)} // Admin view submissions
             />
           ))}
