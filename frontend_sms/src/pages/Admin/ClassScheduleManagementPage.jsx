@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Typography, Paper, Box, Button, Alert,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TablePagination, IconButton, Tooltip, CircularProgress
+  TablePagination, IconButton, Tooltip, CircularProgress, Grid, TextField, MenuItem
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
@@ -12,6 +12,9 @@ import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NotificationToast from '../../components/common/NotificationToast';
 import classScheduleService from '../../services/classScheduleService';
+import branchService from '../../services/branchService';
+import gradeService from '../../services/gradeService';
+import userService from '../../services/userService';
 import useAuthStore from '../../store/auth.store'; // To get schoolId for admin
 
 // TODO: Implement ConfirmationDialog
@@ -29,6 +32,16 @@ const ClassScheduleManagementPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
+
+  const [filters, setFilters] = useState({
+    branchId: '',
+    gradeId: '',
+    teacherId: '',
+  });
+
+  const [branches, setBranches] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [teachers, setTeachers] = useState([]);
 
   // Toast notifications
   const [toastOpen, setToastOpen] = useState(false);
@@ -56,6 +69,7 @@ const ClassScheduleManagementPage = () => {
         limit: rowsPerPage,
         sortBy: 'dayOfWeek,startTime', // Default sort
         populate: 'subjectId,gradeId,teacherId,branchId', // Populate for display
+        ...filters,
         // schoolId: user?.schoolId, // Backend should scope automatically for admin role via schoolScopeMiddleware
       };
       // If user is rootUser and a school filter is implemented, pass schoolId here
@@ -72,11 +86,32 @@ const ClassScheduleManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, user?.schoolId]); // user.schoolId if used in params
+  }, [page, rowsPerPage, user?.schoolId, filters]); // user.schoolId if used in params
+
+  const fetchFilterData = useCallback(async () => {
+    if (!user?.schoolId) return;
+    try {
+      const schoolId = user.schoolId.id || user.schoolId;
+      const [branchRes, gradeRes, teacherRes] = await Promise.all([
+        branchService.getAllBranches({ schoolId, limit: 500, sortBy: 'name:asc' }),
+        gradeService.getGrades({ schoolId, limit: 1000, sortBy: 'title:asc' }),
+        userService.getAllUsers({ schoolId, role: 'teacher', limit: 1000 })
+      ]);
+      setBranches(branchRes.results || []);
+      setGrades(gradeRes.results || []);
+      setTeachers(teacherRes.data?.results || []);
+    } catch (err) {
+      showToast(`Error fetching filter data: ${err.message}`, 'error');
+    }
+  }, [user?.schoolId]);
 
   useEffect(() => {
     fetchSchedules();
   }, [fetchSchedules]);
+
+  useEffect(() => {
+    fetchFilterData();
+  }, [fetchFilterData]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -84,6 +119,24 @@ const ClassScheduleManagementPage = () => {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+    if (name === 'branchId') {
+      setFilters(prev => ({ ...prev, gradeId: '' }));
+    }
+    setPage(0);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      branchId: '',
+      gradeId: '',
+      teacherId: '',
+    });
     setPage(0);
   };
 
@@ -142,7 +195,71 @@ const ClassScheduleManagementPage = () => {
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        {/* TODO: Add Filters component here */}
+        <Box sx={{ mb: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={3}>
+              <TextField
+                select
+                fullWidth
+                label="Filter by Branch"
+                name="branchId"
+                value={filters.branchId}
+                onChange={handleFilterChange}
+                variant="outlined"
+                size="small"
+              >
+                <MenuItem value=""><em>All Branches</em></MenuItem>
+                {branches.map(branch => (
+                  <MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                select
+                fullWidth
+                label="Filter by Grade"
+                name="gradeId"
+                value={filters.gradeId}
+                onChange={handleFilterChange}
+                variant="outlined"
+                size="small"
+                disabled={!filters.branchId}
+              >
+                <MenuItem value=""><em>All Grades</em></MenuItem>
+                {grades.map(grade => (
+                  <MenuItem key={grade.id} value={grade.id}>{grade.title}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                select
+                fullWidth
+                label="Filter by Teacher"
+                name="teacherId"
+                value={filters.teacherId}
+                onChange={handleFilterChange}
+                variant="outlined"
+                size="small"
+              >
+                <MenuItem value=""><em>All Teachers</em></MenuItem>
+                {teachers.map(teacher => (
+                  <MenuItem key={teacher.id} value={teacher.id}>{teacher.fullname}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <Button
+                variant="outlined"
+                onClick={handleClearFilters}
+                fullWidth
+              >
+                Clear Filters
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
 
         {loading && <CircularProgress sx={{display: 'block', margin: 'auto', mb: 2}} />}
 
