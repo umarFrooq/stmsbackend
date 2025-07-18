@@ -72,8 +72,13 @@ const AdminAssignmentsListPage = () => {
         sortBy: 'dueDate:desc',
         limit,
         page,
-        ...filters, // Spread all current filters
       };
+      if (filters.schoolId) params.schoolId = filters.schoolId;
+      if (filters.branchId) params.branchId = filters.branchId;
+      if (filters.gradeId) params.gradeId = filters.gradeId;
+      if (filters.subjectId) params.subjectId = filters.subjectId;
+      if (filters.teacherId) params.teacherId = filters.teacherId;
+      if (filters.status) params.status = filters.status;
       // Ensure schoolId is passed if not superadmin/root selecting "all schools"
       if (!isSuperAdminOrRoot && !params.schoolId && user?.schoolId) {
           params.schoolId = user.schoolId;
