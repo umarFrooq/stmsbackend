@@ -4,14 +4,6 @@ const ApiError = require('../../utils/ApiError');
 const catchAsync = require('../../utils/catchAsync');
 const { submissionService } = require('./index'); // Assuming services will be exported via index.js
 
-const createSubmissionHandler = catchAsync(async (req, res) => {
-  if (req.user.role !== 'student') {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Only students can submit assignments.');
-  }
-  const { assignmentId } = req.params;
-  const submission = await submissionService.createSubmission(assignmentId, req.body, req.user);
-  res.status(httpStatus.CREATED).send(submission);
-});
 
 const getSubmissionsHandler = catchAsync(async (req, res) => {
   const filterParams = pick(req.query, [
