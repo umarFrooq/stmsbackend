@@ -777,7 +777,6 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
-        enableReinitialize // Important for initialValues to update when 'user' prop changes
         context={{ isEditing }} // Pass isEditing to Yup context if needed
       >
         {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue, dirty, isValid }) => {
