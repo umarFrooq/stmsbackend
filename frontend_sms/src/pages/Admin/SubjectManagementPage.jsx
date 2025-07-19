@@ -1,169 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, FormControl, InputLabel, Select, MenuItem, FormHelperText, Paper } from '@mui/material';
+import { Box, Typography, Button, IconButton, Tooltip, Chip, Alert, Grid, TextField, Paper, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
-import { Formik, Form } from 'formik';
-import * as Yup from 'yup';
 import { debounce } from 'lodash';
 
 import StyledDataGrid from '../../components/common/StyledDataGrid';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import NotificationToast from '../../components/common/NotificationToast';
+import SubjectFormDialog from '../../components/subjects/SubjectFormDialog';
 
 import subjectService from '../../services/subjectService';
 import gradeService from '../../services/gradeService';
 import userService from '../../services/userService';
-import branchService from '../../services/branchService'; // Assuming you have this
+import branchService from '../../services/branchService';
 import useAuthStore from '../../store/auth.store';
-
-
-// Subject Form Dialog Component
-const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers, branches }) => {
-    const isEditing = Boolean(subject);
-
-    const getInitialValues = () => ({
-        title: subject?.title || '',
-        subjectCode: subject?.subjectCode || '',
-        description: subject?.description || '',
-        creditHours: subject?.creditHours || 0,
-        branchId: subject?.branchId?._id || subject?.branchId || '',
-        defaultTeacher: subject?.defaultTeacher?._id || subject?.defaultTeacher || '',
-        gradeId: subject?.gradeId?._id || subject?.gradeId || '',
-    });
-
-    const [initialValues, setInitialValues] = useState(getInitialValues());
-
-    useEffect(() => {
-        setInitialValues(getInitialValues());
-    }, [subject]);
-
-    const validationSchema = Yup.object().shape({
-        title: Yup.string().required('Subject name/title is required'),
-        subjectCode: Yup.string().required('Subject code is required'),
-        description: Yup.string().nullable(),
-        creditHours: Yup.number().min(0, 'Credit hours cannot be negative').required('Credit hours are required'),
-        branchId: Yup.string()
-          .matches(/^[0-9a-fA-F]{24}$/, 'Invalid Branch ID')
-          .required('Branch is required'),
-        defaultTeacher: Yup.string()
-          .test(
-            'is-object-id',
-            'Invalid Teacher ID',
-            (value) => !value || (Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value))
-          )
-          .nullable(), // Teacher can be optional
-        gradeId: Yup.string()
-          .test(
-            'is-object-id',
-            'Invalid Grade ID',
-            (value) => !value || (Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value))
-          )
-          .nullable(), // Grade can be optional
-        // status: Yup.string().required('Status is required'),
-    });
-
-    return (
-        <Dialog open={open} onClose={() => onClose(false)} maxWidth="md" fullWidth>
-            <DialogTitle>{isEditing ? 'Edit Subject' : 'Add New Subject'}</DialogTitle>
-            <Formik
-                initialValues={initialValues}
-                validationSchema={validationSchema}
-                onSubmit={async (values, { setSubmitting }) => {
-                    // Filter out empty strings for optional fields before submitting
-                    const payload = { ...values };
-                    if (payload.defaultTeacher === '') payload.defaultTeacher = null;
-                    if (payload.gradeId === '') payload.gradeId = null;
-
-                    await onSubmit(payload, isEditing, subject?._id);
-                    setSubmitting(false);
-                }}
-                enableReinitialize
-            >
-                {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => (
-                    <Form>
-                        <DialogContent dividers>
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField fullWidth label="Subject Name/Title" name="title" value={values.title} onChange={handleChange} onBlur={handleBlur} error={touched.title && Boolean(errors.title)} helperText={touched.title && errors.title} disabled={isSubmitting} />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField fullWidth label="Subject Code" name="subjectCode" value={values.subjectCode} onChange={handleChange} onBlur={handleBlur} error={touched.subjectCode && Boolean(errors.subjectCode)} helperText={touched.subjectCode && errors.subjectCode} disabled={isSubmitting} />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField fullWidth multiline rows={3} label="Description (Optional)" name="description" value={values.description} onChange={handleChange} onBlur={handleBlur} disabled={isSubmitting} />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField fullWidth type="number" label="Credit Hours" name="creditHours" value={values.creditHours} onChange={handleChange} onBlur={handleBlur} error={touched.creditHours && Boolean(errors.creditHours)} helperText={touched.creditHours && errors.creditHours} disabled={isSubmitting} inputProps={{ min: 0 }} />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                     <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting}>
-                                        <InputLabel id="branch-select-label">Branch</InputLabel>
-                                         <Select
-                                             labelId="branch-select-label"
-                                             name="branchId"
-                                             value={values.branchId}
-                                             label="Branch"
-                                             onChange={(e) => {
-                                                 setFieldValue('branchId', e.target.value);
-                                                 setFieldValue('gradeId', '');
-                                             }}
-                                             onBlur={handleBlur}
-                                         >
-                                            <MenuItem value=""><em>None</em></MenuItem>
-                                            {branches.map(b => (<MenuItem key={b._id} value={b._id}>{b.name}</MenuItem>))}
-                                        </Select>
-                                        {touched.branchId && errors.branchId && <FormHelperText>{errors.branchId}</FormHelperText>}
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || !values.branchId}>
-                                        <InputLabel id="grade-select-label">Grade (Optional)</InputLabel>
-                                        <Select labelId="grade-select-label" name="gradeId" value={values.gradeId} label="Grade (Optional)" onChange={(e) => setFieldValue('gradeId', e.target.value)} onBlur={handleBlur}>
-                                        <MenuItem value=""><em>None</em></MenuItem>
-                                            {grades.filter(g => g.branchId._id === values.branchId).map(g => (<MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>))}
-                                        </Select>
-                                        {touched.gradeId && errors.gradeId && <FormHelperText>{errors.gradeId}</FormHelperText>}
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth error={touched.defaultTeacher && Boolean(errors.defaultTeacher)} disabled={isSubmitting}>
-                                        <InputLabel id="teacher-select-label">Default Teacher (Optional)</InputLabel>
-                                        <Select labelId="teacher-select-label" name="defaultTeacher" value={values.defaultTeacher} label="Default Teacher (Optional)" onChange={(e) => setFieldValue('defaultTeacher', e.target.value)} onBlur={handleBlur}>
-                                        <MenuItem value=""><em>None</em></MenuItem>
-                                            {teachers.map(t => (<MenuItem key={t._id} value={t._id}>{t.fullname}</MenuItem>))}
-                                        </Select>
-                                        {touched.defaultTeacher && errors.defaultTeacher && <FormHelperText>{errors.defaultTeacher}</FormHelperText>}
-                                    </FormControl>
-                                </Grid>
-                                {/* Status field removed, assuming backend handles or it's not needed for now
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth error={touched.status && Boolean(errors.status)} disabled={isSubmitting}>
-                                        <InputLabel id="status-select-label">Status</InputLabel>
-                                        <Select labelId="status-select-label" name="status" value={values.status} label="Status" onChange={handleChange} onBlur={handleBlur}>
-                                            <MenuItem value="active">Active</MenuItem><MenuItem value="inactive">Inactive</MenuItem>
-                                        </Select>
-                                        {touched.status && errors.status && <FormHelperText>{errors.status}</FormHelperText>}
-                                    </FormControl>
-                                </Grid>
-                                */}
-                            </Grid>
-                        </DialogContent>
-                        <DialogActions sx={{ p: '16px 24px' }}>
-                            <Button onClick={() => onClose(false)} color="inherit" disabled={isSubmitting}>Cancel</Button>
-                            <Button type="submit" variant="contained" color="primary" disabled={isSubmitting} startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}>
-                                {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Subject')}
-                            </Button>
-                        </DialogActions>
-                    </Form>
-                )}
-            </Formik>
-        </Dialog>
-    );
-};
 
 
 const SubjectManagementPage = () => {
@@ -205,22 +59,22 @@ const SubjectManagementPage = () => {
 
   const fetchDropdownData = useCallback(async () => {
     try {
-        const params = { limit: 1000, populate: 'branchId' }; // High limit and populate branch
+        // const schoolId = user?.schoolId; // Assuming user object has schoolId - REMOVED
+        const params = {limit: 1000 }; // High limit to fetch all for dropdowns. SchoolId handled by backend.
 
         const [gradesRes, teachersRes, branchesRes] = await Promise.all([
-            gradeService.getGrades(params),
-            userService.getAllUsers({ role: 'teacher', limit: 1000 }),
-            branchService.getAllBranches({ limit: 1000 })
+            gradeService.getGrades(params), // SchoolId should be handled by backend based on token
+            userService.getAllUsers({ role: 'teacher', ...params }), // SchoolId should be handled by backend
+            branchService.getAllBranches(params) // SchoolId should be handled by backend
         ]);
-
         setGrades(gradesRes.results || []);
-        setTeachers(teachersRes.results || teachersRes.data?.results || []);
+        setTeachers(teachersRes.results || teachersRes.data?.results || []); // userService might have data nested
         setBranches(branchesRes.results || []);
     } catch (err) {
         showToast('Failed to load support data (grades, teachers, branches). Please try again.', 'error');
         console.error("Error fetching dropdown data:", err);
     }
-  }, []);
+  }, []); // Removed user?.schoolId from dependency array
 
 
   const fetchSubjects = useCallback(async (currentFilters, page = pagination.page, pageSize = pagination.pageSize) => {
