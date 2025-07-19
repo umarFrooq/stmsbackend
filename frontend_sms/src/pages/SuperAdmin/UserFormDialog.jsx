@@ -647,49 +647,49 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
       }),
   });
 
-  const handleSubmit = async (values, { setSubmitting }) => {
-    // In edit mode, we only want to send the fields that have actually been changed.
-    const getChangedValues = (currentValues, initialUser) => {
-      const changes = {};
-      const initial = {
-        fullname: initialUser?.fullname || '',
-        email: initialUser?.email || '',
-        role: initialUser?.role || '',
-        branchId: initialUser?.branchId?._id || initialUser?.branchId || '',
-        gradeId: initialUser?.gradeId?._id || initialUser?.gradeId || '',
-        status: initialUser?.status || 'active',
-        cnic: initialUser?.cnic || '',
-        password: '', // Password is not pre-filled
-      };
+  const getChangedValues = (currentValues, initialUser) => {
+    const changes = {};
+    const initial = {
+      fullname: initialUser?.fullname || '',
+      email: initialUser?.email || '',
+      role: initialUser?.role || '',
+      branchId: initialUser?.branchId?._id || initialUser?.branchId || '',
+      gradeId: initialUser?.gradeId?._id || initialUser?.gradeId || '',
+      status: initialUser?.status || 'active',
+      cnic: initialUser?.cnic || '',
+      password: '', // Password is not pre-filled
+    };
 
-      Object.keys(currentValues).forEach(key => {
-        // Skip confirmPassword field
-        if (key === 'confirmPassword') return;
+    Object.keys(currentValues).forEach(key => {
+      // Skip confirmPassword field
+      if (key === 'confirmPassword') return;
 
-        const currentValue = currentValues[key];
-        const initialValue = initial[key];
+      const currentValue = currentValues[key];
+      const initialValue = initial[key];
 
-        // If it's a new user, include all fields except empty password
-        if (!isEditing) {
+      // If it's a new user, include all fields except empty password
+      if (!isEditing) {
+        if (key === 'password' && currentValue) {
+          changes.password = currentValue;
+        } else if (key !== 'password') {
+          changes[key] = currentValue === '' ? null : currentValue;
+        }
+      } else {
+        // If editing, only include changed fields
+        if (currentValue !== initialValue) {
           if (key === 'password' && currentValue) {
             changes.password = currentValue;
           } else if (key !== 'password') {
             changes[key] = currentValue === '' ? null : currentValue;
           }
-        } else {
-          // If editing, only include changed fields
-          if (currentValue !== initialValue) {
-            if (key === 'password' && currentValue) {
-              changes.password = currentValue;
-            } else if (key !== 'password') {
-              changes[key] = currentValue === '' ? null : currentValue;
-            }
-          }
         }
-      });
-      return changes;
-    };
+      }
+    });
+    return changes;
+  };
 
+  const handleSubmit = async (values, { setSubmitting }) => {
+    // In edit mode, we only want to send the fields that have actually been changed.
     let submissionPayload;
     if (isEditing) {
         submissionPayload = getChangedValues(values, user);
