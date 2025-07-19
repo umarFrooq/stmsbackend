@@ -21,7 +21,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'; // For late
 
-import { format } from 'date-fns'; // Ensure date-fns is installed
 import useAuthStore from '../../store/auth.store';
 
 const SubmissionListItem = ({ submission, onGrade, onView }) => {
@@ -61,7 +60,7 @@ const SubmissionListItem = ({ submission, onGrade, onView }) => {
           )}
           {submissionDate && (
             <Typography variant="caption" color="text.secondary" display="block">
-              Submitted: {format(submissionDate, 'PPpp')}
+              Submitted: {submissionDate.toLocaleString()}
               {submission.isLateSubmission && <Chip label="Late" color="error" size="small" icon={<ErrorOutlineIcon />} sx={{ ml: 1 }} />}
             </Typography>
           )}

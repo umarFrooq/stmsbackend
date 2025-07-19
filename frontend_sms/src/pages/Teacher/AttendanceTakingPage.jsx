@@ -7,8 +7,7 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format } from 'date-fns'; // For formatting date to YYYY-MM-DD
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NotificationToast from '../../components/common/NotificationToast';
@@ -149,7 +148,7 @@ const AttendanceTakingPage = () => {
       setError(null);
 
       try {
-        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+        const formattedDate = new Date(selectedDate).toISOString().split('T')[0];
         const attendanceParams = {
           gradeId: classContext.gradeId.id,       // Use .id
           section: classContext.section,
@@ -269,7 +268,7 @@ const AttendanceTakingPage = () => {
           gradeId: classContext.gradeId.id,       // Use .id
           section: classContext.section,
           branchId: classContext.branchId.id,     // Use .id
-          date: format(selectedDate, 'yyyy-MM-dd'),
+          date: new Date(selectedDate).toISOString().split('T')[0],
           status: studentAtt.status,
           remarks: studentAtt.remarks || '',
           markedBy: teacherUser.id, // teacherUser.id is already the ID
@@ -334,7 +333,7 @@ const AttendanceTakingPage = () => {
 
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
         <Paper sx={{ p: { xs: 2, md: 3 } }}>
           <Typography variant="h5" component="h1" gutterBottom>

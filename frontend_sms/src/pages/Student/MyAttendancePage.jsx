@@ -2,10 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Grid, TextField, Select, MenuItem, FormControl, InputLabel, Button, CircularProgress, Alert, TableContainer, Table, TableHead, TableRow, TableCell, TableBody
 } from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; // Standard import path
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { format } from 'date-fns'; // For formatting dates
 
 import attendanceService from '../../services/attendanceService';
 import subjectService from '../../services/subjectService';
@@ -95,10 +94,10 @@ const MyAttendancePage = () => {
         populate: 'subjectId,gradeId,branchId', // Populate for display
       };
       if (filters.startDate) {
-        params.startDate = format(filters.startDate, 'yyyy-MM-dd');
+        params.startDate = new Date(filters.startDate).toISOString().split('T')[0];
       }
       if (filters.endDate) {
-        params.endDate = format(filters.endDate, 'yyyy-MM-dd');
+        params.endDate = new Date(filters.endDate).toISOString().split('T')[0];
       }
       if (filters.subjectId) {
         params.subjectId = filters.subjectId;
@@ -155,7 +154,7 @@ const MyAttendancePage = () => {
   }
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>My Attendance</Typography>
 
@@ -259,7 +258,7 @@ const MyAttendancePage = () => {
                 ) : (
                   attendanceRecords.map((record) => (
                     <TableRow key={record.id || record._id}>
-                      <TableCell>{format(new Date(record.date), 'dd MMM yyyy')}</TableCell>
+                      <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
                       <TableCell>{record.subjectId?.name || record.subjectId?.title || 'N/A'}</TableCell>
                       <TableCell>{record.status.charAt(0).toUpperCase() + record.status.slice(1).replace('_', ' ')}</TableCell>
                       <TableCell>{record.gradeId?.title || 'N/A'}</TableCell>

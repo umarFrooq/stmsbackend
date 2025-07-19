@@ -25,7 +25,6 @@ import SubmissionListItem from '../../components/assignment/SubmissionListItem';
 import { getSubmissionsForAssignment } from '../../services/submissionService';
 import { getAssignmentById } from '../../services/assignmentService';
 import useAuthStore from '../../store/auth.store';
-import { format } from 'date-fns';
 
 const AdminViewAssignmentDetailsPage = () => {
   const { assignmentId } = useParams();
@@ -160,7 +159,7 @@ const AdminViewAssignmentDetailsPage = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
                 <Typography variant="body2" color="text.secondary">
-                Due Date: {assignment.dueDate ? format(new Date(assignment.dueDate), 'PPpp') : 'N/A'}
+                Due Date: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleString() : 'N/A'}
                 </Typography>
             </Grid>
              <Grid item xs={12} sm={6}>

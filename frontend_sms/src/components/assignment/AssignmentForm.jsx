@@ -16,7 +16,7 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'; // Ensure @mui/x-date-pickers is installed
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; // Ensure date-fns is installed
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -307,7 +307,7 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Paper elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
         <Typography variant="h5" component="h2" gutterBottom>
           {initialData ? 'Edit Assignment' : 'Create New Assignment'}

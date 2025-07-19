@@ -26,7 +26,6 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 
-import { format } from 'date-fns'; // Ensure date-fns is installed
 import useAuthStore from '../../store/auth.store';
 
 const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, onSubmitAssignment, onViewDetails }) => {
@@ -82,7 +81,7 @@ const AssignmentListItem = ({ assignment, onEdit, onDelete, onViewSubmissions, o
           </Typography>
           {dueDate && (
             <Typography variant="body2" color={isPastDue ? 'error.main' : 'text.secondary'} sx={{ display: 'flex', alignItems: 'center' }}>
-              <EventIcon fontSize="small" sx={{ mr: 0.5 }} /> Due: {format(dueDate, 'PPpp')}
+              <EventIcon fontSize="small" sx={{ mr: 0.5 }} /> Due: {dueDate.toLocaleString()}
             </Typography>
           )}
            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
