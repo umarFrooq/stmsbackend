@@ -24,6 +24,8 @@ import useAuthStore from '../../store/auth.store';
 // Subject Form Dialog Component
 const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers, branches }) => {
     const isEditing = Boolean(subject);
+    const [filteredGrades, setFilteredGrades] = useState(grades);
+
     // Ensure subject.defaultTeacher and subject.gradeId are just IDs if populated
     const initialTeacherId = subject?.defaultTeacher?._id || subject?.defaultTeacher || '';
     const initialGradeId = subject?.gradeId?._id || subject?.gradeId || '';
@@ -65,6 +67,18 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
           .nullable(), // Grade can be optional
         // status: Yup.string().required('Status is required'),
     });
+
+    useEffect(() => {
+        if (values.branchId) {
+            setFilteredGrades(grades.filter(g => g.branchId._id === values.branchId));
+            // If the current gradeId is not in the filtered list, reset it
+            if (!filteredGrades.some(g => g._id === values.gradeId)) {
+                setFieldValue('gradeId', '');
+            }
+        } else {
+            setFilteredGrades(grades);
+        }
+    }, [values.branchId, grades, setFieldValue]);
 
 
     return (
@@ -111,11 +125,11 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                     </FormControl>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting}>
+                                    <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || !values.branchId}>
                                         <InputLabel id="grade-select-label">Grade (Optional)</InputLabel>
                                         <Select labelId="grade-select-label" name="gradeId" value={values.gradeId} label="Grade (Optional)" onChange={(e) => setFieldValue('gradeId', e.target.value)} onBlur={handleBlur}>
                                         <MenuItem value=""><em>None</em></MenuItem>
-                                            {grades.map(g => (<MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>))}
+                                            {filteredGrades.map(g => (<MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>))}
                                         </Select>
                                         {touched.gradeId && errors.gradeId && <FormHelperText>{errors.gradeId}</FormHelperText>}
                                     </FormControl>
