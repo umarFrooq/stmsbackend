@@ -922,4 +922,4 @@ UserFormDialog.propTypes = {
   availableRoles: PropTypes.arrayOf(PropTypes.string), // Added prop type for roles
 };
 
-export default UserFormDialog;
+export default React.memo(UserFormDialog);
