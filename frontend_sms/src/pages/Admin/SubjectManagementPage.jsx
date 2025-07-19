@@ -26,22 +26,21 @@ import useAuthStore from '../../store/auth.store';
 const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers, branches }) => {
     const isEditing = Boolean(subject);
 
-    // Ensure subject.defaultTeacher and subject.gradeId are just IDs if populated
-    const initialTeacherId = subject?.defaultTeacher?._id || subject?.defaultTeacher || '';
-    const initialGradeId = subject?.gradeId?._id || subject?.gradeId || '';
-    const initialBranchId = subject?.branchId?._id || subject?.branchId || '';
-
-
-    const initialValues = {
+    const getInitialValues = () => ({
         title: subject?.title || '',
         subjectCode: subject?.subjectCode || '',
         description: subject?.description || '',
         creditHours: subject?.creditHours || 0,
-        branchId: initialBranchId || '',
-        defaultTeacher: initialTeacherId || '',
-        gradeId: initialGradeId || '',
-        // status: subject?.status || 'active', // Assuming status is handled by backend or not used for now
-    };
+        branchId: subject?.branchId?._id || subject?.branchId || '',
+        defaultTeacher: subject?.defaultTeacher?._id || subject?.defaultTeacher || '',
+        gradeId: subject?.gradeId?._id || subject?.gradeId || '',
+    });
+
+    const [initialValues, setInitialValues] = useState(getInitialValues());
+
+    useEffect(() => {
+        setInitialValues(getInitialValues());
+    }, [subject]);
 
     const validationSchema = Yup.object().shape({
         title: Yup.string().required('Subject name/title is required'),
