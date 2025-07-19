@@ -6,8 +6,8 @@ import {
   Checkbox, FormControlLabel, TextField, Grid, CircularProgress, MenuItem, Select, FormControl, InputLabel, Chip
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NotificationToast from '../../components/common/NotificationToast';
@@ -333,108 +333,105 @@ const AttendanceTakingPage = () => {
 
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
-        <Paper sx={{ p: { xs: 2, md: 3 } }}>
-          <Typography variant="h5" component="h1" gutterBottom>
-            Take Attendance: {classContext?.subjectId?.title || 'Loading class...'} ({classContext?.gradeId?.title} - Sec {classContext?.section})
-          </Typography>
+    <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
+      <Paper sx={{ p: { xs: 2, md: 3 } }}>
+        <Typography variant="h5" component="h1" gutterBottom>
+          Take Attendance: {classContext?.subjectId?.title || 'Loading class...'} ({classContext?.gradeId?.title} - Sec {classContext?.section})
+        </Typography>
 
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6} md={4}>
-              <DatePicker
-                label="Attendance Date"
-                value={selectedDate}
-                onChange={(newDate) => setSelectedDate(newDate || new Date())}
-                disabled={saving || loadingAttendance}
-                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={8} display="flex" justifyContent={{xs: 'flex-start', sm: 'flex-end'}} gap={1}>
-              <Button onClick={() => markAll('present')} variant="outlined" size="small" disabled={saving || loadingAttendance || isAttendanceFullyMarked || !isAnyStudentUnmarked}>Mark All Unmarked Present</Button>
-              <Button onClick={() => markAll('absent')} variant="outlined" size="small" color="secondary" disabled={saving || loadingAttendance || isAttendanceFullyMarked || !isAnyStudentUnmarked}>Mark All Unmarked Absent</Button>
-            </Grid>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={6} md={4}>
+            <DatePicker
+              selected={selectedDate}
+              onChange={(newDate) => setSelectedDate(newDate || new Date())}
+              disabled={saving || loadingAttendance}
+              customInput={<TextField fullWidth size="small" />}
+            />
           </Grid>
+          <Grid item xs={12} sm={6} md={8} display="flex" justifyContent={{xs: 'flex-start', sm: 'flex-end'}} gap={1}>
+            <Button onClick={() => markAll('present')} variant="outlined" size="small" disabled={saving || loadingAttendance || isAttendanceFullyMarked || !isAnyStudentUnmarked}>Mark All Unmarked Present</Button>
+            <Button onClick={() => markAll('absent')} variant="outlined" size="small" color="secondary" disabled={saving || loadingAttendance || isAttendanceFullyMarked || !isAnyStudentUnmarked}>Mark All Unmarked Absent</Button>
+          </Grid>
+        </Grid>
 
-          {pageMessage && <Alert severity={isAttendanceFullyMarked ? "info" : "warning"} sx={{ mb: 2 }}>{pageMessage}</Alert>}
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>} {/* For errors during attendance fetch for a date */}
+        {pageMessage && <Alert severity={isAttendanceFullyMarked ? "info" : "warning"} sx={{ mb: 2 }}>{pageMessage}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>} {/* For errors during attendance fetch for a date */}
 
 
-          {loadingAttendance && <CircularProgress sx={{display: 'block', margin: '20px auto'}}/>}
+        {loadingAttendance && <CircularProgress sx={{display: 'block', margin: '20px auto'}}/>}
 
-          {!loadingAttendance && !students.length && !loading && ( // Ensure not initial loading
-              <Alert severity="warning" sx={{mt: 2}}>No students found for this class, or class details are missing.</Alert>
-          )}
+        {!loadingAttendance && !students.length && !loading && ( // Ensure not initial loading
+            <Alert severity="warning" sx={{mt: 2}}>No students found for this class, or class details are missing.</Alert>
+        )}
 
-          {!loadingAttendance && students.length > 0 && (
-            <TableContainer component={Paper} variant="outlined">
-              <Table sx={{ minWidth: 650 }} aria-label="attendance table">
-                <TableHead sx={{backgroundColor: 'grey.100'}}>
-                  <TableRow>
-                    <TableCell>Student Name</TableCell>
-                    {ATTENDANCE_STATUS_OPTIONS.map(statusOption => (
-                        <TableCell key={statusOption} align="center" sx={{textTransform: 'capitalize'}}>
-                            {statusOption.replace('_', ' ')}
-                        </TableCell>
-                    ))}
-                    <TableCell>Remarks</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {students.map((student) => {
-                    const currentStudentAtt = attendance[student.id];
-                    const isDisabled = saving || currentStudentAtt?.isMarked; // Disable if saving or already marked
-                    return (
-                      <TableRow key={student.id} sx={{ backgroundColor: currentStudentAtt?.isMarked ? 'grey.50' : 'inherit' }}>
-                        <TableCell component="th" scope="row">
-                          {student.fullname}
-                          {currentStudentAtt?.isMarked && <Chip label="Recorded" size="small" sx={{ml: 1}} color="success" variant="outlined"/>}
-                        </TableCell>
-                        {ATTENDANCE_STATUS_OPTIONS.map(statusOption => (
-                             <TableCell key={statusOption} align="center">
-                                <Checkbox
-                                    checked={currentStudentAtt?.status === statusOption}
-                                    onChange={() => handleAttendanceChange(student.id, statusOption)}
-                                    disabled={isDisabled}
-                                />
-                            </TableCell>
-                        ))}
-                        <TableCell>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            variant="outlined"
-                            placeholder="Optional remarks"
-                            value={currentStudentAtt?.remarks || ''}
-                            onChange={(e) => handleRemarkChange(student.id, e.target.value)}
-                            disabled={isDisabled}
-                            sx={{backgroundColor: isDisabled ? 'grey.100' : 'transparent' }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+        {!loadingAttendance && students.length > 0 && (
+          <TableContainer component={Paper} variant="outlined">
+            <Table sx={{ minWidth: 650 }} aria-label="attendance table">
+              <TableHead sx={{backgroundColor: 'grey.100'}}>
+                <TableRow>
+                  <TableCell>Student Name</TableCell>
+                  {ATTENDANCE_STATUS_OPTIONS.map(statusOption => (
+                      <TableCell key={statusOption} align="center" sx={{textTransform: 'capitalize'}}>
+                          {statusOption.replace('_', ' ')}
+                      </TableCell>
+                  ))}
+                  <TableCell>Remarks</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {students.map((student) => {
+                  const currentStudentAtt = attendance[student.id];
+                  const isDisabled = saving || currentStudentAtt?.isMarked; // Disable if saving or already marked
+                  return (
+                    <TableRow key={student.id} sx={{ backgroundColor: currentStudentAtt?.isMarked ? 'grey.50' : 'inherit' }}>
+                      <TableCell component="th" scope="row">
+                        {student.fullname}
+                        {currentStudentAtt?.isMarked && <Chip label="Recorded" size="small" sx={{ml: 1}} color="success" variant="outlined"/>}
+                      </TableCell>
+                      {ATTENDANCE_STATUS_OPTIONS.map(statusOption => (
+                           <TableCell key={statusOption} align="center">
+                              <Checkbox
+                                  checked={currentStudentAtt?.status === statusOption}
+                                  onChange={() => handleAttendanceChange(student.id, statusOption)}
+                                  disabled={isDisabled}
+                              />
+                          </TableCell>
+                      ))}
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          variant="outlined"
+                          placeholder="Optional remarks"
+                          value={currentStudentAtt?.remarks || ''}
+                          onChange={(e) => handleRemarkChange(student.id, e.target.value)}
+                          disabled={isDisabled}
+                          sx={{backgroundColor: isDisabled ? 'grey.100' : 'transparent' }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant="outlined" onClick={() => navigate(-1)} sx={{mr:2}} disabled={saving}>Cancel</Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={saving ? <CircularProgress size={20} color="inherit"/> : <SaveIcon />}
-              onClick={handleSubmitAttendance}
-              disabled={saving || loading || loadingAttendance || students.length === 0 || !isAnyStudentUnmarked }
-            >
-              {saving ? 'Saving...' : 'Save Attendance'}
-            </Button>
-          </Box>
-        </Paper>
-        <NotificationToast open={toastOpen} message={toastMessage} severity={toastSeverity} handleClose={() => setToastOpen(false)} />
-      </Container>
-    </LocalizationProvider>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="outlined" onClick={() => navigate(-1)} sx={{mr:2}} disabled={saving}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={saving ? <CircularProgress size={20} color="inherit"/> : <SaveIcon />}
+            onClick={handleSubmitAttendance}
+            disabled={saving || loading || loadingAttendance || students.length === 0 || !isAnyStudentUnmarked }
+          >
+            {saving ? 'Saving...' : 'Save Attendance'}
+          </Button>
+        </Box>
+      </Paper>
+      <NotificationToast open={toastOpen} message={toastMessage} severity={toastSeverity} handleClose={() => setToastOpen(false)} />
+    </Container>
   );
 };
 

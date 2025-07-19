@@ -15,9 +15,8 @@ import {
   ListItemSecondaryAction,
   Link as MuiLink,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'; // Ensure @mui/x-date-pickers is installed
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FileUploadIcon from '@mui/icons-material/FileUpload'; // Placeholder for actual upload
@@ -307,216 +306,212 @@ const AssignmentForm = ({ initialData, onSubmit, isLoading, schoolIdFromProps, b
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          {initialData ? 'Edit Assignment' : 'Create New Assignment'}
-        </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                name="title"
-                label="Title"
-                value={formData.title}
-                onChange={handleChange}
-                error={!formData.title && false} // Basic validation example
-                helperText={!formData.title && false ? "Title is required" : ""}
-                required
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                name="description"
-                label="Description"
-                value={formData.description}
-                onChange={handleChange}
-                multiline
-                rows={4}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            {/* Branch Selector for Admin/Root */}
-            {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser') && !branchIdFromProps && (
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  select
-                  name="branchId"
-                  label="Branch"
-                  value={formData.branchId}
-                  onChange={handleChange}
-                  disabled={loadingBranches || branches.length === 0}
-                  {...commonSelectProps}
-                >
-                  <MenuItem value=""><em>Select Branch</em></MenuItem>
-                  {branches.map((branch) => (
-                    <MenuItem key={branch._id} value={branch._id}>
-                      {branch.name} ({branch.branchCode})
-                    </MenuItem>
-                  ))}
-                </TextField>
-                 {loadingBranches && <CircularProgress size={20} />}
-              </Grid>
-            )}
-
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                name="gradeId"
-                label="Grade"
-                value={formData.gradeId}
-                onChange={handleChange}
-                required
-                disabled={loadingGrades || filteredGrades.length === 0}
-                {...commonSelectProps}
-              >
-                <MenuItem value=""><em>Select Grade</em></MenuItem>
-                {filteredGrades.map((grade) => (
-                  // Prefer grade.id, fallback to grade._id if absolutely necessary for transitional period,
-                  // but ideally API should be consistent and use 'id'.
-                  <MenuItem key={grade.id || grade._id} value={grade.id || grade._id}>
-                    {grade.title} {grade.branchId?.name ? `(${grade.branchId.name})` : ''}
-                  </MenuItem>
-                ))}
-              </TextField>
-              {loadingGrades && <CircularProgress size={20} />}
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                name="subjectId"
-                label="Subject"
-                value={formData.subjectId}
-                onChange={handleChange}
-                required
-                disabled={loadingSubjects || subjects.length === 0}
-                {...commonSelectProps}
-              >
-                <MenuItem value=""><em>Select Subject</em></MenuItem>
-                {subjects.map((subject) => (
-                  <MenuItem key={subject.id} value={subject.id}>
-                    {subject.title} ({subject.subjectCode})
-                  </MenuItem>
-                ))}
-              </TextField>
-              {loadingSubjects && <CircularProgress size={20} />}
-            </Grid>
-
-
-            <Grid item xs={12} sm={6}>
-              <DateTimePicker
-                label="Due Date & Time"
-                value={formData.dueDate}
-                onChange={handleDateChange}
-                minDate={new Date()}
-                renderInput={(params) => (
-                  <TextField {...params} fullWidth required size="small" />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="totalMarks"
-                label="Total Marks"
-                type="number"
-                value={formData.totalMarks}
-                onChange={handleChange}
-                required
-                fullWidth
-                size="small"
-                InputProps={{ inputProps: { min: 0, max: 1000 } }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-                <TextField
-                    select
-                    name="status"
-                    label="Status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    fullWidth
-                    size="small"
-                >
-                    <MenuItem value="published">Published</MenuItem>
-                    <MenuItem value="draft">Draft</MenuItem>
-                </TextField>
-            </Grid>
-            {/* File Attachments Section */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>File Attachments (Teacher)</Typography>
-              <List dense>
-                {formData.fileAttachments.map((file, index) => (
-                  <ListItem key={index} divider>
-                    <Grid container spacing={1} alignItems="center">
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          label="File Name"
-                          value={file.fileName}
-                          size="small"
-                          onChange={(e) => handleFileAttachmentChange(index, 'fileName', e.target.value)}
-                          fullWidth
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={5}>
-                        <TextField
-                          label="File Path (URL)"
-                          value={file.filePath}
-                           size="small"
-                          onChange={(e) => handleFileAttachmentChange(index, 'filePath', e.target.value)}
-                          fullWidth
-                        />
-                      </Grid>
-                       <Grid item xs={12} sm={2}>
-                        <TextField
-                          label="File Type"
-                          value={file.fileType}
-                           size="small"
-                          onChange={(e) => handleFileAttachmentChange(index, 'fileType', e.target.value)}
-                          fullWidth
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={1}>
-                        <IconButton onClick={() => removeFileAttachment(index)} color="error" size="small">
-                          <DeleteIcon />
-                        </IconButton>
-                      </Grid>
-                    </Grid>
-                  </ListItem>
-                ))}
-              </List>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<AddCircleOutlineIcon />}
-                onClick={addFileAttachment}
-                sx={{ mt: 1 }}
-              >
-                Add Attachment
-              </Button>
-            </Grid>
-
-
-            <Grid item xs={12} sx={{ mt: 2 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isLoading}
-                fullWidth
-              >
-                {isLoading ? <CircularProgress size={24} /> : (initialData ? 'Update Assignment' : 'Create Assignment')}
-              </Button>
-            </Grid>
+    <Paper elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
+      <Typography variant="h5" component="h2" gutterBottom>
+        {initialData ? 'Edit Assignment' : 'Create New Assignment'}
+      </Typography>
+      <Box component="form" onSubmit={handleSubmit} noValidate>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              name="title"
+              label="Title"
+              value={formData.title}
+              onChange={handleChange}
+              error={!formData.title && false} // Basic validation example
+              helperText={!formData.title && false ? "Title is required" : ""}
+              required
+              fullWidth
+              size="small"
+            />
           </Grid>
-        </Box>
-      </Paper>
-    </LocalizationProvider>
+          <Grid item xs={12}>
+            <TextField
+              name="description"
+              label="Description"
+              value={formData.description}
+              onChange={handleChange}
+              multiline
+              rows={4}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+
+          {/* Branch Selector for Admin/Root */}
+          {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'rootUser') && !branchIdFromProps && (
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                name="branchId"
+                label="Branch"
+                value={formData.branchId}
+                onChange={handleChange}
+                disabled={loadingBranches || branches.length === 0}
+                {...commonSelectProps}
+              >
+                <MenuItem value=""><em>Select Branch</em></MenuItem>
+                {branches.map((branch) => (
+                  <MenuItem key={branch._id} value={branch._id}>
+                    {branch.name} ({branch.branchCode})
+                  </MenuItem>
+                ))}
+              </TextField>
+              {loadingBranches && <CircularProgress size={20} />}
+            </Grid>
+          )}
+
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              select
+              name="gradeId"
+              label="Grade"
+              value={formData.gradeId}
+              onChange={handleChange}
+              required
+              disabled={loadingGrades || filteredGrades.length === 0}
+              {...commonSelectProps}
+            >
+              <MenuItem value=""><em>Select Grade</em></MenuItem>
+              {filteredGrades.map((grade) => (
+                // Prefer grade.id, fallback to grade._id if absolutely necessary for transitional period,
+                // but ideally API should be consistent and use 'id'.
+                <MenuItem key={grade.id || grade._id} value={grade.id || grade._id}>
+                  {grade.title} {grade.branchId?.name ? `(${grade.branchId.name})` : ''}
+                </MenuItem>
+              ))}
+            </TextField>
+            {loadingGrades && <CircularProgress size={20} />}
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              select
+              name="subjectId"
+              label="Subject"
+              value={formData.subjectId}
+              onChange={handleChange}
+              required
+              disabled={loadingSubjects || subjects.length === 0}
+              {...commonSelectProps}
+            >
+              <MenuItem value=""><em>Select Subject</em></MenuItem>
+              {subjects.map((subject) => (
+                <MenuItem key={subject.id} value={subject.id}>
+                  {subject.title} ({subject.subjectCode})
+                </MenuItem>
+              ))}
+            </TextField>
+            {loadingSubjects && <CircularProgress size={20} />}
+          </Grid>
+
+
+          <Grid item xs={12} sm={6}>
+            <DatePicker
+              selected={formData.dueDate}
+              onChange={handleDateChange}
+              showTimeSelect
+              dateFormat="Pp"
+              customInput={<TextField fullWidth required size="small" />}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="totalMarks"
+              label="Total Marks"
+              type="number"
+              value={formData.totalMarks}
+              onChange={handleChange}
+              required
+              fullWidth
+              size="small"
+              InputProps={{ inputProps: { min: 0, max: 1000 } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              select
+              name="status"
+              label="Status"
+              value={formData.status}
+              onChange={handleChange}
+              fullWidth
+              size="small"
+            >
+              <MenuItem value="published">Published</MenuItem>
+              <MenuItem value="draft">Draft</MenuItem>
+            </TextField>
+          </Grid>
+          {/* File Attachments Section */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>File Attachments (Teacher)</Typography>
+            <List dense>
+              {formData.fileAttachments.map((file, index) => (
+                <ListItem key={index} divider>
+                  <Grid container spacing={1} alignItems="center">
+                    <Grid item xs={12} sm={4}>
+                      <TextField
+                        label="File Name"
+                        value={file.fileName}
+                        size="small"
+                        onChange={(e) => handleFileAttachmentChange(index, 'fileName', e.target.value)}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={5}>
+                      <TextField
+                        label="File Path (URL)"
+                        value={file.filePath}
+                        size="small"
+                        onChange={(e) => handleFileAttachmentChange(index, 'filePath', e.target.value)}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={2}>
+                      <TextField
+                        label="File Type"
+                        value={file.fileType}
+                        size="small"
+                        onChange={(e) => handleFileAttachmentChange(index, 'fileType', e.target.value)}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={1}>
+                      <IconButton onClick={() => removeFileAttachment(index)} color="error" size="small">
+                        <DeleteIcon />
+                      </IconButton>
+                    </Grid>
+                  </Grid>
+                </ListItem>
+              ))}
+            </List>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={addFileAttachment}
+              sx={{ mt: 1 }}
+            >
+              Add Attachment
+            </Button>
+          </Grid>
+
+
+          <Grid item xs={12} sx={{ mt: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={isLoading}
+              fullWidth
+            >
+              {isLoading ? <CircularProgress size={24} /> : (initialData ? 'Update Assignment' : 'Create Assignment')}
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    </Paper>
   );
 };
 
