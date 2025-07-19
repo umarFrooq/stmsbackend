@@ -35,9 +35,9 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
         subjectCode: subject?.subjectCode || '',
         description: subject?.description || '',
         creditHours: subject?.creditHours || 0,
-        branchId: initialBranchId,
-        defaultTeacher: initialTeacherId,
-        gradeId: initialGradeId,
+        branchId: initialBranchId || '',
+        defaultTeacher: initialTeacherId || '',
+        gradeId: initialGradeId || '',
         // status: subject?.status || 'active', // Assuming status is handled by backend or not used for now
     };
 
@@ -47,11 +47,7 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
         description: Yup.string().nullable(),
         creditHours: Yup.number().min(0, 'Credit hours cannot be negative').required('Credit hours are required'),
         branchId: Yup.string()
-          .test(
-            'is-object-id',
-            'Branch is required',
-            (value) => !value || (Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value))
-          )
+          .matches(/^[0-9a-fA-F]{24}$/, 'Invalid Branch ID')
           .required('Branch is required'),
         defaultTeacher: Yup.string()
           .test(
