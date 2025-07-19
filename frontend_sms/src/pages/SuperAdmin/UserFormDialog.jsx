@@ -289,7 +289,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
         enableReinitialize // Important for initialValues to update when 'user' prop changes
         context={{ isEditing }} // Pass isEditing to Yup context if needed
       >
-        {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => {
+        {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue, dirty }) => {
           // Re-fetch grades if role or branch changes
           useEffect(() => {
             const shouldFetchGrades = open && values.role === 'student';
@@ -334,6 +334,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                       error={touched.fullname && Boolean(errors.fullname)}
                       helperText={touched.fullname && errors.fullname}
                       disabled={isSubmitting}
+                      autoFocus
                     />
                   </Grid>
 
@@ -473,7 +474,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                   type="submit"
                   variant="contained"
                   color="primary"
-                  disabled={isSubmitting || loadingBranches || loadingGrades}
+                  disabled={isSubmitting || loadingBranches || loadingGrades || (isEditing && !dirty)}
                 startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
               >
                 {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create User')}
