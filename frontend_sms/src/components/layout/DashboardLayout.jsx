@@ -444,9 +444,37 @@ const DashboardLayout = (props) => {
       permission: 'manageGrades',
       condition: (userRoles) => userRoles.includes('admin') && !userRoles.includes('superadmin')
     },
+    {
+      text: 'Leave Policies',
+      icon: <SettingsIcon />,
+      path: `/admin/leave-policy/${user?.branchId}`,
+      requiredRoles: ['admin'],
+      permission: 'manageLeavePolicies',
+    },
+    {
+      text: 'Teacher Attendance',
+      icon: <EventNoteIcon />,
+      path: '/admin/teacher-attendance',
+      requiredRoles: ['admin'],
+      permission: 'manageTeacherAttendances',
+    },
+    {
+      text: 'Payrolls',
+      icon: <AssignmentIcon />,
+      path: '/admin/payrolls',
+      requiredRoles: ['admin', 'superadmin'],
+      permission: 'managePayrolls',
+    },
 
     // Teacher specific
     { text: 'Teacher Dashboard', icon: <SchoolIcon />, path: '/teacher', requiredRoles: ['teacher', 'superadmin'] },
+    {
+      text: 'My Payrolls',
+      icon: <AssignmentIcon />,
+      path: '/teacher/my-payrolls',
+      requiredRoles: ['teacher'],
+      permission: 'viewOwnPayrolls',
+    },
 
     // Student specific
     { text: 'Student Dashboard', icon: <FaceIcon />, path: '/student', requiredRoles: ['student', 'superadmin'] },

@@ -197,6 +197,11 @@ const AppRouter = () => {
             {/* Admin view/grade submission might reuse teacher's page or have its own */}
             <Route path="submissions/:submissionId/details" element={<ProtectedRoute permission="viewAllSubmissionsSchool"><div /></ProtectedRoute>} />
             <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><div /></ProtectedRoute>} />
+
+            {/* Payroll Routes */}
+            <Route path="leave-policy/:branchId" element={<ProtectedRoute permission="manageLeavePolicies"><LeavePolicyPage /></ProtectedRoute>} />
+            <Route path="teacher-attendance" element={<ProtectedRoute permission="manageTeacherAttendances"><TeacherAttendancePage /></ProtectedRoute>} />
+            <Route path="payrolls" element={<ProtectedRoute permission="managePayrolls"><PayrollPage /></ProtectedRoute>} />
           </Route>
 
           {/* Teacher Routes */}
@@ -215,6 +220,8 @@ const AppRouter = () => {
             <Route path="assignments/edit/:assignmentId" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherEditAssignmentPage /></ProtectedRoute>} />
             <Route path="assignments/:assignmentId/submissions" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherSubmissionsPage /></ProtectedRoute>} />
 
+            {/* Payroll Routes */}
+            <Route path="my-payrolls" element={<ProtectedRoute permission="viewOwnPayrolls"><MyPayrollPage /></ProtectedRoute>} />
           </Route>
 
           {/* Student Routes */}
