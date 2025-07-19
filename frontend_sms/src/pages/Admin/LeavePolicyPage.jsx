@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import leavePolicyService from '../../services/leavePolicyService';
 import LeavePolicyForm from '../../components/leavePolicy/LeavePolicyForm';
-import  useAuth  from '../../store/auth.store';
+import { useAuth } from '../../store/auth.store';
 import { Typography } from '@mui/material';
 
 const LeavePolicyPage = () => {

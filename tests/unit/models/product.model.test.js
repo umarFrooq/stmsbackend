@@ -7,6 +7,7 @@ describe("Product model", () => {
     let newProduct;
     beforeEach(() => {
       newProduct = {
+        name: "Michael’s Kors BAG CAMEL",
         productName: "Michael’s Kors BAG CAMEL",
         category: "5f2c0c19a1b13739c4c38975",
         description: "Michael’s Kors BAG CAMEL discription",
