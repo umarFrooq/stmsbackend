@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import useAuthStore from '../store/auth.store';
-
+import LeavePolicyPage  from '../pages/Admin/LeavePolicyPage'
 // Pages
 import LoginPage from '../pages/Auth/LoginPage.jsx'; // Ensured .jsx
 import DashboardLayout from '../components/layout/DashboardLayout.jsx'; // Ensured .jsx
 import HomePage from '../pages/HomePage.jsx'; // Ensured .jsx
 import StudentDashboardPage from '../pages/Student/StudentDashboardPage.jsx'; // Ensured .jsx
 import MyAttendancePage from '../pages/Student/MyAttendancePage.jsx'; // Added for student attendance
-
 // Teacher Pages
 import TeacherDashboardPage from '../pages/Teacher/TeacherDashboardPage';
 import MyClassesPageTeacher from '../pages/Teacher/MyClassesPage';
