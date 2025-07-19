@@ -73,7 +73,7 @@ import AttendanceLogPage from '../pages/Shared/AttendanceLogPage.jsx'; // Added 
 import PayrollPage from '../pages/Payroll/PayrollPage.jsx';
 import LeavePolicyPage from '../pages/Payroll/LeavePolicyPage.jsx';
 import TeacherAttendancePage from '../pages/Payroll/TeacherAttendancePage.jsx';
-import TeacherDashboardPage from '../pages/Payroll/TeacherDashboardPage.jsx';
+// import TeacherDashboardPage from '../pages/Payroll/TeacherDashboardPage.jsx';
 
 
 // Example Profile Page (generic for now)
