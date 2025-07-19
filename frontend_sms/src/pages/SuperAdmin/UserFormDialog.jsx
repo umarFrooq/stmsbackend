@@ -647,6 +647,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
   });
 
   const handleSubmit = async (values, { setSubmitting }) => {
+    console.log('handleSubmit called with values:', values);
     // In edit mode, we only want to send the fields that have actually been changed.
     let submissionPayload;
     if (isEditing) {
@@ -670,16 +671,8 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     }
 
 
-    // The parent's onSubmit should handle the API call.
-    // It's important that the parent component shows a message if there are no changes.
-    if (isEditing && Object.keys(submissionPayload).length === 0) {
-      // If no changes, you might want to close the dialog or show a toast
-      onClose(true); // Assuming onClose takes a parameter to indicate submission happened
-      setSubmitting(false);
-      return;
-    }
 
-
+    console.log('Submitting payload:', submissionPayload);
     await onSubmit(submissionPayload, isEditing, user?.id);
 
     setSubmitting(false);
