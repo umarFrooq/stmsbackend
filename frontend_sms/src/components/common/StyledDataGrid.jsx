@@ -23,6 +23,7 @@ const StyledDataGrid = ({
   minHeight = 400, // Minimum height if autoHeight is false
   slots, // To pass custom slots like Toolbar, Footer, etc.
   slotProps, // Props for the slots
+  getRowId, // Add getRowId to the destructured props
   // ...other DataGrid props can be passed through
   ...rest
 }) => {
@@ -81,6 +82,7 @@ const StyledDataGrid = ({
             // backgroundColor: 'primary.light', // Example header styling
           },
         }}
+        getRowId={getRowId} // Pass getRowId to the DataGrid
         {...rest} // Pass any other DataGrid props
       />
     </Paper>
@@ -103,6 +105,7 @@ StyledDataGrid.propTypes = {
   minHeight: PropTypes.number,
   slots: PropTypes.object,
   slotProps: PropTypes.object,
+  getRowId: PropTypes.func, // Add propType for getRowId
 };
 
 export default StyledDataGrid;
