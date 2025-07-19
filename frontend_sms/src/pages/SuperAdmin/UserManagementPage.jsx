@@ -260,7 +260,6 @@ const UserManagementPage = () => {
   };
 
   const handleUserFormSubmit = async (values, isEditingMode, userId) => {
-    console.log('handleUserFormSubmit called with:', { values, isEditingMode, userId });
     try {
       if (isEditingMode) {
         await userService.updateUser(userId, values);
@@ -274,7 +273,6 @@ const UserManagementPage = () => {
       setPaginationModel(prev => ({ ...prev, page: 0 })); // Reset page
       return true;
     } catch (apiError) {
-      console.error('Error in handleUserFormSubmit:', apiError);
       showToast(apiError.message || (apiError.data && apiError.data.message) || `Failed to ${isEditingMode ? 'update' : 'create'} user.`, 'error');
       return false;
     }
