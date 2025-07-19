@@ -362,6 +362,7 @@ import DomainIcon from '@mui/icons-material/Domain'; // For School Management (R
 import ClassIcon from '@mui/icons-material/Class'; // For Grade Management
 import EventNoteIcon from '@mui/icons-material/EventNote'; // For Attendance Log
 import AssignmentIcon from '@mui/icons-material/Assignment'; // For Assignments
+import PaymentIcon from '@mui/icons-material/Payment'; // For Payroll
 
 import useAuthStore from '../../store/auth.store';
 import './Dashboard.css';
@@ -482,6 +483,35 @@ const DashboardLayout = (props) => {
       // For simplicity in nav, 'manageAllAssignmentsSchool' covers the primary admin/superadmin case for managing school assignments.
       permission: 'manageAllAssignmentsSchool'
       // If rootUser needs a link to a global assignment view, it would be a separate entry or handled by their 'Root Dashboard'
+    },
+    // Payroll Links
+    {
+      text: 'Payrolls',
+      icon: <PaymentIcon />,
+      path: '/admin/payrolls',
+      requiredRoles: ['admin', 'superadmin'],
+      permission: 'managePayrolls',
+    },
+    {
+      text: 'Leave Policies',
+      icon: <PaymentIcon />,
+      path: '/admin/leave-policies',
+      requiredRoles: ['admin', 'superadmin'],
+      permission: 'manageLeavePolicies',
+    },
+    {
+      text: 'Teacher Attendances',
+      icon: <PaymentIcon />,
+      path: '/admin/teacher-attendances',
+      requiredRoles: ['admin', 'superadmin'],
+      permission: 'manageTeacherAttendances',
+    },
+    {
+      text: 'My Payroll',
+      icon: <PaymentIcon />,
+      path: '/teacher/dashboard',
+      requiredRoles: ['teacher'],
+      permission: 'getPayrolls',
     },
   ];
 

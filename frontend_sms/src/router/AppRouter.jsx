@@ -69,6 +69,13 @@ import ProtectedRoute from './ProtectedRoute.jsx'; // Ensured .jsx
 // Shared Pages
 import AttendanceLogPage from '../pages/Shared/AttendanceLogPage.jsx'; // Added for shared attendance log
 
+// Payroll Pages
+import PayrollPage from '../pages/Payroll/PayrollPage.jsx';
+import LeavePolicyPage from '../pages/Payroll/LeavePolicyPage.jsx';
+import TeacherAttendancePage from '../pages/Payroll/TeacherAttendancePage.jsx';
+import TeacherDashboardPage from '../pages/Payroll/TeacherDashboardPage.jsx';
+
+
 // Example Profile Page (generic for now)
 const UserProfilePage = () => <div>User Profile Page (Accessible by all logged-in users)</div>;
 
@@ -197,6 +204,11 @@ const AppRouter = () => {
             {/* Admin view/grade submission might reuse teacher's page or have its own */}
             <Route path="submissions/:submissionId/details" element={<ProtectedRoute permission="viewAllSubmissionsSchool"><div /></ProtectedRoute>} />
             <Route path="submissions/:submissionId/grade" element={<ProtectedRoute permission="gradeSubmission"><div /></ProtectedRoute>} />
+
+            {/* Payroll Routes */}
+            <Route path="payrolls" element={<ProtectedRoute permission="managePayrolls"><PayrollPage /></ProtectedRoute>} />
+            <Route path="leave-policies" element={<ProtectedRoute permission="manageLeavePolicies"><LeavePolicyPage /></ProtectedRoute>} />
+            <Route path="teacher-attendances" element={<ProtectedRoute permission="manageTeacherAttendances"><TeacherAttendancePage /></ProtectedRoute>} />
           </Route>
 
           {/* Teacher Routes */}
@@ -215,6 +227,8 @@ const AppRouter = () => {
             <Route path="assignments/edit/:assignmentId" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherEditAssignmentPage /></ProtectedRoute>} />
             <Route path="assignments/:assignmentId/submissions" element={<ProtectedRoute permission="manageOwnAssignments"><TeacherSubmissionsPage /></ProtectedRoute>} />
 
+            {/* Payroll Routes */}
+            <Route path="dashboard" element={<ProtectedRoute permission="getPayrolls"><TeacherDashboardPage /></ProtectedRoute>} />
           </Route>
 
           {/* Student Routes */}

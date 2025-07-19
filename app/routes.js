@@ -7,6 +7,9 @@ var branchRoutes = require("./branch/branch.routes");
 var paperRoutes = require("./paper/paper.routes");
 var schoolRoutes = require("./school/school.routes"); // Added school routes
 const classScheduleRoutes = require("./class-schedule/class-schedule.routes"); // Added class schedule routes
+const payrollRoutes = require("./payroll/payroll.routes");
+const leavePolicyRoutes = require("./payroll/leavePolicy.routes");
+const teacherAttendanceRoutes = require("./payroll/teacherAttendance.routes");
 let addressRoutes=require('./address/address.routes')
 // var bannerRoutes = require("./banner/banner.routes");
 // var shippmentRoutes = require("./shippment/shippment.routes");
@@ -150,6 +153,11 @@ router.use("/class-schedules", classScheduleRoutes); // Added class schedule rou
 router.use("/assignments", assignmentRoutes);
 router.use("/assignments/:assignmentId/submissions", assignmentSpecificSubmissionRouter); // Mount for nested routes
 router.use("/submissions", mainSubmissionRouter);
+
+// Payroll Routes
+router.use("/payrolls", payrollRoutes);
+router.use("/leave-policies", leavePolicyRoutes);
+router.use("/teacher-attendances", teacherAttendanceRoutes);
 
 
 module.exports = router;
