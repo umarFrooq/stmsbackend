@@ -68,19 +68,6 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
         // status: Yup.string().required('Status is required'),
     });
 
-    useEffect(() => {
-        if (values.branchId) {
-            setFilteredGrades(grades.filter(g => g.branchId._id === values.branchId));
-            // If the current gradeId is not in the filtered list, reset it
-            if (!filteredGrades.some(g => g._id === values.gradeId)) {
-                setFieldValue('gradeId', '');
-            }
-        } else {
-            setFilteredGrades(grades);
-        }
-    }, [values.branchId, grades, setFieldValue]);
-
-
     return (
         <Dialog open={open} onClose={() => onClose(false)} maxWidth="md" fullWidth>
             <DialogTitle>{isEditing ? 'Edit Subject' : 'Add New Subject'}</DialogTitle>
@@ -98,7 +85,19 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                 }}
                 enableReinitialize
             >
-                {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => (
+                {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => {
+    useEffect(() => {
+        if (values.branchId) {
+            setFilteredGrades(grades.filter(g => g.branchId._id === values.branchId));
+            // If the current gradeId is not in the filtered list, reset it
+            if (!filteredGrades.some(g => g._id === values.gradeId)) {
+                setFieldValue('gradeId', '');
+            }
+        } else {
+            setFilteredGrades(grades);
+        }
+    }, [values.branchId, grades, setFieldValue]);
+                return (
                     <Form>
                         <DialogContent dividers>
                             <Grid container spacing={3}>
