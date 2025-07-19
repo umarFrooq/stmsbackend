@@ -13,9 +13,8 @@ import {
   Paper,
   Chip
 } from '@mui/material';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import SearchIcon from '@mui/icons-material/Search';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import ClearIcon from '@mui/icons-material/Clear';
 import debounce from 'lodash.debounce';
 
@@ -311,138 +310,130 @@ const AttendanceLogPage = () => {
   }
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-        <Typography variant="h5" component="h1" sx={{ mb: 3 }}>
-          Attendance Log
-        </Typography>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      <Typography variant="h5" component="h1" sx={{ mb: 3 }}>
+        Attendance Log
+      </Typography>
 
-        <Paper sx={{ mb: 3, p: 2 }}>
-          <Grid container spacing={2} alignItems="center">
-            {/* Student Filter */}
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Student</InputLabel>
-                <Select name="studentId" value={filters.studentId} label="Student" onChange={handleFilterChange}>
-                  <MenuItem value=""><em>All Students</em></MenuItem>
-                  {students.map(s => <MenuItem key={s.id} value={s.id}>{s.fullname || s.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Teacher (Marked By) Filter */}
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Teacher (Marked By)</InputLabel>
-                <Select name="teacherId" value={filters.teacherId} label="Teacher (Marked By)" onChange={handleFilterChange}>
-                  <MenuItem value=""><em>All Teachers</em></MenuItem>
-                  {teachers.map(t => <MenuItem key={t.id} value={t.id}>{t.fullname || t.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Grade Filter */}
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Grade</InputLabel>
-                <Select name="gradeId" value={filters.gradeId} label="Grade" onChange={handleFilterChange}>
-                  <MenuItem value=""><em>All Grades</em></MenuItem>
-                  {grades.map(g => <MenuItem key={g.id} value={g.id}>{g.title || g.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Section Filter */}
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small" disabled={!filters.gradeId || sections.length === 0}>
-                <InputLabel>Section</InputLabel>
-                <Select name="section" value={filters.section} label="Section" onChange={handleFilterChange}>
-                  <MenuItem value=""><em>All Sections</em></MenuItem>
-                  {sections.map(sec => <MenuItem key={sec} value={sec}>{sec}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Status Filter */}
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Status</InputLabel>
-                <Select name="status" value={filters.status} label="Status" onChange={handleFilterChange}>
-                  <MenuItem value=""><em>All Statuses</em></MenuItem>
-                  {ATTENDANCE_STATUSES.map(s => <MenuItem key={s} value={s}>{s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Start Date Filter */}
-            <Grid item xs={12} sm={6} md={3}>
-              <DatePicker
-                label="Start Date"
-                value={filters.startDate}
-                onChange={(date) => handleDateChange('startDate', date)}
-                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
-              />
-            </Grid>
-
-            {/* End Date Filter */}
-            <Grid item xs={12} sm={6} md={3}>
-              <DatePicker
-                label="End Date"
-                value={filters.endDate}
-                onChange={(date) => handleDateChange('endDate', date)}
-                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <Button
-                variant="contained"
-                onClick={handleSearch}
-                startIcon={<SearchIcon />}
-                disabled={loading}
-                sx={{ flexGrow: 1 }}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : "Search"}
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={handleResetFilters}
-                startIcon={<ClearIcon />}
-                disabled={loading}
-                sx={{ flexGrow: 1 }}
-              >
-                Reset
-              </Button>
-            </Grid>
+      <Paper sx={{ mb: 3, p: 2 }}>
+        <Grid container spacing={2} alignItems="center">
+          {/* Student Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Student</InputLabel>
+              <Select name="studentId" value={filters.studentId} label="Student" onChange={handleFilterChange}>
+                <MenuItem value=""><em>All Students</em></MenuItem>
+                {students.map(s => <MenuItem key={s.id} value={s.id}>{s.fullname || s.name}</MenuItem>)}
+              </Select>
+            </FormControl>
           </Grid>
-        </Paper>
 
-        {/* Error Display */}
-        {error && !loading && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+          {/* Teacher (Marked By) Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Teacher (Marked By)</InputLabel>
+              <Select name="teacherId" value={filters.teacherId} label="Teacher (Marked By)" onChange={handleFilterChange}>
+                <MenuItem value=""><em>All Teachers</em></MenuItem>
+                {teachers.map(t => <MenuItem key={t.id} value={t.id}>{t.fullname || t.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
 
-        {/* Data Grid */}
-        <StyledDataGrid
-          rows={attendanceRecords}
-          columns={columns}
-          loading={loading}
-          error={null} // Error is handled above the grid
-          getRowId={(row) => row.id || row._id} // Use _id if id is not present
-          minHeight={500}
-          rowCount={totalRecords}
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          paginationMode="server"
-          pageSizeOptions={[10, 25, 50, 100]}
-        />
-      </Box>
+          {/* Grade Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Grade</InputLabel>
+              <Select name="gradeId" value={filters.gradeId} label="Grade" onChange={handleFilterChange}>
+                <MenuItem value=""><em>All Grades</em></MenuItem>
+                {grades.map(g => <MenuItem key={g.id} value={g.id}>{g.title || g.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
 
-      <NotificationToast
-        open={toastOpen}
-        message={toastMessage}
-        severity={toastSeverity}
-        handleClose={() => setToastOpen(false)}
+          {/* Section Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small" disabled={!filters.gradeId || sections.length === 0}>
+              <InputLabel>Section</InputLabel>
+              <Select name="section" value={filters.section} label="Section" onChange={handleFilterChange}>
+                <MenuItem value=""><em>All Sections</em></MenuItem>
+                {sections.map(sec => <MenuItem key={sec} value={sec}>{sec}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Status Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Status</InputLabel>
+              <Select name="status" value={filters.status} label="Status" onChange={handleFilterChange}>
+                <MenuItem value=""><em>All Statuses</em></MenuItem>
+                {ATTENDANCE_STATUSES.map(s => <MenuItem key={s} value={s}>{s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Start Date Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <DatePicker
+              selected={filters.startDate}
+              onChange={(date) => handleDateChange('startDate', date)}
+              customInput={<TextField fullWidth size="small" />}
+            />
+          </Grid>
+
+          {/* End Date Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <DatePicker
+              selected={filters.endDate}
+              onChange={(date) => handleDateChange('endDate', date)}
+              customInput={<TextField fullWidth size="small" />}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={handleSearch}
+              disabled={loading}
+              sx={{ flexGrow: 1 }}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Search"}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleResetFilters}
+              startIcon={<ClearIcon />}
+              disabled={loading}
+              sx={{ flexGrow: 1 }}
+            >
+              Reset
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Error Display */}
+      {error && !loading && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+
+      {/* Data Grid */}
+      <StyledDataGrid
+        rows={attendanceRecords}
+        columns={columns}
+        loading={loading}
+        error={null} // Error is handled above the grid
+        getRowId={(row) => row.id || row._id} // Use _id if id is not present
+        minHeight={500}
+        rowCount={totalRecords}
+        paginationModel={paginationModel}
+        onPaginationModelChange={setPaginationModel}
+        paginationMode="server"
+        pageSizeOptions={[10, 25, 50, 100]}
       />
-    </LocalizationProvider>
+    </Box>
+  );
+};
+
+export default AttendanceLogPage;
   );
 };
 
