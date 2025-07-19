@@ -133,65 +133,60 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
   }, [open, user?.role, initialValues.role, initialValues.branchId, isEditing, user?.branchId, currentUser?.schoolScope]);
 
   const validationSchema = Yup.object().shape({
-    fullname: Yup.string().trim()
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Full name is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    email: Yup.string()
-      .email('Invalid email address')
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Email is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    password: Yup.string().when('$isEditing', (isEditingValue, schema) => {
-      if (isEditingValue) return schema.optional();
-      return schema.required('Password is required').min(8, 'Password must be at least 8 characters');
+    fullname: Yup.string().trim().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Full name is required'),
+      otherwise: (schema) => schema.optional(),
     }),
-    confirmPassword: Yup.string().when('$isEditing', (isEditingValue, schema) => {
-      if (isEditingValue) return schema.optional();
-      return schema.when('password', (passwordAttempt, currentSchema) => {
-        if (passwordAttempt && passwordAttempt.length > 0) {
-          return currentSchema.oneOf([Yup.ref('password'), null], 'Passwords must match')
-            .required('Confirm password is required');
-        }
-        return currentSchema.optional();
-      });
+    email: Yup.string().email('Invalid email address').when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Email is required'),
+      otherwise: (schema) => schema.optional(),
     }),
-    role: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Role is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    branchId: Yup.string()
-      .when('$isEditing', {
-        is: false, // Create mode
-        then: (schema) => schema.required('Branch/Campus is required'),
-        otherwise: (schema) => schema.optional(), // Edit mode
-      }),
-    status: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: (schema) => schema.required('Status is required'),
-        otherwise: (schema) => schema.optional(),
-      }),
-    // For gradeId, it's required if role is 'student' during creation.
-    // During an update (isEditing=true), it's optional even if role is 'student', to allow unsetting it.
-    // If role is changed TO 'student' during an update, this logic implies gradeId is not strictly required by Yup,
-    // but the backend or service layer should handle consistency if a student must have a grade.
-    gradeId: Yup.string().when(['$isEditing', 'role'], ([isEditingValue, roleValue], schema) => {
-      if (roleValue === 'student') {
-        return isEditingValue ? schema.nullable().optional() : schema.required('Grade is required for students.');
+    password: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Password is required').min(8, 'Password must be at least 8 characters'),
+      otherwise: (schema) => schema.optional().min(8, 'Password must be at least 8 characters'),
+    }),
+    confirmPassword: Yup.string().when('password', (password, schema) => {
+      if (password && password.length > 0) {
+        return schema
+          .oneOf([Yup.ref('password'), null], 'Passwords must match')
+          .required('Confirm password is required');
       }
-      return schema.nullable().optional();
-    }), // Ensure comma here if it was missing before cnic
-    cnic: Yup.string().trim().optional().nullable()
+      return schema.optional();
+    }),
+    role: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Role is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    branchId: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Branch/Campus is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    status: Yup.string().when('$isEditing', {
+      is: false,
+      then: (schema) => schema.required('Status is required'),
+      otherwise: (schema) => schema.optional(),
+    }),
+    gradeId: Yup.string().when('role', {
+      is: 'student',
+      then: (schema) => schema.when('$isEditing', {
+        is: false,
+        then: (schema) => schema.required('Grade is required for students.'),
+        otherwise: (schema) => schema.nullable().optional(),
+      }),
+      otherwise: (schema) => schema.nullable().optional(),
+    }),
+    cnic: Yup.string()
+      .trim()
+      .optional()
+      .nullable()
       .matches(/^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$/, 'Invalid CNIC format. Expected: XXXXX-XXXXXXX-X')
-      .test('is-valid-cnic-length', 'CNIC must be exactly 15 characters including hyphens', value => {
-        if (!value) return true; // Optional, so valid if empty
+      .test('is-valid-cnic-length', 'CNIC must be exactly 15 characters including hyphens', (value) => {
+        if (!value) return true;
         return value.length === 15;
       }),
   });
@@ -200,25 +195,31 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
     let submissionPayload = {};
 
     if (isEditing) {
-      // Only include fields that have changed or are always necessary
-      if (values.fullname !== user?.fullname) submissionPayload.fullname = values.fullname;
-      if (values.role !== user?.role) submissionPayload.role = values.role;
+      // Only include fields that have changed
+      if (values.fullname && values.fullname !== user?.fullname) {
+        submissionPayload.fullname = values.fullname;
+      }
+      if (values.role && values.role !== user?.role) {
+        submissionPayload.role = values.role;
+      }
 
       const initialBranchId = user?.branchId?._id || user?.branchId || '';
-      if (values.branchId !== initialBranchId) submissionPayload.branchId = values.branchId;
+      if (values.branchId && values.branchId !== initialBranchId) {
+        submissionPayload.branchId = values.branchId;
+      }
 
       const initialGradeId = user?.gradeId?._id || user?.gradeId || '';
-      if (values.gradeId !== initialGradeId) {
-        submissionPayload.gradeId = values.gradeId ? values.gradeId : null; // Send null if cleared
+      if (values.gradeId && values.gradeId !== initialGradeId) {
+        submissionPayload.gradeId = values.gradeId ? values.gradeId : null;
       } else if (values.role !== 'student' && initialGradeId) {
-        // If role changed from student to something else, and there was a grade, clear it
         submissionPayload.gradeId = null;
       }
 
+      if (values.status && values.status !== user?.status) {
+        submissionPayload.status = values.status;
+      }
 
-      if (values.status !== user?.status) submissionPayload.status = values.status;
-      // Password and email are not changed in edit mode via this form typically
-      if (values.cnic !== (user?.cnic || null)) {
+      if (values.cnic && values.cnic !== (user?.cnic || null)) {
         submissionPayload.cnic = values.cnic || null;
       }
     } else { // Create mode
@@ -332,7 +333,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                       value={values.fullname} onChange={handleChange} onBlur={handleBlur}
                       error={touched.fullname && Boolean(errors.fullname)}
                       helperText={touched.fullname && errors.fullname}
-                      disabled={isSubmitting} required
+                      disabled={isSubmitting}
                     />
                   </Grid>
 
@@ -345,7 +346,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                           value={values.email} onChange={handleChange} onBlur={handleBlur}
                           error={touched.email && Boolean(errors.email)}
                           helperText={touched.email && errors.email}
-                          disabled={isSubmitting} required
+                          disabled={isSubmitting}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -354,7 +355,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                           value={values.password} onChange={handleChange} onBlur={handleBlur}
                           error={touched.password && Boolean(errors.password)}
                           helperText={touched.password && errors.password}
-                          disabled={isSubmitting} required
+                          disabled={isSubmitting}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -363,7 +364,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                           value={values.confirmPassword} onChange={handleChange} onBlur={handleBlur}
                           error={touched.confirmPassword && Boolean(errors.confirmPassword)}
                           helperText={touched.confirmPassword && errors.confirmPassword}
-                          disabled={isSubmitting || !values.password} required
+                          disabled={isSubmitting || !values.password}
                         />
                       </Grid>
                     </>
@@ -372,11 +373,11 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                   {/* Role */}
                   <Grid item xs={12} sm={values.role === 'student' ? 4 : 6}>
                     <FormControl fullWidth error={touched.role && Boolean(errors.role)} disabled={isSubmitting}>
-                      <InputLabel id="role-select-label" required>Role</InputLabel>
+                      <InputLabel id="role-select-label">Role</InputLabel>
                       <Select
                         labelId="role-select-label" name="role" value={values.role} label="Role"
                         onChange={(e) => handleRoleChange(e, handleChange, setFieldValue, values)}
-                        onBlur={handleBlur} required
+                        onBlur={handleBlur}
                       >
                         {availableRoles.map((role) => (
                           <MenuItem key={role} value={role}>
@@ -391,10 +392,10 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                   {/* Branch */}
                  <Grid item xs={12} sm={values.role === 'student' ? 4 : 6}>
                     <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting || loadingBranches}>
-                      <InputLabel id="branch-select-label" required>Branch/Campus</InputLabel>
+                      <InputLabel id="branch-select-label">Branch/Campus</InputLabel>
                       <Select
                         labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch/Campus"
-                        onChange={handleChange} onBlur={handleBlur} required
+                        onChange={handleChange} onBlur={handleBlur}
                       >
                         <MenuItem value=""><em>{loadingBranches ? 'Loading...' : branchError ? 'Error loading' : 'Select Branch'}</em></MenuItem>
                         {availableBranches.map((branch) => (
