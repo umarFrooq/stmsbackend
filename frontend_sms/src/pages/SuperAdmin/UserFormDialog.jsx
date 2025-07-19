@@ -514,6 +514,7 @@ import gradeService from '../../services/gradeService'; // Import grade service
 import useAuthStore from '../../store/auth.store'; // To get current user/school context
 
 const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) => {
+  console.log('UserFormDialog rendered with open:', open);
   const isEditing = Boolean(user);
   const { user: currentUser } = useAuthStore(); // Get current logged-in user for schoolId if needed
 
