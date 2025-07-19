@@ -406,7 +406,7 @@ const SubjectManagementPage = () => {
         rows={subjects}
         columns={columns}
         loading={loading}
-        getRowId={(row) => row._id} // Use _id from backend
+        getRowId={(row) => row._id || row.id} // Use _id from backend, fallback to id
         rowCount={pagination.total}
         pageSize={pagination.pageSize}
         rowsPerPageOptions={[5, 10, 25, 50]}
