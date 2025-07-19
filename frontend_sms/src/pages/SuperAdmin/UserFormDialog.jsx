@@ -624,62 +624,20 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
   }, [open, user?.role, initialValues.role, initialValues.branchId, isEditing, user?.branchId, currentUser?.schoolScope]);
 
   const validationSchema = Yup.object().shape({
-    fullname: Yup.string().trim()
-      .when('$isEditing', {
-        is: false,
-        then: schema => schema.required('Full name is required'),
-        otherwise: schema => schema.optional()
-      }),
-    email: Yup.string().email('Invalid email address')
-      .when('$isEditing', {
-        is: false,
-        then: schema => schema.required('Email is required'),
-        otherwise: schema => schema.optional()
-      }),
-    password: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: schema => schema.required('Password is required').min(8, 'Password must be at least 8 characters'),
-        otherwise: schema => schema.optional().min(8, 'Password must be at least 8 characters if provided')
-      }),
+    fullname: Yup.string().trim().optional(),
+    email: Yup.string().email('Invalid email address').optional(),
+    password: Yup.string().optional().min(8, 'Password must be at least 8 characters if provided'),
     confirmPassword: Yup.string()
       .when('password', (password, schema) => {
-        // Only require confirmPassword if password is being set (either in create mode, or in edit mode if password is not empty)
         if (password && password.length > 0) {
           return schema.oneOf([Yup.ref('password'), null], 'Passwords must match').required('Confirm password is required');
         }
         return schema.optional();
       }),
-    role: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: schema => schema.required('Role is required'),
-        otherwise: schema => schema.optional()
-      }),
-    branchId: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: schema => schema.required('Branch/Campus is required'),
-        otherwise: schema => schema.optional()
-      }),
-    status: Yup.string()
-      .when('$isEditing', {
-        is: false,
-        then: schema => schema.required('Status is required'),
-        otherwise: schema => schema.optional()
-      }),
-    gradeId: Yup.string()
-      .when('role', {
-        is: 'student',
-        // If role is student, grade is required only in create mode.
-        then: schema => schema.when('$isEditing', {
-          is: false,
-          then: schema => schema.required('Grade is required for students.'),
-          otherwise: schema => schema.optional().nullable()
-        }),
-        // If role is not student, grade is not required and should be nullable.
-        otherwise: schema => schema.optional().nullable()
-      }),
+    role: Yup.string().optional(),
+    branchId: Yup.string().optional(),
+    status: Yup.string().optional(),
+    gradeId: Yup.string().optional().nullable(),
     cnic: Yup.string().trim().optional().nullable()
       .matches(/^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$/, 'Invalid CNIC format. Expected: XXXXX-XXXXXXX-X')
       .test('is-valid-cnic-length', 'CNIC must be exactly 15 characters including hyphens', value => {
@@ -690,20 +648,42 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
 
   const handleSubmit = async (values, { setSubmitting }) => {
     // In edit mode, we only want to send the fields that have actually been changed.
-    const getChangedValues = (currentValues, initialValues) => {
+    const getChangedValues = (currentValues, initialUser) => {
       const changes = {};
-      Object.keys(currentValues).forEach(key => {
-        const initial = initialValues[key];
-        const current = currentValues[key];
-        // Special handling for object IDs (like branchId, gradeId)
-        const initialId = (initial && typeof initial === 'object') ? initial._id : initial;
-        const currentId = current;
+      const initial = {
+        fullname: initialUser?.fullname || '',
+        email: initialUser?.email || '',
+        role: initialUser?.role || '',
+        branchId: initialUser?.branchId?._id || initialUser?.branchId || '',
+        gradeId: initialUser?.gradeId?._id || initialUser?.gradeId || '',
+        status: initialUser?.status || 'active',
+        cnic: initialUser?.cnic || '',
+        password: '', // Password is not pre-filled
+      };
 
-        if (key === 'password' && current) {
-          // Always include password if a new one is typed
-          changes.password = current;
-        } else if (initialId !== currentId && key !== 'password' && key !== 'confirmPassword') {
-          changes[key] = current === '' ? null : current; // Send null if a field is cleared
+      Object.keys(currentValues).forEach(key => {
+        // Skip confirmPassword field
+        if (key === 'confirmPassword') return;
+
+        const currentValue = currentValues[key];
+        const initialValue = initial[key];
+
+        // If it's a new user, include all fields except empty password
+        if (!isEditing) {
+          if (key === 'password' && currentValue) {
+            changes.password = currentValue;
+          } else if (key !== 'password') {
+            changes[key] = currentValue === '' ? null : currentValue;
+          }
+        } else {
+          // If editing, only include changed fields
+          if (currentValue !== initialValue) {
+            if (key === 'password' && currentValue) {
+              changes.password = currentValue;
+            } else if (key !== 'password') {
+              changes[key] = currentValue === '' ? null : currentValue;
+            }
+          }
         }
       });
       return changes;
@@ -711,18 +691,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
 
     let submissionPayload;
     if (isEditing) {
-        const userInitialValues = {
-            fullname: user?.fullname || '',
-            email: user?.email || '',
-            role: user?.role || '',
-            branchId: user?.branchId?._id || user?.branchId || '',
-            gradeId: user?.gradeId?._id || user?.gradeId || '',
-            status: user?.status || 'active',
-            cnic: user?.cnic || '',
-            password: '', // Password is not pre-filled
-        };
-        submissionPayload = getChangedValues(values, userInitialValues);
-
+        submissionPayload = getChangedValues(values, user);
         // If role changes from 'student' to something else, ensure gradeId is nulled out
         if (submissionPayload.role && submissionPayload.role !== 'student' && user.role === 'student') {
             submissionPayload.gradeId = null;
@@ -742,6 +711,14 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
 
     // The parent's onSubmit should handle the API call.
     // It's important that the parent component shows a message if there are no changes.
+    if (isEditing && Object.keys(submissionPayload).length === 0) {
+      // If no changes, you might want to close the dialog or show a toast
+      onClose(true); // Assuming onClose takes a parameter to indicate submission happened
+      setSubmitting(false);
+      return;
+    }
+
+
     await onSubmit(submissionPayload, isEditing, user?.id);
 
     setSubmitting(false);
@@ -963,7 +940,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                   type="submit"
                   variant="contained"
                   color="primary"
-                  disabled={isSubmitting || (isEditing && !dirty)}
+                  disabled={isSubmitting || (isEditing && !dirty && !Object.keys(getChangedValues(values, user)).length)}
                   startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
                 >
                 {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create User')}
