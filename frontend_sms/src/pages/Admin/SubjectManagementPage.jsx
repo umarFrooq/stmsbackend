@@ -46,24 +46,27 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
         subjectCode: Yup.string().required('Subject code is required'),
         description: Yup.string().nullable(),
         creditHours: Yup.number().min(0, 'Credit hours cannot be negative').required('Credit hours are required'),
-        branchId: Yup.string().custom((value) => { // Using custom validation to ensure it's a valid ObjectId string if provided
-            if (value && !Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value)) {
-              return false;
-            }
-            return true;
-          }).required('Branch is required'),
-        defaultTeacher: Yup.string().custom((value) => {
-            if (value && !Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value)) {
-              return false;
-            }
-            return true;
-          }).nullable(), // Teacher can be optional
-        gradeId: Yup.string().custom((value) => {
-            if (value && !Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value)) {
-              return false;
-            }
-            return true;
-          }).nullable(), // Grade can be optional
+        branchId: Yup.string()
+          .test(
+            'is-object-id',
+            'Branch is required',
+            (value) => !value || (Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value))
+          )
+          .required('Branch is required'),
+        defaultTeacher: Yup.string()
+          .test(
+            'is-object-id',
+            'Invalid Teacher ID',
+            (value) => !value || (Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value))
+          )
+          .nullable(), // Teacher can be optional
+        gradeId: Yup.string()
+          .test(
+            'is-object-id',
+            'Invalid Grade ID',
+            (value) => !value || (Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value))
+          )
+          .nullable(), // Grade can be optional
         // status: Yup.string().required('Status is required'),
     });
 
