@@ -103,7 +103,7 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                 <Grid item xs={12} sm={6}>
                                      <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting}>
                                         <InputLabel id="branch-select-label">Branch</InputLabel>
-                                        <Select labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch" onChange={handleChange} onBlur={handleBlur} >
+                                        <Select labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch" onChange={(e) => setFieldValue('branchId', e.target.value)} onBlur={handleBlur} >
                                             <MenuItem value=""><em>None</em></MenuItem>
                                             {branches.map(b => (<MenuItem key={b._id} value={b._id}>{b.name}</MenuItem>))}
                                         </Select>
@@ -113,7 +113,7 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting}>
                                         <InputLabel id="grade-select-label">Grade (Optional)</InputLabel>
-                                        <Select labelId="grade-select-label" name="gradeId" value={values.gradeId} label="Grade (Optional)" onChange={handleChange} onBlur={handleBlur}>
+                                        <Select labelId="grade-select-label" name="gradeId" value={values.gradeId} label="Grade (Optional)" onChange={(e) => setFieldValue('gradeId', e.target.value)} onBlur={handleBlur}>
                                         <MenuItem value=""><em>None</em></MenuItem>
                                             {grades.map(g => (<MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>))}
                                         </Select>
@@ -123,7 +123,7 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth error={touched.defaultTeacher && Boolean(errors.defaultTeacher)} disabled={isSubmitting}>
                                         <InputLabel id="teacher-select-label">Default Teacher (Optional)</InputLabel>
-                                        <Select labelId="teacher-select-label" name="defaultTeacher" value={values.defaultTeacher} label="Default Teacher (Optional)" onChange={handleChange} onBlur={handleBlur}>
+                                        <Select labelId="teacher-select-label" name="defaultTeacher" value={values.defaultTeacher} label="Default Teacher (Optional)" onChange={(e) => setFieldValue('defaultTeacher', e.target.value)} onBlur={handleBlur}>
                                         <MenuItem value=""><em>None</em></MenuItem>
                                             {teachers.map(t => (<MenuItem key={t._id} value={t._id}>{t.fullname}</MenuItem>))}
                                         </Select>
