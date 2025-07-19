@@ -22,8 +22,9 @@ import branchService from '../../services/branchService'; // Assuming you have t
 import useAuthStore from '../../store/auth.store';
 
 
-// Subject Form Dialog Component
-const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers, branches }) => {
+
+
+const SubjectFormDialog = ({ open, onClose, subject, onSubmit, teachers, branches }) => {
     const isEditing = Boolean(subject);
 
     const getInitialValues = () => ({
@@ -64,7 +65,6 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
             (value) => !value || (Yup.string().matches(/^[0-9a-fA-F]{24}$/).isValidSync(value))
           )
           .nullable(), // Grade can be optional
-        // status: Yup.string().required('Status is required'),
     });
 
     return (
@@ -74,7 +74,6 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                 initialValues={initialValues}
                 validationSchema={validationSchema}
                 onSubmit={async (values, { setSubmitting }) => {
-                    // Filter out empty strings for optional fields before submitting
                     const payload = { ...values };
                     if (payload.defaultTeacher === '') payload.defaultTeacher = null;
                     if (payload.gradeId === '') payload.gradeId = null;
@@ -84,11 +83,32 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                 }}
                 enableReinitialize
             >
-                {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => (
-                    <Form>
-                        <DialogContent dividers>
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
+                {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => {
+                    const [grades, setGrades] = useState([]);
+                    const [loadingGrades, setLoadingGrades] = useState(false);
+
+                    useEffect(() => {
+                        if (values.branchId) {
+                            setLoadingGrades(true);
+                            gradeService.getGrades({ branchId: values.branchId, limit: 500 })
+                                .then(data => {
+                                    setGrades(data.results || []);
+                                })
+                                .catch(err => {
+                                    console.error("Failed to fetch grades for branch:", err);
+                                    setGrades([]);
+                                })
+                                .finally(() => setLoadingGrades(false));
+                        } else {
+                            setGrades([]);
+                        }
+                    }, [values.branchId]);
+
+                    return (
+                        <Form>
+                            <DialogContent dividers>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} sm={6}>
                                     <TextField fullWidth label="Subject Name/Title" name="title" value={values.title} onChange={handleChange} onBlur={handleBlur} error={touched.title && Boolean(errors.title)} helperText={touched.title && errors.title} disabled={isSubmitting} />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
@@ -103,7 +123,17 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                 <Grid item xs={12} sm={6}>
                                      <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting}>
                                         <InputLabel id="branch-select-label">Branch</InputLabel>
-                                        <Select labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch" onChange={(e) => setFieldValue('branchId', e.target.value)} onBlur={handleBlur} >
+                                        <Select
+                                            labelId="branch-select-label"
+                                            name="branchId"
+                                            value={values.branchId}
+                                            label="Branch"
+                                            onChange={(e) => {
+                                                setFieldValue('branchId', e.target.value);
+                                                setFieldValue('gradeId', '');
+                                            }}
+                                            onBlur={handleBlur}
+                                        >
                                             <MenuItem value=""><em>None</em></MenuItem>
                                             {branches.map(b => (<MenuItem key={b._id} value={b._id}>{b.name}</MenuItem>))}
                                         </Select>
@@ -111,14 +141,21 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                     </FormControl>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <GradeDropdown
-                                        branchId={values.branchId}
-                                        value={values.gradeId}
-                                        onChange={(e) => setFieldValue('gradeId', e.target.value)}
-                                        disabled={isSubmitting || !values.branchId}
-                                        error={touched.gradeId && Boolean(errors.gradeId)}
-                                        helperText={touched.gradeId && errors.gradeId}
-                                    />
+                                    <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || !values.branchId || loadingGrades}>
+                                        <InputLabel id="grade-select-label">Grade (Optional)</InputLabel>
+                                        <Select
+                                            labelId="grade-select-label"
+                                            name="gradeId"
+                                            value={values.gradeId}
+                                            label="Grade (Optional)"
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                        >
+                                            <MenuItem value=""><em>{loadingGrades ? 'Loading...' : 'None'}</em></MenuItem>
+                                            {grades.map(g => (<MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>))}
+                                        </Select>
+                                        {touched.gradeId && errors.gradeId && <FormHelperText>{errors.gradeId}</FormHelperText>}
+                                    </FormControl>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth error={touched.defaultTeacher && Boolean(errors.defaultTeacher)} disabled={isSubmitting}>
@@ -130,17 +167,6 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                         {touched.defaultTeacher && errors.defaultTeacher && <FormHelperText>{errors.defaultTeacher}</FormHelperText>}
                                     </FormControl>
                                 </Grid>
-                                {/* Status field removed, assuming backend handles or it's not needed for now
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth error={touched.status && Boolean(errors.status)} disabled={isSubmitting}>
-                                        <InputLabel id="status-select-label">Status</InputLabel>
-                                        <Select labelId="status-select-label" name="status" value={values.status} label="Status" onChange={handleChange} onBlur={handleBlur}>
-                                            <MenuItem value="active">Active</MenuItem><MenuItem value="inactive">Inactive</MenuItem>
-                                        </Select>
-                                        {touched.status && errors.status && <FormHelperText>{errors.status}</FormHelperText>}
-                                    </FormControl>
-                                </Grid>
-                                */}
                             </Grid>
                         </DialogContent>
                         <DialogActions sx={{ p: '16px 24px' }}>
@@ -155,7 +181,6 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
         </Dialog>
     );
 };
-
 
 const SubjectManagementPage = () => {
   const [subjects, setSubjects] = useState([]);
