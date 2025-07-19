@@ -267,7 +267,9 @@ const updateUserById = async (userId, updateBody, schoolIdScope) => { // Added s
     // If schoolIdScope is present, but updateBody.schoolId is not, ensure existing schoolId is not cleared
     // unless explicitly allowed (e.g. by passing null for schoolId if user can be unassigned from school).
     // For now, if schoolId is in updateBody, it's handled above. If not, user.schoolId remains.
-
+    if (schoolIdScope && !updateBody.schoolId) {
+        updateBody.schoolId = schoolIdScope;
+    }
 
     const rolesToCheck = [roleTypes.ADMIN, roleTypes.REQUESTED_SUPPLIER, roleTypes.SUPPLIER];
     // Role determination for duplication check needs to be based on the user's actual role, not hardcoded.
