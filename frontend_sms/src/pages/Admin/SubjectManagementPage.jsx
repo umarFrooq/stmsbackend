@@ -22,9 +22,12 @@ import useAuthStore from '../../store/auth.store';
 
 
 // Subject Form Dialog Component
-const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers, branches }) => {
+const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades: initialGrades, teachers, branches }) => {
     const isEditing = Boolean(subject);
-    const [filteredGrades, setFilteredGrades] = useState(grades);
+    const [availableGrades, setAvailableGrades] = useState(initialGrades || []);
+    const [loadingGrades, setLoadingGrades] = useState(false);
+    const [gradeError, setGradeError] = useState(null);
+
 
     // Ensure subject.defaultTeacher and subject.gradeId are just IDs if populated
     const initialTeacherId = subject?.defaultTeacher?._id || subject?.defaultTeacher || '';
@@ -85,11 +88,31 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                 }}
                 enableReinitialize
             >
-                {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => (
-                    <Form>
-                        <DialogContent dividers>
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
+                {({ errors, touched, isSubmitting, values, handleChange, handleBlur, setFieldValue }) => {
+                    useEffect(() => {
+                        if (values.branchId) {
+                            setLoadingGrades(true);
+                            gradeService.getGrades({ branchId: values.branchId, limit: 500 })
+                                .then(data => {
+                                    setAvailableGrades(data.results || []);
+                                    setGradeError(null);
+                                })
+                                .catch(err => {
+                                    console.error("Failed to fetch grades for branch:", err);
+                                    setAvailableGrades([]);
+                                    setGradeError("Could not load grades for this branch.");
+                                })
+                                .finally(() => setLoadingGrades(false));
+                        } else {
+                            setAvailableGrades([]);
+                        }
+                    }, [values.branchId]);
+
+                    return (
+                        <Form>
+                            <DialogContent dividers>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} sm={6}>
                                     <TextField fullWidth label="Subject Name/Title" name="title" value={values.title} onChange={handleChange} onBlur={handleBlur} error={touched.title && Boolean(errors.title)} helperText={touched.title && errors.title} disabled={isSubmitting} />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
@@ -104,21 +127,39 @@ const SubjectFormDialog = ({ open, onClose, subject, onSubmit, grades, teachers,
                                 <Grid item xs={12} sm={6}>
                                      <FormControl fullWidth error={touched.branchId && Boolean(errors.branchId)} disabled={isSubmitting}>
                                         <InputLabel id="branch-select-label">Branch</InputLabel>
-                                        <Select labelId="branch-select-label" name="branchId" value={values.branchId} label="Branch" onChange={(e) => setFieldValue('branchId', e.target.value)} onBlur={handleBlur} >
-                                            <MenuItem value=""><em>None</em></MenuItem>
+                                        <Select
+                                            labelId="branch-select-label"
+                                            name="branchId"
+                                            value={values.branchId}
+                                            label="Branch"
+                                            onChange={(e) => {
+                                                setFieldValue('branchId', e.target.value);
+                                                setFieldValue('gradeId', ''); // Reset grade selection
+                                            }}
+                                            onBlur={handleBlur}
+                                        >
+                                            <MenuItem value=""><em>Select Branch</em></MenuItem>
                                             {branches.map(b => (<MenuItem key={b._id} value={b._id}>{b.name}</MenuItem>))}
                                         </Select>
                                         {touched.branchId && errors.branchId && <FormHelperText>{errors.branchId}</FormHelperText>}
                                     </FormControl>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || !values.branchId}>
+                                    <FormControl fullWidth error={touched.gradeId && Boolean(errors.gradeId)} disabled={isSubmitting || loadingGrades || !values.branchId}>
                                         <InputLabel id="grade-select-label">Grade (Optional)</InputLabel>
-                                        <Select labelId="grade-select-label" name="gradeId" value={values.gradeId} label="Grade (Optional)" onChange={(e) => setFieldValue('gradeId', e.target.value)} onBlur={handleBlur}>
-                                        <MenuItem value=""><em>None</em></MenuItem>
-                                            {filteredGrades.map(g => (<MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>))}
+                                        <Select
+                                            labelId="grade-select-label"
+                                            name="gradeId"
+                                            value={values.gradeId}
+                                            label="Grade (Optional)"
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                        >
+                                            <MenuItem value=""><em>{loadingGrades ? 'Loading...' : 'Select Grade'}</em></MenuItem>
+                                            {availableGrades.map(g => (<MenuItem key={g._id} value={g._id}>{g.title}</MenuItem>))}
                                         </Select>
                                         {touched.gradeId && errors.gradeId && <FormHelperText>{errors.gradeId}</FormHelperText>}
+                                        {gradeError && <FormHelperText error>{gradeError}</FormHelperText>}
                                     </FormControl>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
@@ -197,22 +238,22 @@ const SubjectManagementPage = () => {
 
   const fetchDropdownData = useCallback(async () => {
     try {
-        // const schoolId = user?.schoolId; // Assuming user object has schoolId - REMOVED
-        const params = {limit: 1000 }; // High limit to fetch all for dropdowns. SchoolId handled by backend.
+        const params = { limit: 1000, populate: 'branchId' }; // High limit and populate branch
 
         const [gradesRes, teachersRes, branchesRes] = await Promise.all([
-            gradeService.getGrades(params), // SchoolId should be handled by backend based on token
-            userService.getAllUsers({ role: 'teacher', ...params }), // SchoolId should be handled by backend
-            branchService.getAllBranches(params) // SchoolId should be handled by backend
+            gradeService.getGrades(params),
+            userService.getAllUsers({ role: 'teacher', limit: 1000 }),
+            branchService.getAllBranches({ limit: 1000 })
         ]);
+
         setGrades(gradesRes.results || []);
-        setTeachers(teachersRes.results || teachersRes.data?.results || []); // userService might have data nested
+        setTeachers(teachersRes.results || teachersRes.data?.results || []);
         setBranches(branchesRes.results || []);
     } catch (err) {
         showToast('Failed to load support data (grades, teachers, branches). Please try again.', 'error');
         console.error("Error fetching dropdown data:", err);
     }
-  }, []); // Removed user?.schoolId from dependency array
+  }, []);
 
 
   const fetchSubjects = useCallback(async (currentFilters, page = pagination.page, pageSize = pagination.pageSize) => {
@@ -423,7 +464,6 @@ const SubjectManagementPage = () => {
             onClose={handleSubjectFormClose}
             subject={editingSubject}
             onSubmit={handleSubjectFormSubmit}
-            grades={grades}
             teachers={teachers}
             branches={branches}
         />
