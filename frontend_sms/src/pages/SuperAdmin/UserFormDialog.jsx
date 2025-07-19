@@ -514,7 +514,6 @@ import gradeService from '../../services/gradeService'; // Import grade service
 import useAuthStore from '../../store/auth.store'; // To get current user/school context
 
 const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) => {
-  console.log('UserFormDialog rendered with open:', open);
   const isEditing = Boolean(user);
   const { user: currentUser } = useAuthStore(); // Get current logged-in user for schoolId if needed
 
@@ -647,56 +646,17 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
       }),
   });
 
-  const getChangedValues = (currentValues, initialUser) => {
-    const changes = {};
-    const initial = {
-      fullname: initialUser?.fullname || '',
-      email: initialUser?.email || '',
-      role: initialUser?.role || '',
-      branchId: initialUser?.branchId?._id || initialUser?.branchId || '',
-      gradeId: initialUser?.gradeId?._id || initialUser?.gradeId || '',
-      status: initialUser?.status || 'active',
-      cnic: initialUser?.cnic || '',
-      password: '', // Password is not pre-filled
-    };
-
-    Object.keys(currentValues).forEach(key => {
-      // Skip confirmPassword field
-      if (key === 'confirmPassword') return;
-
-      const currentValue = currentValues[key];
-      const initialValue = initial[key];
-
-      // If it's a new user, include all fields except empty password
-      if (!isEditing) {
-        if (key === 'password' && currentValue) {
-          changes.password = currentValue;
-        } else if (key !== 'password') {
-          changes[key] = currentValue === '' ? null : currentValue;
-        }
-      } else {
-        // If editing, only include changed fields
-        if (currentValue !== initialValue) {
-          if (key === 'password' && currentValue) {
-            changes.password = currentValue;
-          } else if (key !== 'password') {
-            changes[key] = currentValue === '' ? null : currentValue;
-          }
-        }
-      }
-    });
-    return changes;
-  };
-
   const handleSubmit = async (values, { setSubmitting }) => {
     // In edit mode, we only want to send the fields that have actually been changed.
     let submissionPayload;
     if (isEditing) {
-        submissionPayload = getChangedValues(values, user);
-        // If role changes from 'student' to something else, ensure gradeId is nulled out
-        if (submissionPayload.role && submissionPayload.role !== 'student' && user.role === 'student') {
-            submissionPayload.gradeId = null;
+      const changedValues = {};
+      Object.keys(values).forEach(key => {
+        if (values[key] !== initialValues[key]) {
+          changedValues[key] = values[key];
         }
+      });
+      submissionPayload = changedValues;
     } else {
         // In create mode, send all values, but clean up confirmPassword
         submissionPayload = { ...values };
@@ -941,7 +901,7 @@ const UserFormDialog = ({ open, onClose, user, onSubmit, availableRoles = [] }) 
                   type="submit"
                   variant="contained"
                   color="primary"
-                  disabled={isSubmitting || (isEditing && !dirty && !Object.keys(getChangedValues(values, user)).length)}
+                  disabled={isSubmitting || (isEditing && !dirty)}
                   startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
                 >
                 {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create User')}

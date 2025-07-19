@@ -229,7 +229,6 @@ const UserManagementPage = () => {
   };
 
   const handleEditUser = (user) => {
-    console.log('handleEditUser called with user:', user);
     setEditingUser(user);
     setIsUserFormOpen(true);
   };
